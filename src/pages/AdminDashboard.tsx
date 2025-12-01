@@ -60,25 +60,33 @@ const AdminDashboard = () => {
         return;
       }
 
-      const response = await supabase.functions.invoke('export-full-database', {
+      const invokeOptions: any = {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
-      });
+        responseType: 'text',
+      };
 
-      if (response.error) {
-        console.error('Export error:', response.error);
-        toast.error('Export hiba: ' + response.error.message);
+      const { data, error } = await supabase.functions.invoke<string>('export-full-database', invokeOptions);
+
+      if (error) {
+        console.error('Export error:', error);
+        toast.error('Export hiba: ' + error.message);
         setIsExporting(false);
         return;
       }
 
-      // Create blob from response data
-      const sqlContent = response.data;
+      if (!data || typeof data !== 'string') {
+        console.error('Export error: no data returned from function');
+        toast.error('Export hiba: üres válasz érkezett');
+        setIsExporting(false);
+        return;
+      }
+
+      const sqlContent = data;
       const blob = new Blob([sqlContent], { type: 'text/plain; charset=utf-8' });
       const url = URL.createObjectURL(blob);
       
-      // Create download link and trigger download
       const link = document.createElement('a');
       link.href = url;
       link.download = `dingleup_full_export_${new Date().toISOString().split('T')[0]}.sql`;
