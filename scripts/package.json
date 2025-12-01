@@ -1,0 +1,14 @@
+{
+  "name": "dingleup-database-scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Database export and utility scripts for DingleUP!",
+  "scripts": {
+    "export:full": "node export-database-full.js > ../db/full_data_export.sql",
+    "export:schema": "node export-schema.js > ../db/schema_export.sql"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.75.0",
+    "dotenv": "^16.4.5"
+  }
+}
