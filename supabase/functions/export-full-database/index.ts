@@ -202,40 +202,70 @@ Deno.serve(async (req) => {
 
     output += `BEGIN;\n\n`;
 
+    const PAGE_SIZE = 1000;
+
     for (const table of TABLES) {
       console.log(`Exporting table: ${table}`);
 
-      const { data, error } = await supabase
-        .from(table)
-        .select('*')
-        .limit(100000);
+      let offset = 0;
+      let totalRows = 0;
+      let columns: string[] | null = null;
+      let triggersDisabled = false;
 
-      if (error) {
-        console.error(`Error exporting ${table}:`, error);
-        // Include error as SQL comment so export remains usable
-        output += `-- ERROR exporting table ${table}: ${error.message}\n\n`;
-        continue;
+      while (true) {
+        const { data, error } = await supabase
+          .from(table)
+          .select('*')
+          .range(offset, offset + PAGE_SIZE - 1);
+
+        if (error) {
+          console.error(`Error exporting ${table} (offset ${offset}):`, error);
+          // Include error as SQL comment so export remains usable
+          if (totalRows === 0) {
+            output += `-- ERROR exporting table ${table} at offset ${offset}: ${error.message}\n\n`;
+          } else {
+            output += `-- ERROR exporting additional rows for table ${table} at offset ${offset}: ${error.message}\n`;
+          }
+          break;
+        }
+
+        if (!data || data.length === 0) {
+          if (totalRows === 0) {
+            output += `-- Table ${table} is empty\n\n`;
+          }
+          break;
+        }
+
+        if (!columns) {
+          // First non-empty page: initialize columns and disable triggers
+          columns = Object.keys(data[0]);
+
+          output += `\n-- Data for table: ${table}\n`;
+          output += `-- Page size: ${PAGE_SIZE}\n`;
+
+          // Disable triggers during import for performance
+          output += `ALTER TABLE public.${table} DISABLE TRIGGER ALL;\n`;
+          triggersDisabled = true;
+        }
+
+        for (const row of data as Record<string, unknown>[]) {
+          output += generateInsert(table, row, columns) + '\n';
+        }
+
+        totalRows += data.length;
+        offset += data.length;
+
+        if (data.length < PAGE_SIZE) {
+          // Last page for this table
+          break;
+        }
       }
 
-      if (!data || data.length === 0) {
-        output += `-- Table ${table} is empty\n\n`;
-        continue;
+      if (triggersDisabled) {
+        // Re-enable triggers
+        output += `ALTER TABLE public.${table} ENABLE TRIGGER ALL;\n`;
+        output += `-- Exported ${totalRows} rows from ${table}\n\n`;
       }
-
-      output += `\n-- Data for table: ${table}\n`;
-      output += `-- Rows: ${data.length}\n\n`;
-
-      const columns = Object.keys(data[0]);
-
-      // Disable triggers during import for performance
-      output += `ALTER TABLE public.${table} DISABLE TRIGGER ALL;\n`;
-
-      for (const row of data as Record<string, unknown>[]) {
-        output += generateInsert(table, row, columns) + '\n';
-      }
-
-      // Re-enable triggers
-      output += `ALTER TABLE public.${table} ENABLE TRIGGER ALL;\n\n`;
     }
 
     output += `COMMIT;\n\n`;
