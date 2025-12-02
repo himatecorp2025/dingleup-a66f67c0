@@ -12,11 +12,11 @@ const TABLES = [
   'retention_analytics', 'tips_tricks_videos', 'subscription_promo_events',
   
   // Level 1: Depends on Level 0
-  'profiles', 'questions',
+  'profiles', 'questions', 'question_pools',
   
   // Level 2: Depends on profiles
   'user_roles', 'password_history', 'pin_reset_tokens', 'login_attempts', 'login_attempts_pin',
-  'question_pools', 'question_translations', 'wallet_ledger', 'wallet_ledger_archive',
+  'question_translations', 'wallet_ledger', 'wallet_ledger_archive',
   'lives_ledger', 'lives_ledger_archive', 'tutorial_progress', 'user_presence', 'speed_tokens',
   'user_sessions', 'user_game_settings', 'user_topic_stats', 'user_ad_interest_candidates',
   'user_cohorts', 'user_engagement_scores', 'user_journey_analytics', 'user_like_prompt_tracking',
@@ -55,26 +55,42 @@ function escapeSqlValue(value: unknown): string {
   if (typeof value === 'string') {
     return `'${value.replace(/'/g, "''")}'`;
   }
+  if (Array.isArray(value)) {
+    const arrayValues = value.map(v => {
+      if (typeof v === 'string') return `"${v.replace(/"/g, '\\"')}"`;
+      return String(v);
+    }).join(',');
+    return `'{${arrayValues}}'`;
+  }
   if (typeof value === 'object') {
     return `'${JSON.stringify(value).replace(/'/g, "''")}'::jsonb`;
   }
   return `'${String(value).replace(/'/g, "''")}'`;
 }
 
+function inferPgType(value: unknown, colName: string): string {
+  if (value === null || value === undefined) {
+    if (colName === 'id' || colName.endsWith('_id')) return 'UUID';
+    if (colName.includes('_at') || colName.includes('date')) return 'TIMESTAMPTZ';
+    if (colName === 'email') return 'TEXT';
+    return 'TEXT';
+  }
+  if (typeof value === 'number') return Number.isInteger(value) ? 'INTEGER' : 'NUMERIC';
+  if (typeof value === 'boolean') return 'BOOLEAN';
+  if (Array.isArray(value)) return 'TEXT[]';
+  if (typeof value === 'object') return 'JSONB';
+  if (typeof value === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}T/.test(value)) return 'TIMESTAMPTZ';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'DATE';
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) return 'UUID';
+    return 'TEXT';
+  }
+  return 'TEXT';
+}
+
 function generateInsert(tableName: string, row: Record<string, unknown>, columns: string[]): string {
   const values = columns.map((col) => escapeSqlValue(row[col])).join(', ');
   return `INSERT INTO public.${tableName} (${columns.join(', ')}) VALUES (${values});`;
-}
-
-function pgType(dataType: string, maxLen: number | null, udtName: string): string {
-  if (dataType === 'ARRAY') return `${udtName.replace(/^_/, '')}[]`;
-  if (dataType === 'USER-DEFINED') return udtName;
-  if (dataType === 'character varying') return maxLen ? `VARCHAR(${maxLen})` : 'VARCHAR';
-  if (dataType === 'character') return maxLen ? `CHAR(${maxLen})` : 'CHAR';
-  if (dataType === 'numeric') return 'NUMERIC';
-  if (dataType === 'timestamp with time zone') return 'TIMESTAMPTZ';
-  if (dataType === 'timestamp without time zone') return 'TIMESTAMP';
-  return dataType.toUpperCase();
 }
 
 Deno.serve(async (req) => {
@@ -105,6 +121,10 @@ Deno.serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // Parse export type from query params
+    const url = new URL(req.url);
+    const exportType = url.searchParams.get('type') || 'full';
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     if (!supabaseUrl || !supabaseKey) {
@@ -127,125 +147,218 @@ Deno.serve(async (req) => {
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    console.log('Starting full database export with schema for admin:', userId);
+    console.log(`Starting database export (type: ${exportType}) for admin:`, userId);
 
     let output = '';
-    output += `-- ============================================\n`;
-    output += `-- DingleUP! Full Database Export (Schema + Data)\n`;
-    output += `-- Generated: ${new Date().toISOString()}\n`;
-    output += `-- ============================================\n\n`;
-
-    output += `-- IMPORT INSTRUCTIONS:\n`;
-    output += `-- psql -U postgres -d dingleup -f this_file.sql\n\n`;
-
-    output += `BEGIN;\n`;
-    output += `SET session_replication_role = 'replica';\n`;
-    output += `SET CONSTRAINTS ALL DEFERRED;\n\n`;
-
-    // Extensions
-    output += `-- Extensions\n`;
-    output += `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";\n`;
-    output += `CREATE EXTENSION IF NOT EXISTS "pg_trgm";\n\n`;
-
-    // Enum types
-    output += `-- Enum Types\n`;
-    output += `DO $$ BEGIN CREATE TYPE app_role AS ENUM ('admin', 'user'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;\n\n`;
-
+    const timestamp = new Date().toISOString();
     const PAGE_SIZE = 1000;
-    const exportedTables: string[] = [];
+    
+    if (exportType === 'schema') {
+      // SCHEMA ONLY EXPORT (CREATE TABLE statements)
+      output += `-- ============================================\n`;
+      output += `-- DingleUP! Database Schema Export (CREATE TABLE)\n`;
+      output += `-- Generated: ${timestamp}\n`;
+      output += `-- ============================================\n\n`;
+      output += `-- Extensions\n`;
+      output += `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";\n`;
+      output += `CREATE EXTENSION IF NOT EXISTS "pg_trgm";\n\n`;
+      output += `-- Enum Types\n`;
+      output += `DO $$ BEGIN CREATE TYPE app_role AS ENUM ('admin', 'user'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;\n\n`;
 
-    for (const tableName of TABLES) {
-      console.log(`Exporting: ${tableName}`);
+      for (const tableName of TABLES) {
+        console.log(`Schema export: ${tableName}`);
+        
+        const { data: firstRow, error } = await supabase.from(tableName).select('*').limit(1);
+        
+        if (error || !firstRow || firstRow.length === 0) {
+          output += `-- Table ${tableName}: skipped (empty or not found)\n\n`;
+          continue;
+        }
 
-      // Get table columns schema
-      const { data: columnsData, error: colError } = await supabase
-        .rpc('get_table_columns', { p_table_name: tableName })
-        .select('*');
-
-      // Fallback: try to get data and infer columns
-      let columns: string[] = [];
-      let columnDefs: string[] = [];
-
-      const { data: firstRow } = await supabase.from(tableName).select('*').limit(1);
-      
-      if (!firstRow || firstRow.length === 0) {
-        output += `-- Table ${tableName} is empty or does not exist\n\n`;
-        continue;
+        const columns = Object.keys(firstRow[0]);
+        const colDefs = columns.map(col => {
+          const val = firstRow[0][col];
+          const type = inferPgType(val, col);
+          return `  ${col} ${type}`;
+        });
+        
+        output += `-- ============================================\n`;
+        output += `-- Table: ${tableName}\n`;
+        output += `-- ============================================\n`;
+        output += `DROP TABLE IF EXISTS public.${tableName} CASCADE;\n`;
+        output += `CREATE TABLE public.${tableName} (\n${colDefs.join(',\n')}\n);\n\n`;
       }
 
-      columns = Object.keys(firstRow[0]);
-
-      // Generate CREATE TABLE
-      output += `-- ============================================\n`;
-      output += `-- Table: ${tableName}\n`;
-      output += `-- ============================================\n`;
-      output += `DROP TABLE IF EXISTS public.${tableName} CASCADE;\n`;
+      output += `-- Schema export complete\n`;
       
-      // Simple column definition based on data types
-      const colDefs = columns.map(col => {
-        const val = firstRow[0][col];
-        let type = 'TEXT';
-        if (val === null) type = 'TEXT';
-        else if (typeof val === 'number') type = Number.isInteger(val) ? 'INTEGER' : 'NUMERIC';
-        else if (typeof val === 'boolean') type = 'BOOLEAN';
-        else if (typeof val === 'object') type = 'JSONB';
-        else if (typeof val === 'string') {
-          if (/^\d{4}-\d{2}-\d{2}T/.test(val)) type = 'TIMESTAMPTZ';
-          else if (/^\d{4}-\d{2}-\d{2}$/.test(val)) type = 'DATE';
-          else if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val)) type = 'UUID';
-          else type = 'TEXT';
-        }
-        return `  ${col} ${type}`;
+      return new Response(output, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Content-Disposition': `attachment; filename="dingleup_schema_${timestamp.split('T')[0]}.sql"`,
+        },
       });
-      
-      output += `CREATE TABLE public.${tableName} (\n${colDefs.join(',\n')}\n);\n\n`;
-      
-      exportedTables.push(tableName);
 
-      // Export data
-      let offset = 0;
-      let totalRows = 0;
+    } else if (exportType === 'data') {
+      // DATA ONLY EXPORT (INSERT statements)
+      output += `-- ============================================\n`;
+      output += `-- DingleUP! Database Data Export (INSERT)\n`;
+      output += `-- Generated: ${timestamp}\n`;
+      output += `-- ============================================\n\n`;
+      output += `-- IMPORT INSTRUCTIONS:\n`;
+      output += `-- 1. First import the schema file\n`;
+      output += `-- 2. Then run: psql -U postgres -d dingleup -f this_file.sql\n`;
+      output += `-- ============================================\n\n`;
+      output += `BEGIN;\n`;
+      output += `SET session_replication_role = 'replica';\n`;
+      output += `SET CONSTRAINTS ALL DEFERRED;\n\n`;
 
-      while (true) {
-        const { data, error } = await supabase
-          .from(tableName)
-          .select('*')
-          .range(offset, offset + PAGE_SIZE - 1);
+      let totalRowsExported = 0;
 
-        if (error) {
-          output += `-- ERROR: ${error.message}\n`;
-          break;
+      for (const tableName of TABLES) {
+        console.log(`Data export: ${tableName}`);
+        
+        const { data: firstRow, error: firstError } = await supabase.from(tableName).select('*').limit(1);
+        
+        if (firstError || !firstRow || firstRow.length === 0) {
+          output += `-- Table ${tableName}: empty or not found\n\n`;
+          continue;
         }
 
-        if (!data || data.length === 0) break;
+        const columns = Object.keys(firstRow[0]);
+        output += `-- ============================================\n`;
+        output += `-- Data: ${tableName}\n`;
+        output += `-- ============================================\n`;
+        output += `TRUNCATE TABLE public.${tableName} CASCADE;\n`;
 
-        for (const row of data as Record<string, unknown>[]) {
-          output += generateInsert(tableName, row, columns) + '\n';
+        let offset = 0;
+        let tableRows = 0;
+
+        while (true) {
+          const { data, error } = await supabase
+            .from(tableName)
+            .select('*')
+            .range(offset, offset + PAGE_SIZE - 1);
+
+          if (error) {
+            output += `-- ERROR: ${error.message}\n`;
+            break;
+          }
+
+          if (!data || data.length === 0) break;
+
+          for (const row of data as Record<string, unknown>[]) {
+            output += generateInsert(tableName, row, columns) + '\n';
+          }
+
+          tableRows += data.length;
+          offset += data.length;
+
+          if (data.length < PAGE_SIZE) break;
         }
 
-        totalRows += data.length;
-        offset += data.length;
-
-        if (data.length < PAGE_SIZE) break;
+        output += `-- Rows: ${tableRows}\n\n`;
+        totalRowsExported += tableRows;
       }
 
-      output += `-- Rows: ${totalRows}\n\n`;
+      output += `SET session_replication_role = 'origin';\n`;
+      output += `COMMIT;\n\n`;
+      output += `-- Data export complete: ${totalRowsExported} total rows\n`;
+
+      return new Response(output, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Content-Disposition': `attachment; filename="dingleup_data_${timestamp.split('T')[0]}.sql"`,
+        },
+      });
+
+    } else {
+      // FULL EXPORT (both schema and data) - default
+      output += `-- ============================================\n`;
+      output += `-- DingleUP! Full Database Export (Schema + Data)\n`;
+      output += `-- Generated: ${timestamp}\n`;
+      output += `-- ============================================\n\n`;
+      output += `-- IMPORT INSTRUCTIONS:\n`;
+      output += `-- psql -U postgres -d dingleup -f this_file.sql\n`;
+      output += `-- ============================================\n\n`;
+      output += `BEGIN;\n`;
+      output += `SET session_replication_role = 'replica';\n`;
+      output += `SET CONSTRAINTS ALL DEFERRED;\n\n`;
+      output += `-- Extensions\n`;
+      output += `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";\n`;
+      output += `CREATE EXTENSION IF NOT EXISTS "pg_trgm";\n\n`;
+      output += `-- Enum Types\n`;
+      output += `DO $$ BEGIN CREATE TYPE app_role AS ENUM ('admin', 'user'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;\n\n`;
+
+      for (const tableName of TABLES) {
+        console.log(`Full export: ${tableName}`);
+
+        const { data: firstRow } = await supabase.from(tableName).select('*').limit(1);
+        
+        if (!firstRow || firstRow.length === 0) {
+          output += `-- Table ${tableName} is empty or does not exist\n\n`;
+          continue;
+        }
+
+        const columns = Object.keys(firstRow[0]);
+        const colDefs = columns.map(col => {
+          const val = firstRow[0][col];
+          const type = inferPgType(val, col);
+          return `  ${col} ${type}`;
+        });
+        
+        output += `-- ============================================\n`;
+        output += `-- Table: ${tableName}\n`;
+        output += `-- ============================================\n`;
+        output += `DROP TABLE IF EXISTS public.${tableName} CASCADE;\n`;
+        output += `CREATE TABLE public.${tableName} (\n${colDefs.join(',\n')}\n);\n\n`;
+
+        let offset = 0;
+        let totalRows = 0;
+
+        while (true) {
+          const { data, error } = await supabase
+            .from(tableName)
+            .select('*')
+            .range(offset, offset + PAGE_SIZE - 1);
+
+          if (error) {
+            output += `-- ERROR: ${error.message}\n`;
+            break;
+          }
+
+          if (!data || data.length === 0) break;
+
+          for (const row of data as Record<string, unknown>[]) {
+            output += generateInsert(tableName, row, columns) + '\n';
+          }
+
+          totalRows += data.length;
+          offset += data.length;
+
+          if (data.length < PAGE_SIZE) break;
+        }
+
+        output += `-- Rows: ${totalRows}\n\n`;
+      }
+
+      output += `SET session_replication_role = 'origin';\n`;
+      output += `COMMIT;\n\n`;
+      output += `-- Export complete\n`;
+
+      return new Response(output, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Content-Disposition': `attachment; filename="dingleup_full_export_${timestamp.split('T')[0]}.sql"`,
+        },
+      });
     }
 
-    output += `SET session_replication_role = 'origin';\n`;
-    output += `COMMIT;\n\n`;
-    output += `-- Export complete: ${exportedTables.length} tables\n`;
-
-    console.log('Export completed, size:', output.length);
-
-    return new Response(output, {
-      status: 200,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Content-Disposition': `attachment; filename="dingleup_full_export_${new Date().toISOString().split('T')[0]}.sql"`,
-      },
-    });
   } catch (error) {
     console.error('Export error:', error);
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),

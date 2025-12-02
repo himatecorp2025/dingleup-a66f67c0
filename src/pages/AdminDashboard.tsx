@@ -46,61 +46,69 @@ const AdminDashboard = () => {
     report: any;
   } | null>(null);
   const [actionType, setActionType] = useState<'reviewing' | 'resolved' | 'dismissed'>('reviewing');
-  const [isExporting, setIsExporting] = useState(false);
+  const [isExportingSchema, setIsExportingSchema] = useState(false);
+  const [isExportingData, setIsExportingData] = useState(false);
 
-  const handleFullDatabaseExport = async () => {
+  const handleDatabaseExport = async (exportType: 'schema' | 'data') => {
+    const isSchema = exportType === 'schema';
+    const setExporting = isSchema ? setIsExportingSchema : setIsExportingData;
+    
     try {
-      setIsExporting(true);
-      toast.info('Adatbázis export indítása...');
+      setExporting(true);
+      toast.info(isSchema ? 'Schema export indítása...' : 'Data export indítása...');
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error('Nincs bejelentkezve');
-        setIsExporting(false);
+        setExporting(false);
         return;
       }
 
-      const invokeOptions: any = {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        responseType: 'text',
-      };
+      const response = await fetch(
+        `https://wdpxmwsxhckazwxufttk.supabase.co/functions/v1/export-full-database?type=${exportType}`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
-      const { data, error } = await supabase.functions.invoke<string>('export-full-database', invokeOptions);
-
-      if (error) {
-        console.error('Export error:', error);
-        toast.error('Export hiba: ' + error.message);
-        setIsExporting(false);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Export error:', errorText);
+        toast.error('Export hiba: ' + errorText);
+        setExporting(false);
         return;
       }
 
-      if (!data || typeof data !== 'string') {
+      const sqlContent = await response.text();
+      
+      if (!sqlContent || sqlContent.length < 100) {
         console.error('Export error: no data returned from function');
         toast.error('Export hiba: üres válasz érkezett');
-        setIsExporting(false);
+        setExporting(false);
         return;
       }
 
-      const sqlContent = data;
       const blob = new Blob([sqlContent], { type: 'text/plain; charset=utf-8' });
       const url = URL.createObjectURL(blob);
       
       const link = document.createElement('a');
       link.href = url;
-      link.download = `dingleup_full_export_${new Date().toISOString().split('T')[0]}.sql`;
+      link.download = `dingleup_${exportType}_${new Date().toISOString().split('T')[0]}.sql`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      toast.success('Adatbázis sikeresen exportálva!');
+      toast.success(isSchema ? 'Schema sikeresen exportálva!' : 'Data sikeresen exportálva!');
     } catch (error) {
       console.error('Unexpected export error:', error);
       toast.error('Váratlan hiba történt az export során');
     } finally {
-      setIsExporting(false);
+      setExporting(false);
     }
   };
 
@@ -357,25 +365,37 @@ const AdminDashboard = () => {
         {/* Content based on active tab */}
         {activeTab === 'dashboard' && (
           <div className="space-y-4 lg:space-y-6">
-            {/* Database Export Button */}
+            {/* Database Export Buttons */}
             <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl lg:rounded-2xl p-4 lg:p-6 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-300">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-4">
                 <div>
-                  <h3 className="text-lg lg:text-xl font-bold text-white mb-2">Teljes adatbázis export</h3>
+                  <h3 className="text-lg lg:text-xl font-bold text-white mb-2">Adatbázis export</h3>
                   <p className="text-white/60 text-sm lg:text-base">
-                    Töltsd le a teljes adatbázist SQL formátumban (CREATE TABLE + INSERT statements)
+                    Töltsd le a teljes adatbázis sémát (CREATE TABLE) és az adatokat (INSERT) külön fájlokba
                   </p>
                 </div>
-                <Button
-                  onClick={handleFullDatabaseExport}
-                  disabled={isExporting}
-                  variant="outline"
-                  size="lg"
-                  className="gap-2 bg-blue-600/20 hover:bg-blue-600/30 border-blue-500/30 text-white"
-                >
-                  <Database className="h-5 w-5" />
-                  {isExporting ? 'Export folyamatban...' : 'Export letöltése'}
-                </Button>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    onClick={() => handleDatabaseExport('schema')}
+                    disabled={isExportingSchema || isExportingData}
+                    variant="outline"
+                    size="lg"
+                    className="gap-2 bg-purple-600/20 hover:bg-purple-600/30 border-purple-500/30 text-white"
+                  >
+                    <Database className="h-5 w-5" />
+                    {isExportingSchema ? 'Schema export...' : 'Schema Export (CREATE TABLE)'}
+                  </Button>
+                  <Button
+                    onClick={() => handleDatabaseExport('data')}
+                    disabled={isExportingSchema || isExportingData}
+                    variant="outline"
+                    size="lg"
+                    className="gap-2 bg-green-600/20 hover:bg-green-600/30 border-green-500/30 text-white"
+                  >
+                    <Database className="h-5 w-5" />
+                    {isExportingData ? 'Data export...' : 'Data Export (INSERT)'}
+                  </Button>
+                </div>
               </div>
             </div>
 
