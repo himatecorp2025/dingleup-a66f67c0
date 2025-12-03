@@ -48,6 +48,27 @@ const TABLES = [
   'performance_metrics', 'device_geo_analytics', 'session_details', 'reports',
 ];
 
+// Map PostgreSQL data_type to SQL DDL type
+function mapPgType(dataType: string, udtName: string): string {
+  const dt = dataType.toLowerCase();
+  if (dt === 'uuid') return 'UUID';
+  if (dt === 'text') return 'TEXT';
+  if (dt === 'character varying') return 'TEXT';
+  if (dt === 'integer') return 'INTEGER';
+  if (dt === 'bigint') return 'BIGINT';
+  if (dt === 'smallint') return 'SMALLINT';
+  if (dt === 'boolean') return 'BOOLEAN';
+  if (dt === 'numeric' || dt === 'real' || dt === 'double precision') return 'NUMERIC';
+  if (dt === 'jsonb') return 'JSONB';
+  if (dt === 'json') return 'JSON';
+  if (dt === 'date') return 'DATE';
+  if (dt === 'timestamp with time zone') return 'TIMESTAMPTZ';
+  if (dt === 'timestamp without time zone') return 'TIMESTAMP';
+  if (dt === 'array') return udtName.replace(/^_/, '') + '[]';
+  if (dt === 'user-defined' && udtName === 'app_role') return 'app_role';
+  return 'TEXT';
+}
+
 function escapeSqlValue(value: unknown): string {
   if (value === null || value === undefined) return 'NULL';
   if (typeof value === 'boolean') return value ? 'true' : 'false';
@@ -68,29 +89,27 @@ function escapeSqlValue(value: unknown): string {
   return `'${String(value).replace(/'/g, "''")}'`;
 }
 
-function inferPgType(value: unknown, colName: string): string {
-  if (value === null || value === undefined) {
-    if (colName === 'id' || colName.endsWith('_id')) return 'UUID';
-    if (colName.includes('_at') || colName.includes('date')) return 'TIMESTAMPTZ';
-    if (colName === 'email') return 'TEXT';
-    return 'TEXT';
-  }
-  if (typeof value === 'number') return Number.isInteger(value) ? 'INTEGER' : 'NUMERIC';
-  if (typeof value === 'boolean') return 'BOOLEAN';
-  if (Array.isArray(value)) return 'TEXT[]';
-  if (typeof value === 'object') return 'JSONB';
-  if (typeof value === 'string') {
-    if (/^\d{4}-\d{2}-\d{2}T/.test(value)) return 'TIMESTAMPTZ';
-    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'DATE';
-    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) return 'UUID';
-    return 'TEXT';
-  }
-  return 'TEXT';
-}
-
 function generateInsert(tableName: string, row: Record<string, unknown>, columns: string[]): string {
   const values = columns.map((col) => escapeSqlValue(row[col])).join(', ');
   return `INSERT INTO public.${tableName} (${columns.join(', ')}) VALUES (${values});`;
+}
+
+// Fetch actual schema from information_schema using RPC
+// deno-lint-ignore no-explicit-any
+async function fetchTableSchema(
+  supabase: any, 
+  tableName: string
+): Promise<Array<{column_name: string, data_type: string, udt_name: string}>> {
+  const { data, error } = await supabase.rpc('get_table_column_types', { 
+    p_table_name: tableName 
+  });
+  
+  if (error || !data) {
+    console.log(`Schema fetch failed for ${tableName}:`, error?.message);
+    return [];
+  }
+  
+  return data as Array<{column_name: string, data_type: string, udt_name: string}>;
 }
 
 Deno.serve(async (req) => {
@@ -168,18 +187,17 @@ Deno.serve(async (req) => {
       for (const tableName of TABLES) {
         console.log(`Schema export: ${tableName}`);
         
-        const { data: firstRow, error } = await supabase.from(tableName).select('*').limit(1);
+        // Get ACTUAL schema from information_schema
+        const schemaInfo = await fetchTableSchema(supabase, tableName);
         
-        if (error || !firstRow || firstRow.length === 0) {
-          output += `-- Table ${tableName}: skipped (empty or not found)\n\n`;
+        if (!schemaInfo || schemaInfo.length === 0) {
+          output += `-- Table ${tableName}: skipped (not found in information_schema)\n\n`;
           continue;
         }
 
-        const columns = Object.keys(firstRow[0]);
-        const colDefs = columns.map(col => {
-          const val = firstRow[0][col];
-          const type = inferPgType(val, col);
-          return `  ${col} ${type}`;
+        const colDefs = schemaInfo.map(col => {
+          const pgType = mapPgType(col.data_type, col.udt_name);
+          return `  ${col.column_name} ${pgType}`;
         });
         
         output += `-- ============================================\n`;
@@ -296,18 +314,18 @@ Deno.serve(async (req) => {
       for (const tableName of TABLES) {
         console.log(`Full export: ${tableName}`);
 
-        const { data: firstRow } = await supabase.from(tableName).select('*').limit(1);
+        // Get ACTUAL schema from information_schema
+        const schemaInfo = await fetchTableSchema(supabase, tableName);
         
-        if (!firstRow || firstRow.length === 0) {
-          output += `-- Table ${tableName} is empty or does not exist\n\n`;
+        if (!schemaInfo || schemaInfo.length === 0) {
+          output += `-- Table ${tableName}: skipped (not found)\n\n`;
           continue;
         }
 
-        const columns = Object.keys(firstRow[0]);
-        const colDefs = columns.map(col => {
-          const val = firstRow[0][col];
-          const type = inferPgType(val, col);
-          return `  ${col} ${type}`;
+        const columnNames = schemaInfo.map(c => c.column_name);
+        const colDefs = schemaInfo.map(col => {
+          const pgType = mapPgType(col.data_type, col.udt_name);
+          return `  ${col.column_name} ${pgType}`;
         });
         
         output += `-- ============================================\n`;
@@ -333,7 +351,7 @@ Deno.serve(async (req) => {
           if (!data || data.length === 0) break;
 
           for (const row of data as Record<string, unknown>[]) {
-            output += generateInsert(tableName, row, columns) + '\n';
+            output += generateInsert(tableName, row, columnNames) + '\n';
           }
 
           totalRows += data.length;

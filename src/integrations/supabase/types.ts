@@ -4058,6 +4058,14 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_table_column_types: {
+        Args: { p_table_name: string }
+        Returns: {
+          column_name: string
+          data_type: string
+          udt_name: string
+        }[]
+      }
       get_topics_needing_questions: {
         Args: never
         Returns: {
