@@ -29,6 +29,7 @@ import Index from "./pages/Index";
 
 // Lazy load all other pages for optimal bundle splitting
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const CoinShop = lazy(() => import("./pages/CoinShop"));
 const RegisterNew = lazy(() => import("./pages/RegisterNew"));
 const LoginNew = lazy(() => import("./pages/LoginNew"));
 const ForgotPin = lazy(() => import("./pages/ForgotPin"));
@@ -150,6 +151,7 @@ const AppCore = () => {
               
               {/* Protected routes wrapped in ErrorBoundary */}
               <Route path="/dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+              <Route path="/coin-shop" element={<ErrorBoundary><CoinShop /></ErrorBoundary>} />
               <Route path="/profile" element={<ErrorBoundary><Profile /></ErrorBoundary>} />
               <Route path="/leaderboard" element={<ErrorBoundary><Leaderboard /></ErrorBoundary>} />
               <Route path="/game" element={<GameErrorBoundary><Game /></GameErrorBoundary>} />

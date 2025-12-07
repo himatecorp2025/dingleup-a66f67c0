@@ -67,7 +67,7 @@ export const UsersHexagonBar: React.FC<UsersHexagonBarProps> = ({
 
       {/* Coins Hexagon */}
       <div className="absolute z-10 flex flex-col items-center" style={{ left: '40%', top: '30%', transform: 'translate(-50%, -50%)' }}>
-        <DiamondHexagon type="coins" value={coins} onClick={() => navigate('/gifts')} />
+        <DiamondHexagon type="coins" value={coins} onClick={() => navigate('/coin-shop')} />
         <span className="text-white uppercase text-xs font-bold mt-1" style={{ 
           textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000'
         }}>
