@@ -151,7 +151,7 @@ serve(async (req) => {
         if (goldGranted > 0 || livesGranted > 0) {
           const { error: walletError } = await supabaseClient.rpc('credit_wallet', {
             p_user_id: user.id,
-            p_delta_gold: goldGranted,
+            p_delta_coins: goldGranted,
             p_delta_lives: livesGranted,
             p_source: 'speed_booster_purchase',
             p_idempotency_key: paymentIntentId,
@@ -179,7 +179,7 @@ serve(async (req) => {
         // Wallet credit
         const { error: walletError } = await supabaseClient.rpc('credit_wallet', {
           p_user_id: user.id,
-          p_delta_gold: goldGranted,
+          p_delta_coins: goldGranted,
           p_delta_lives: livesGranted,
           p_source: 'premium_booster_purchase',
           p_idempotency_key: paymentIntentId,
@@ -229,7 +229,7 @@ serve(async (req) => {
         // Wallet credit
         const { error: walletError } = await supabaseClient.rpc('credit_wallet', {
           p_user_id: user.id,
-          p_delta_gold: goldGranted,
+          p_delta_coins: goldGranted,
           p_delta_lives: livesGranted,
           p_source: 'instant_rescue_purchase',
           p_idempotency_key: paymentIntentId,
