@@ -3,12 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 
 export type TutorialRoute = 
   | 'dashboard' 
-  | 'chat' 
   | 'profile' 
   | 'play' 
   | 'landing'
-  | 'topics'
-  | 'gifts';
+  | 'coin-shop';
 
 interface TutorialState {
   [key: string]: boolean;

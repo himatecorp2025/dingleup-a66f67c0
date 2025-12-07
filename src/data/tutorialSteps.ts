@@ -122,56 +122,6 @@ export const tutorialSteps = {
       position: 'top' as const
     }
   ],
-  chat: [
-    {
-      target: '.chat-container',
-      title: 'Chat és Barátok 💬',
-      description: 'Itt tudsz csevegni más játékosokkal! Kereshetsz barátokat, küldhetsz üzeneteket, képeket és fájlokat is. Nézzük meg, hogyan működik!',
-      position: 'center' as const
-    },
-    {
-      target: '[data-tutorial="friends-menu"]',
-      title: 'Barátok hexagon menü',
-      description: 'Felül látod a barátaidat hexagon keretekben. Kattints egy hexagonra, és máris megnyílik a beszélgetés vele!',
-      position: 'bottom' as const
-    },
-    {
-      target: '[data-tutorial="search-friends"]',
-      title: 'Új barátok keresése 🔍',
-      description: 'A keresés gombbal új játékosokat találhatsz. Kereshetsz felhasználónév vagy e-mail cím alapján, és elküldhetsz nekik barátkérést.',
-      position: 'bottom' as const
-    },
-    {
-      target: '[data-tutorial="search-friends"]',
-      title: 'Barátkérések kezelése',
-      description: 'Ha valaki küldött neked barátkérést, itt fogadhatod el vagy utasíthatod el. Miután elfogadtad, azonnal írhattok egymásnak!',
-      position: 'bottom' as const
-    },
-    {
-      target: '[data-tutorial="threads-list"]',
-      title: 'Beszélgetések listája',
-      description: 'Itt látod az összes beszélgetésedet. A legfrissebb üzenetek felül jelennek meg. Kattints egy beszélgetésre a megnyitásához.',
-      position: 'right' as const
-    },
-    {
-      target: '[data-tutorial="threads-list"]',
-      title: 'Üzenetek küldése 📨',
-      description: 'Egy beszélgetésben írhatsz szöveges üzeneteket, küldhetsz képeket, emoji-kat és fájlokat is. Az üzenetek azonnal megjelennek mindkét félnél!',
-      position: 'right' as const
-    },
-    {
-      target: '[data-tutorial="threads-list"]',
-      title: 'Online státusz 🟢',
-      description: 'Látod, hogy barátaid éppen online vannak-e. A zöld pont azt jelenti, hogy aktív, míg a szürke pont azt, hogy offline.',
-      position: 'right' as const
-    },
-    {
-      target: '.chat-container',
-      title: 'Kész vagy! 🎉',
-      description: 'Most már tudod, hogyan használd a chatet! Keress barátokat, és kezdj el beszélgetni velük. Jó csevegést! 💬',
-      position: 'center' as const
-    }
-  ],
   profile: [
     {
       target: '.profile-container',
