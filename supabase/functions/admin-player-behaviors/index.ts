@@ -1,9 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { getCorsHeaders, handleCorsPreflight } from '../_shared/cors.ts';
 
-// Only 'mixed' category is used now
-const CATEGORIES = ['mixed'] as const;
-
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin');
   
@@ -51,76 +48,94 @@ Deno.serve(async (req) => {
     const service = createClient(supabaseUrl, supabaseServiceKey);
 
     // Build date filter fragments
-    const hasRange = !!startDate || !!endDate;
     const startISO = startDate ? new Date(startDate).toISOString() : null;
     const endISO = endDate ? new Date(endDate).toISOString() : null;
 
-    const stats: any[] = [];
+    // Fetch ALL game_results (no category filter - aggregate everything)
+    let resultsQuery = service.from('game_results')
+      .select('user_id, completed, correct_answers, average_response_time, created_at');
 
-    for (const cat of CATEGORIES) {
-      // game_results aggregation with service role (bypasses RLS)
-      let resultsQuery = service.from('game_results')
-        .select('user_id, completed, correct_answers, average_response_time, created_at')
-        .eq('category', cat);
+    if (startISO) resultsQuery = resultsQuery.gte('created_at', startISO);
+    if (endISO) resultsQuery = resultsQuery.lte('created_at', endISO);
 
-      if (startISO) resultsQuery = resultsQuery.gte('created_at', startISO);
-      if (endISO) resultsQuery = resultsQuery.lte('created_at', endISO);
-
-      const { data: results, error: resultsError } = await resultsQuery;
-
-      // Filter out "instant quit" games (no answer AND no timeout)
-      const validGames = (results || []).filter(r => 
-        (r.correct_answers != null && r.correct_answers > 0) || 
-        (r.average_response_time != null && r.average_response_time > 0)
-      );
-
-      const totalGames = validGames.length;
-      const completedGames = validGames.filter(r => r.completed === true).length;
-      const uniquePlayers = new Set(validGames.map(r => r.user_id)).size;
-
-      // Average correct answers across ALL valid games (not just completed)
-      const avgCorrectAnswers = totalGames > 0
-        ? (validGames.reduce((s, r) => s + (r.correct_answers || 0), 0) / totalGames)
-        : 0;
-
-      // Average response time across ALL valid games that have response time
-      const gamesWithTime = validGames.filter(r => r.average_response_time != null && r.average_response_time > 0);
-      const avgResponseTime = gamesWithTime.length > 0
-        ? (gamesWithTime.reduce((s, r) => s + Number(r.average_response_time), 0) / gamesWithTime.length)
-        : 0;
-
-      // help usage aggregation with service role (bypasses RLS)
-      let helpQuery = service.from('game_help_usage')
-        .select('help_type')
-        .eq('category', cat);
-      if (startISO) helpQuery = helpQuery.gte('used_at', startISO);
-      if (endISO) helpQuery = helpQuery.lte('used_at', endISO);
-      
-      const { data: helps, error: helpsError } = await helpQuery;
-
-      const helpUsage = {
-        third: (helps || []).filter(h => h.help_type === 'third').length,
-        skip: (helps || []).filter(h => h.help_type === 'skip').length,
-        audience: (helps || []).filter(h => h.help_type === 'audience').length,
-        '2x_answer': (helps || []).filter(h => h.help_type === '2x_answer').length,
-      } as const;
-
-      const categoryStats = {
-        category: cat,
-        uniquePlayers,
-        totalGames,
-        completedGames,
-        abandonedGames: totalGames - completedGames,
-        completionRate: totalGames > 0 ? Math.round((completedGames / totalGames) * 100) : 0,
-        avgCorrectAnswers: Math.round(avgCorrectAnswers * 10) / 10,
-        avgResponseTime: Math.round(avgResponseTime * 10) / 10,
-        helpUsage,
-      };
-      
-      stats.push(categoryStats);
+    const { data: results, error: resultsError } = await resultsQuery;
+    if (resultsError) {
+      console.error('[admin-player-behaviors] Results error:', resultsError);
     }
+
+    // Fetch game_exit_events for abandoned games count
+    let exitQuery = service.from('game_exit_events')
+      .select('user_id, exit_reason, created_at');
     
-    return new Response(JSON.stringify({ stats }), {
+    if (startISO) exitQuery = exitQuery.gte('created_at', startISO);
+    if (endISO) exitQuery = exitQuery.lte('created_at', endISO);
+
+    const { data: exitEvents, error: exitError } = await exitQuery;
+    if (exitError) {
+      console.error('[admin-player-behaviors] Exit events error:', exitError);
+    }
+
+    // Fetch ALL help usage (no category filter)
+    let helpQuery = service.from('game_help_usage')
+      .select('help_type, used_at');
+    if (startISO) helpQuery = helpQuery.gte('used_at', startISO);
+    if (endISO) helpQuery = helpQuery.lte('used_at', endISO);
+    
+    const { data: helps, error: helpsError } = await helpQuery;
+    if (helpsError) {
+      console.error('[admin-player-behaviors] Helps error:', helpsError);
+    }
+
+    // Calculate aggregated stats
+    const allResults = results || [];
+    const allExitEvents = exitEvents || [];
+    const allHelps = helps || [];
+
+    const totalGames = allResults.length;
+    const completedGames = allResults.filter(r => r.completed === true).length;
+    const uniquePlayers = new Set(allResults.map(r => r.user_id)).size;
+
+    // Abandoned games = total exit events (these are actual mid-game exits)
+    const abandonedGames = allExitEvents.length;
+
+    // Average correct answers across ALL games
+    const avgCorrectAnswers = totalGames > 0
+      ? (allResults.reduce((s, r) => s + (r.correct_answers || 0), 0) / totalGames)
+      : 0;
+
+    // Average response time across games that have response time
+    const gamesWithTime = allResults.filter(r => r.average_response_time != null && r.average_response_time > 0);
+    const avgResponseTime = gamesWithTime.length > 0
+      ? (gamesWithTime.reduce((s, r) => s + Number(r.average_response_time), 0) / gamesWithTime.length)
+      : 0;
+
+    // Help usage aggregation
+    const helpUsage = {
+      third: allHelps.filter(h => h.help_type === 'third').length,
+      skip: allHelps.filter(h => h.help_type === 'skip').length,
+      audience: allHelps.filter(h => h.help_type === 'audience').length,
+      '2x_answer': allHelps.filter(h => h.help_type === '2x_answer').length,
+    };
+
+    // Calculate completion rate based on completed vs total (including exits)
+    const totalAttempts = totalGames + abandonedGames;
+    const completionRate = totalAttempts > 0 
+      ? Math.round((completedGames / totalAttempts) * 100) 
+      : 0;
+
+    const categoryStats = {
+      category: 'mixed',
+      uniquePlayers,
+      totalGames: totalAttempts,
+      completedGames,
+      abandonedGames,
+      completionRate,
+      avgCorrectAnswers: Math.round(avgCorrectAnswers * 10) / 10,
+      avgResponseTime: Math.round(avgResponseTime * 10) / 10,
+      helpUsage,
+    };
+    
+    return new Response(JSON.stringify({ stats: [categoryStats] }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: any) {
