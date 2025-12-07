@@ -1591,90 +1591,6 @@ export type Database = {
         }
         Relationships: []
       }
-      lootbox_daily_plan: {
-        Row: {
-          active_window_end: string | null
-          active_window_start: string | null
-          created_at: string
-          delivered_count: number
-          id: string
-          plan_date: string
-          slots: Json
-          target_count: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          active_window_end?: string | null
-          active_window_start?: string | null
-          created_at?: string
-          delivered_count?: number
-          id?: string
-          plan_date: string
-          slots?: Json
-          target_count: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          active_window_end?: string | null
-          active_window_start?: string | null
-          created_at?: string
-          delivered_count?: number
-          id?: string
-          plan_date?: string
-          slots?: Json
-          target_count?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      lootbox_instances: {
-        Row: {
-          activated_at: string | null
-          created_at: string
-          expires_at: string | null
-          id: string
-          metadata: Json | null
-          open_cost_gold: number
-          opened_at: string | null
-          rewards_gold: number | null
-          rewards_life: number | null
-          source: string
-          status: string
-          user_id: string
-        }
-        Insert: {
-          activated_at?: string | null
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          metadata?: Json | null
-          open_cost_gold?: number
-          opened_at?: string | null
-          rewards_gold?: number | null
-          rewards_life?: number | null
-          source: string
-          status: string
-          user_id: string
-        }
-        Update: {
-          activated_at?: string | null
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          metadata?: Json | null
-          open_cost_gold?: number
-          opened_at?: string | null
-          rewards_gold?: number | null
-          rewards_life?: number | null
-          source?: string
-          status?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       message_media: {
         Row: {
           created_at: string | null
@@ -3941,35 +3857,6 @@ export type Database = {
         Args: { p_invitee_id: string; p_inviter_id: string }
         Returns: Json
       }
-      create_lootbox_drop: {
-        Args: {
-          p_expires_at: string
-          p_metadata?: Json
-          p_open_cost_gold: number
-          p_source: string
-          p_user_id: string
-        }
-        Returns: {
-          activated_at: string | null
-          created_at: string
-          expires_at: string | null
-          id: string
-          metadata: Json | null
-          open_cost_gold: number
-          opened_at: string | null
-          rewards_gold: number | null
-          rewards_life: number | null
-          source: string
-          status: string
-          user_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "lootbox_instances"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
       credit_lives: {
         Args: {
           p_delta_lives: number
@@ -4004,14 +3891,6 @@ export type Database = {
       }
       generate_full_database_export: { Args: never; Returns: string }
       generate_invitation_code: { Args: never; Returns: string }
-      generate_lootbox_daily_plan: {
-        Args: {
-          p_first_login_time?: string
-          p_plan_date: string
-          p_user_id: string
-        }
-        Returns: string
-      }
       get_correct_answer_from_jsonb: {
         Args: { answers_jsonb: Json }
         Returns: string
@@ -4114,18 +3993,6 @@ export type Database = {
       normalize_user_ids: {
         Args: { uid1: string; uid2: string }
         Returns: string[]
-      }
-      open_lootbox_transaction: {
-        Args: {
-          p_gold_reward: number
-          p_idempotency_key: string
-          p_life_reward: number
-          p_lootbox_id: string
-          p_open_cost?: number
-          p_tier: string
-          p_user_id: string
-        }
-        Returns: Json
       }
       process_invitation_reward: { Args: never; Returns: Json }
       purchase_life: { Args: never; Returns: Json }

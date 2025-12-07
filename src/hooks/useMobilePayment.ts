@@ -12,16 +12,16 @@ import { toast } from 'sonner';
  * const { startPayment, isProcessing } = useMobilePayment();
  * 
  * await startPayment({
- *   productType: 'lootbox',
+ *   productType: 'speed_booster',
  *   amount: 199,
  *   currency: 'usd',
- *   displayName: '1 Ajándékdoboz',
- *   metadata: { boxes: '1' }
+ *   displayName: 'Speed Booster',
+ *   metadata: { booster: '1' }
  * });
  */
 
 interface PaymentParams {
-  productType: 'lootbox' | 'speed_booster' | 'premium_booster' | 'instant_rescue';
+  productType: 'speed_booster' | 'premium_booster' | 'instant_rescue';
   amount: number; // cents
   currency: 'usd' | 'huf';
   displayName: string; // Termék neve (pl. "1 Ajándékdoboz")

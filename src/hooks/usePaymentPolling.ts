@@ -21,12 +21,11 @@ export const usePaymentPolling = () => {
     const checkPendingPayments = async () => {
       if (isVerifyingRef.current) return;
 
-      const pendingLootbox = localStorage.getItem('pending_lootbox_session');
       const pendingSpeed = localStorage.getItem('pending_speed_session');
       const pendingPremium = localStorage.getItem('pending_premium_session');
       const pendingRescue = localStorage.getItem('pending_rescue_session');
 
-      if (!pendingLootbox && !pendingSpeed && !pendingPremium && !pendingRescue) {
+      if (!pendingSpeed && !pendingPremium && !pendingRescue) {
         return;
       }
 
@@ -40,36 +39,6 @@ export const usePaymentPolling = () => {
         }
 
         // Try to verify each pending session
-        if (pendingLootbox) {
-          const { sessionId, timestamp } = JSON.parse(pendingLootbox);
-          const retryKey = `lootbox_${sessionId}`;
-          
-          // Skip if session is older than 24 hours
-          if (Date.now() - timestamp > 24 * 60 * 60 * 1000) {
-            localStorage.removeItem('pending_lootbox_session');
-            delete retryCountsRef.current[retryKey];
-          } else {
-            const { data, error } = await supabase.functions.invoke('verify-lootbox-payment', {
-              body: { sessionId },
-              headers: { Authorization: `Bearer ${session.access_token}` }
-            });
-
-            if (!error && data?.success) {
-              localStorage.removeItem('pending_lootbox_session');
-              delete retryCountsRef.current[retryKey];
-              toast.success(t('payment.polling.lootbox_verified'), { duration: 3000 });
-              queryClient.invalidateQueries({ queryKey: ['wallet'] });
-            } else {
-              // Ha sikertelen, növeljük a retry számlálót és 3 próbálkozás után töröljük
-              retryCountsRef.current[retryKey] = (retryCountsRef.current[retryKey] || 0) + 1;
-              if (retryCountsRef.current[retryKey] >= 3) {
-                localStorage.removeItem('pending_lootbox_session');
-                delete retryCountsRef.current[retryKey];
-                console.log('[usePaymentPolling] Lootbox payment verification failed after 3 attempts, cleared from localStorage');
-              }
-            }
-          }
-        }
 
         if (pendingSpeed) {
           const { sessionId, timestamp } = JSON.parse(pendingSpeed);

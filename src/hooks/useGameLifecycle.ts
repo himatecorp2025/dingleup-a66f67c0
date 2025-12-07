@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Question } from '@/types/game';
 import { trackFeatureUsage, trackGameMilestone } from '@/lib/analytics';
 import { useI18n } from '@/i18n';
-import { useLootboxActivityTracker } from './useLootboxActivityTracker';
+
 
 interface UseGameLifecycleOptions {
   userId: string | undefined;
@@ -45,7 +45,7 @@ interface UseGameLifecycleOptions {
 
 export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
   const { t, lang } = useI18n();
-  const { trackActivity } = useLootboxActivityTracker();
+  
   const {
     userId,
     profile,
@@ -298,11 +298,6 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
       const backendDuration = backendEndTime - backendStartTime;
       console.log(`[useGameLifecycle] Backend loading completed in ${backendDuration.toFixed(0)}ms`);
       
-      // Track quiz started activity for lootbox drop (non-blocking)
-      trackActivity('quiz_started', {
-        category: 'mixed',
-        timestamp: new Date().toISOString()
-      }).catch(err => console.error('[useGameLifecycle] Error tracking quiz_started:', err));
     })();
    }, [
      profile, isStarting, userId, spendLife, navigate, refetchWallet, broadcast,
@@ -475,13 +470,6 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
         }
       }
       
-      // Track quiz completed activity for lootbox drop (non-blocking)
-      trackActivity('quiz_completed', {
-        category: 'mixed',
-        correct_answers: correctAnswers,
-        total_questions: questions.length,
-        timestamp: new Date().toISOString()
-      }).catch(err => console.error('[useGameLifecycle] Error tracking quiz_completed:', err));
       
     } catch (error) {
       console.error('Error finishing game:', error);

@@ -14,7 +14,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { GameErrorBoundary } from "@/components/GameErrorBoundary";
 import { OfflineDetector } from "@/components/OfflineDetector";
 import { UpdatePrompt } from "@/components/UpdatePrompt";
-import { LootboxDropOverlay } from "@/components/lootbox/LootboxDropOverlay";
+
 import { useBackButton } from "@/hooks/useBackButton";
 import { useAppLifecycle } from "@/hooks/useAppLifecycle";
 import { useSessionMonitor } from "@/hooks/useSessionMonitor";
@@ -41,7 +41,7 @@ const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const InstallApp = lazy(() => import("./pages/InstallApp"));
 const Invitation = lazy(() => import("./pages/Invitation"));
 const About = lazy(() => import("./pages/About"));
-const Gifts = lazy(() => import("./pages/Gifts"));
+
 
 // Lazy load admin pages
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
@@ -68,7 +68,7 @@ const AdminBoosterTypes = lazy(() => import("./pages/AdminBoosterTypes"));
 const AdminBoosterPurchases = lazy(() => import("./pages/AdminBoosterPurchases"));
 const AdminQuestionPools = lazy(() => import("./pages/AdminQuestionPools"));
 const AdminManualCredit = lazy(() => import("./pages/AdminManualCredit"));
-const AdminLootboxAnalytics = lazy(() => import("./pages/AdminLootboxAnalytics"));
+
 const AdminProfile = lazy(() => import("./pages/AdminProfile"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -129,7 +129,7 @@ const AppCore = () => {
           v7_relativeSplatPath: true,
         }}
       >
-        <LootboxDropOverlay />
+        
         <BackButtonHandler />
         <SessionMonitorWrapper />
         <AppWithAnalytics />
@@ -159,7 +159,7 @@ const AppCore = () => {
               <Route path="/install" element={<ErrorBoundary><InstallApp /></ErrorBoundary>} />
               <Route path="/invitation" element={<ErrorBoundary><Invitation /></ErrorBoundary>} />
               <Route path="/about" element={<ErrorBoundary><About /></ErrorBoundary>} />
-              <Route path="/gifts" element={<ErrorBoundary><Gifts /></ErrorBoundary>} />
+              
               <Route path="/popular-content" element={<ErrorBoundary><PopularContent /></ErrorBoundary>} />
               <Route path="/profile/game" element={<ErrorBoundary><ProfileGame /></ErrorBoundary>} />
               
@@ -182,7 +182,7 @@ const AppCore = () => {
               <Route path="/admin/booster-purchases" element={<ErrorBoundary><AdminBoosterPurchases /></ErrorBoundary>} />
               <Route path="/admin/question-pools" element={<ErrorBoundary><AdminQuestionPools /></ErrorBoundary>} />
               <Route path="/admin/manual-credit" element={<ErrorBoundary><AdminManualCredit /></ErrorBoundary>} />
-              <Route path="/admin/lootbox-analytics" element={<ErrorBoundary><AdminLootboxAnalytics /></ErrorBoundary>} />
+              
               <Route path="/admin/age-statistics" element={<ErrorBoundary><AdminAgeStatistics /></ErrorBoundary>} />
               <Route path="/admin/legal-documents" element={<ErrorBoundary><AdminLegalDocuments /></ErrorBoundary>} />
               <Route path="/admin/profile" element={<ErrorBoundary><AdminProfile /></ErrorBoundary>} />

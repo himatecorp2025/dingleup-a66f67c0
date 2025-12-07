@@ -46,9 +46,6 @@ import { WelcomeBonusDialog } from '@/components/WelcomeBonusDialog';
 import { DailyWinnersDialog } from '@/components/DailyWinnersDialog';
 import { PersonalWinnerDialog } from '@/components/PersonalWinnerDialog';
 import { LeaderboardCarousel } from '@/components/LeaderboardCarousel';
-import { useActiveLootbox } from '@/hooks/useActiveLootbox';
-import { ActiveLootboxDisplay } from '@/components/lootbox/ActiveLootboxDisplay';
-import { LootboxDecisionDialog } from '@/components/lootbox/LootboxDecisionDialog';
 import { DailyRankingsCountdown } from '@/components/DailyRankingsCountdown';
 import { NextLifeTimer } from '@/components/NextLifeTimer';
 import { usePaymentPolling } from '@/hooks/usePaymentPolling';
@@ -61,8 +58,6 @@ import BottomNav from '@/components/BottomNav';
 import gameBackground from '@/assets/game-background.png';
 import { toast } from 'sonner';
 import { useBroadcastChannel } from '@/hooks/useBroadcastChannel';
-import { useLoginLootboxTracker } from '@/hooks/useLoginLootboxTracker';
-import { useLootboxActivityTracker } from '@/hooks/useLootboxActivityTracker';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -104,22 +99,6 @@ const Dashboard = () => {
   const [currentRank, setCurrentRank] = useState<number | null>(null);
   const [personalWinnerError, setPersonalWinnerError] = useState<string | null>(null);
   
-  // PHASE 2 HOOKS: Only enabled after critical data loads
-  // LOOTBOX HEARTBEAT SYSTEM: Automatic periodic checks for pending slots
-  useLootboxActivityTracker({
-    enabled: !!userId && enableSecondaryLoading,
-    heartbeatIntervalSeconds: 30
-  });
-  
-  // Track login activity for lootbox drops (first login of the day)
-  useLoginLootboxTracker(!!userId && enableSecondaryLoading);
-  
-  // Lootbox state
-  const { activeLootbox, refetch: refetchActiveLootbox } = useActiveLootbox(
-    enableSecondaryLoading ? userId : undefined
-  );
-  const [showLootboxDecision, setShowLootboxDecision] = useState(false);
-  const [storedLootboxCount, setStoredLootboxCount] = useState(0);
   
   // PERFORMANCE OPTIMIZATION: Centralized popup manager
   const popupManager = useDashboardPopupManager({
@@ -227,31 +206,6 @@ const Dashboard = () => {
 
 
 
-  // PERFORMANCE: Fetch stored lootbox count ONLY after critical data loads
-  useEffect(() => {
-    if (!userId || !enableSecondaryLoading) return;
-    
-    const fetchStoredCount = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
-
-        const { data } = await supabase.functions.invoke('lootbox-stored', {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
-        });
-
-        if (data?.count !== undefined) {
-          setStoredLootboxCount(data.count);
-        }
-      } catch (err) {
-        console.error('[Dashboard] Error fetching stored lootbox count:', err);
-      }
-    };
-
-    fetchStoredCount();
-  }, [userId, enableSecondaryLoading]);
 
   // PERFORMANCE: Fetch user daily rank ONLY after critical data loads + defer realtime subscription
   useEffect(() => {
@@ -605,9 +559,9 @@ const Dashboard = () => {
 
         {/* Fixed bottom section - CORRECT ORDER from bottom to top: BottomNav -> Top 100 -> Boosters -> Play Now -> Logo */}
         <div className="fixed bottom-0 left-0 right-0 z-[9000] flex flex-col-reverse items-center pb-[calc(var(--bottom-nav-h)+1rem)]">
-          {/* Top 100 Leaderboard Carousel + Active Lootbox - legalsó (közvetlenül BottomNav felett) */}
+          {/* Top 100 Leaderboard Carousel */}
           <div className="w-full" style={{ marginBottom: '2vh' }}>
-            {/* LeaderboardCarousel fixed width container - prevents shift when lootbox appears */}
+            {/* LeaderboardCarousel fixed width container */}
             <div className="flex justify-center px-3">
               <div className="w-full max-w-screen-lg">
                 <LeaderboardCarousel />
@@ -756,24 +710,6 @@ const Dashboard = () => {
         <BottomNav />
       </div>
       <TutorialManager route="dashboard" />
-      
-      {/* Lootbox Decision Dialog */}
-      {activeLootbox && walletData && (
-        <LootboxDecisionDialog
-          open={showLootboxDecision}
-          onClose={() => setShowLootboxDecision(false)}
-          lootboxId={activeLootbox.id}
-          userGold={walletData.coinsCurrent}
-          storedCount={storedLootboxCount}
-          onSuccess={async (decision) => {
-            await refetchWallet();
-            await refetchActiveLootbox();
-            if (decision === 'store') {
-              setStoredLootboxCount(prev => prev + 1);
-            }
-          }}
-        />
-      )}
     </div>
   );
 };

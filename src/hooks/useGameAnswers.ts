@@ -2,7 +2,7 @@ import { useCallback, useRef } from 'react';
 import { Question, CONTINUE_AFTER_WRONG_COST } from '@/types/game';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useI18n } from '@/i18n';
-import { useLootboxActivityTracker } from './useLootboxActivityTracker';
+
 
 interface UseGameAnswersOptions {
   selectedAnswer: string | null;
@@ -26,7 +26,7 @@ interface UseGameAnswersOptions {
 
 export const useGameAnswers = (options: UseGameAnswersOptions) => {
   const { t } = useI18n();
-  const { trackActivity } = useLootboxActivityTracker();
+  
   const consecutiveCorrectRef = useRef(0);
   const {
     selectedAnswer,
@@ -59,14 +59,6 @@ export const useGameAnswers = (options: UseGameAnswersOptions) => {
     // Track consecutive correct answers for answer streak
     consecutiveCorrectRef.current += 1;
     
-    // Track answer streak if 3+ consecutive correct
-    if (consecutiveCorrectRef.current >= 3) {
-      trackActivity('answer_streak', {
-        streak: consecutiveCorrectRef.current,
-        question_index: currentQuestionIndex,
-        timestamp: new Date().toISOString()
-      }).catch(err => console.error('[useGameAnswers] Error tracking answer_streak:', err));
-    }
     
     // Add error handling for credit operation
     try {
@@ -78,7 +70,7 @@ export const useGameAnswers = (options: UseGameAnswersOptions) => {
 
     // Trigger callback after answer is processed
     onAnswerProcessed?.();
-  }, [addResponseTime, incrementCorrectAnswers, triggerHaptic, creditCorrectAnswer, setSelectedAnswer, onAnswerProcessed, trackActivity, currentQuestionIndex]);
+  }, [addResponseTime, incrementCorrectAnswers, triggerHaptic, creditCorrectAnswer, setSelectedAnswer, onAnswerProcessed, currentQuestionIndex]);
 
   const handleWrongAnswer = useCallback((responseTime: number, answerKey: string) => {
     addResponseTime(responseTime);

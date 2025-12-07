@@ -226,16 +226,6 @@ export function AdminSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => navigate('/admin/lootbox-analytics')}
-                  isActive={isActive('/admin/lootbox-analytics')}
-                  className={isActive('/admin/lootbox-analytics') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
-                >
-                  <Heart className="text-purple-400" />
-                  <span>{t('admin.sidebar.lootbox_analytics')}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
                   onClick={() => navigate('/admin/booster-types')}
                   isActive={isActive('/admin/booster-types')}
                   className={isActive('/admin/booster-types') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}

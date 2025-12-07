@@ -13,11 +13,11 @@ import { Loader2 } from 'lucide-react';
  * 
  * Használat:
  * <MobilePaymentButton
- *   productType="lootbox"
+ *   productType="speed_booster"
  *   amount={199}
  *   currency="usd"
- *   displayName="1 Ajándékdoboz"
- *   metadata={{ boxes: '1' }}
+ *   displayName="Speed Booster"
+ *   metadata={{ booster: '1' }}
  *   buttonText="Megszerzem"
  *   onSuccess={() => console.log('Success!')}
  * />
@@ -26,7 +26,7 @@ import { Loader2 } from 'lucide-react';
 const stripePromise = loadStripe('pk_test_51SKlmJKKw7HPC0ZDrqmnAspTdgyOR4leFEO0DnOhSnBxcoLr4erjomPcjYJ3Fa3K6zoX64IyN8deqyzELpfpIYlx001m5g7ctj');
 
 interface MobilePaymentButtonProps {
-  productType: 'lootbox' | 'speed_booster' | 'premium_booster' | 'instant_rescue';
+  productType: 'speed_booster' | 'premium_booster' | 'instant_rescue';
   amount: number; // cents
   currency: 'usd' | 'huf';
   displayName: string;
