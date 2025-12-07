@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
     const topTopics = allTopics.slice(0, 3);
 
     const aiEnabled = settings?.ai_personalized_questions_enabled ?? true;
-    const personalizationReady = totalAnswered >= 1000;
+    const personalizationReady = totalAnswered >= 100;
 
     const result = {
       userId: targetUserId,

@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
     userIds.forEach(userId => {
       const stats = userStatsMap.get(userId) || { totalAnswered: 0, totalCorrect: 0, totalLikes: 0, totalDislikes: 0, topicScores: [] };
       const aiEnabled = settingsMap.get(userId) ?? true;
-      const personalizationActive = stats.totalAnswered >= 1000 && aiEnabled;
+      const personalizationActive = stats.totalAnswered >= 100 && aiEnabled;
       const topTopics = stats.topicScores
         .sort((a: { topicId: any; score: number }, b: { topicId: any; score: number }) => b.score - a.score)
         .slice(0, 3)

@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
     });
 
     const overallCorrectRatio = totalAnswered > 0 ? totalCorrect / totalAnswered : 0;
-    const personalizationReady = totalAnswered >= 1000;
+    const personalizationReady = totalAnswered >= 100;
 
     const profile: UserGameProfile = {
       userId,

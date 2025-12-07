@@ -76,10 +76,13 @@ export function useGameQuestions() {
     try {
       console.log(`[useGameQuestions] Prefetching next game questions (background, lang: ${effectiveLang})...`);
 
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data, error: funcError } = await supabase.functions.invoke('get-game-questions', {
         body: {
           last_pool_order: currentPoolOrder,
           lang: effectiveLang,
+          user_id: user?.id || null,
         },
       });
 
@@ -145,10 +148,13 @@ export function useGameQuestions() {
 
       console.log(`[useGameQuestions] Fetching questions (last pool: ${lastPoolOrder}, lang: ${effectiveLang})`);
 
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data, error: funcError } = await supabase.functions.invoke('get-game-questions', {
         body: {
           last_pool_order: lastPoolOrder,
           lang: effectiveLang,
+          user_id: user?.id || null,
         },
       });
 

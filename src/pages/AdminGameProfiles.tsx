@@ -16,7 +16,7 @@ export default function AdminGameProfiles() {
   const navigate = useNavigate();
   const { profiles, loading, error } = useAdminGameProfilesQuery();
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<'answered' | 'correctness' | 'active'>('answered');
+  const [sortBy, setSortBy] = useState<'answered' | 'correctness'>('answered');
 
   const filteredAndSorted = useMemo(() => {
     let result = [...profiles];
@@ -33,7 +33,6 @@ export default function AdminGameProfiles() {
     result.sort((a, b) => {
       if (sortBy === 'answered') return b.totalAnswered - a.totalAnswered;
       if (sortBy === 'correctness') return b.overallCorrectRatio - a.overallCorrectRatio;
-      if (sortBy === 'active') return (b.personalizationActive ? 1 : 0) - (a.personalizationActive ? 1 : 0);
       return 0;
     });
 
@@ -115,12 +114,6 @@ export default function AdminGameProfiles() {
                 >
                   {t('admin.game_profiles.sort_correctness')}
                 </Button>
-                <Button
-                  variant={sortBy === 'active' ? 'default' : 'outline'}
-                  onClick={() => setSortBy('active')}
-                >
-                  {t('admin.game_profiles.sort_active')}
-                </Button>
               </div>
             </div>
           </CardContent>
@@ -140,7 +133,6 @@ export default function AdminGameProfiles() {
                     <th className="text-left py-3 px-4">{t('admin.game_profiles.col_user')}</th>
                     <th className="text-right py-3 px-4">{t('admin.game_profiles.col_total_answers')}</th>
                     <th className="text-right py-3 px-4">{t('admin.game_profiles.col_correct_percent')}</th>
-                    <th className="text-right py-3 px-4">{t('admin.game_profiles.col_like_dislike')}</th>
                     <th className="text-center py-3 px-4">{t('admin.game_profiles.col_ai_status')}</th>
                     <th className="text-left py-3 px-4">{t('admin.game_profiles.col_top3')}</th>
                     <th className="text-center py-3 px-4">{t('admin.game_profiles.col_actions')}</th>
@@ -159,17 +151,14 @@ export default function AdminGameProfiles() {
                       <td className="text-right py-3 px-4">
                         {(profile.overallCorrectRatio * 100).toFixed(1)}%
                       </td>
-                      <td className="text-right py-3 px-4">
-                        {profile.totalLikes} / {profile.totalDislikes}
-                      </td>
                       <td className="text-center py-3 px-4">
                         {profile.personalizationActive ? (
                           <Badge variant="default" className="bg-green-500">
                             {t('admin.game_profiles.personalization_active')}
                           </Badge>
-                        ) : profile.totalAnswered < 1000 ? (
+                        ) : profile.totalAnswered < 100 ? (
                           <Badge variant="secondary">
-                            {t('admin.game_profiles.learning_phase_short')} ({profile.totalAnswered}/1000)
+                            {t('admin.game_profiles.learning_phase_short')} ({profile.totalAnswered}/100)
                           </Badge>
                         ) : (
                           <Badge variant="outline">{t('admin.game_profiles.ai_disabled')}</Badge>

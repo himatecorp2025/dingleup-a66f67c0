@@ -5,13 +5,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAdminGameProfileDetail } from '@/hooks/useAdminGameProfiles';
-import { Brain, TrendingUp, Heart, ThumbsDown, Clock } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { Brain, TrendingUp, Clock, ArrowLeft } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useI18n } from '@/i18n';
 
 export default function AdminGameProfileDetail() {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
   const { loading, error, profile } = useAdminGameProfileDetail(userId);
 
@@ -44,6 +45,14 @@ export default function AdminGameProfileDetail() {
     <AdminLayout>
       <div className="container mx-auto max-w-7xl">
         <div className="mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/admin/game-profiles')}
+            className="mb-4 text-white/70 hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t('admin.game_profile.back_to_list')}
+          </Button>
           <h1 className="text-4xl font-black bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center gap-3">
             <Brain className="h-8 w-8 text-purple-400" />
             {profile.username}
@@ -68,13 +77,13 @@ export default function AdminGameProfileDetail() {
         ) : (
           <Alert className="mb-6 bg-blue-500/10 border-blue-500/30">
             <AlertDescription>
-              <strong>{t('admin.game_profile.learning_phase')}</strong> {profile.totalAnswered} / 1000 {t('admin.game_profile.questions_answered')}
+              <strong>{t('admin.game_profile.learning_phase')}</strong> {profile.totalAnswered} / 100 {t('admin.game_profile.questions_answered')}
             </AlertDescription>
           </Alert>
         )}
 
         {/* Statisztikai kártyák */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5 mb-6">
+        <div className="grid gap-6 md:grid-cols-3 mb-6">
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>{t('admin.game_profile.total_answers')}</CardDescription>
@@ -101,28 +110,6 @@ export default function AdminGameProfileDetail() {
               <p className="text-3xl font-bold text-blue-600">
                 {(profile.overallCorrectRatio * 100).toFixed(1)}%
               </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription className="flex items-center gap-1">
-                <Heart className="h-3 w-3" /> {t('admin.game_profile.likes')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-pink-600">{profile.totalLikes}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription className="flex items-center gap-1">
-                <ThumbsDown className="h-3 w-3" /> {t('admin.game_profile.dislikes')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{profile.totalDislikes}</p>
             </CardContent>
           </Card>
         </div>
@@ -178,9 +165,6 @@ export default function AdminGameProfileDetail() {
                   </div>
                   <div className="text-right">
                     <p className="font-semibold">{t('admin.game_profile.score')} {topic.score.toFixed(2)}</p>
-                    <p className="text-sm text-muted-foreground">
-                      <Heart className="inline h-3 w-3" /> {topic.likeCount} • <ThumbsDown className="inline h-3 w-3" /> {topic.dislikeCount}
-                    </p>
                   </div>
                 </div>
               ))}
@@ -241,7 +225,6 @@ export default function AdminGameProfileDetail() {
                     <th className="text-left py-2 px-4">{t('admin.game_profile.table.topic')}</th>
                     <th className="text-right py-2 px-4">{t('admin.game_profile.table.answers')}</th>
                     <th className="text-right py-2 px-4">{t('admin.game_profile.table.correct_percent')}</th>
-                    <th className="text-right py-2 px-4">{t('admin.game_profile.table.like_dislike')}</th>
                     <th className="text-right py-2 px-4">{t('admin.game_profile.table.avg_time')}</th>
                     <th className="text-right py-2 px-4">{t('admin.game_profile.table.score')}</th>
                     <th className="text-center py-2 px-4">{t('admin.game_profile.table.top3')}</th>
@@ -254,9 +237,6 @@ export default function AdminGameProfileDetail() {
                       <td className="text-right py-3 px-4">{topic.answeredCount}</td>
                       <td className="text-right py-3 px-4">
                         {(topic.correctRatio * 100).toFixed(1)}%
-                      </td>
-                      <td className="text-right py-3 px-4">
-                        {topic.likeCount} / {topic.dislikeCount}
                       </td>
                       <td className="text-right py-3 px-4">
                         {topic.avgResponseMs ? `${topic.avgResponseMs}ms` : '-'}
