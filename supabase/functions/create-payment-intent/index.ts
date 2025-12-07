@@ -8,14 +8,14 @@ import { checkRateLimit, rateLimitExceeded } from '../_shared/rateLimit.ts';
  * KÖZPONTI MOBILFIZETÉSI ENDPOINT
  * 
  * Stripe PaymentIntent létrehozása natív mobilfizetéshez (Apple Pay / Google Pay).
- * Támogatott terméktípusok: lootbox, speed_booster, premium_booster, instant_rescue
+ * Támogatott terméktípusok: coins, lootbox, speed_booster, premium_booster, instant_rescue
  */
 
 interface PaymentIntentRequest {
-  productType: 'lootbox' | 'speed_booster' | 'premium_booster' | 'instant_rescue';
+  productType: 'coins' | 'lootbox' | 'speed_booster' | 'premium_booster' | 'instant_rescue';
   amount: number; // cents (pl. 1490 = 14.90 HUF vagy USD)
   currency: string; // 'huf' vagy 'usd'
-  metadata?: Record<string, string>; // extra adatok (pl. boxes, gameSessionId)
+  metadata?: Record<string, string>; // extra adatok (pl. boxes, coin_quantity)
 }
 
 serve(async (req) => {

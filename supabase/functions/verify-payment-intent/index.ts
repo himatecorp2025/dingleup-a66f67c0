@@ -84,6 +84,29 @@ serve(async (req) => {
     let lootboxesGranted = 0;
 
     switch (productType) {
+      case 'coins': {
+        const coinQuantity = parseInt(paymentIntent.metadata.coin_quantity || '0');
+        if (coinQuantity <= 0) throw new Error("Invalid coin quantity");
+        
+        goldGranted = coinQuantity;
+
+        // Credit coins using RPC
+        const { error: creditError } = await supabaseClient.rpc('credit_wallet', {
+          p_user_id: user.id,
+          p_delta_coins: coinQuantity,
+          p_source: 'coin_purchase',
+          p_idempotency_key: `coin_purchase_${paymentIntentId}`,
+          p_metadata: { 
+            stripe_payment_intent_id: paymentIntentId,
+            amount_paid_cents: paymentIntent.amount 
+          }
+        });
+
+        if (creditError) throw creditError;
+        console.log(`[verify-payment-intent] Credited ${coinQuantity} coins to user ${user.id}`);
+        break;
+      }
+
       case 'lootbox': {
         const boxes = parseInt(paymentIntent.metadata.boxes || '1');
         lootboxesGranted = boxes;
@@ -231,26 +254,28 @@ serve(async (req) => {
         throw new Error(`Unknown product type: ${productType}`);
     }
 
-    // Purchase log rögzítése
-    const { data: boosterTypeForLog } = await supabaseClient
-      .from('booster_types')
-      .select('id')
-      .eq('code', productType === 'lootbox' ? 'LOOTBOX' : 
-                   productType === 'speed_booster' ? 'SPEED_BOOST' : 
-                   productType === 'premium_booster' ? 'PREMIUM' : 'INSTANT_RESCUE')
-      .single();
+    // Purchase log rögzítése (csak ha nem coins típus, mert azt wallet_ledger-ben tároljuk)
+    if (productType !== 'coins') {
+      const { data: boosterTypeForLog } = await supabaseClient
+        .from('booster_types')
+        .select('id')
+        .eq('code', productType === 'lootbox' ? 'LOOTBOX' : 
+                     productType === 'speed_booster' ? 'SPEED_BOOST' : 
+                     productType === 'premium_booster' ? 'PREMIUM' : 'INSTANT_RESCUE')
+        .single();
 
-    if (boosterTypeForLog) {
-      await supabaseClient
-        .from('booster_purchases')
-        .insert({
-          user_id: user.id,
-          booster_type_id: boosterTypeForLog.id,
-          purchase_source: 'stripe_mobile',
-          iap_transaction_id: paymentIntentId,
-          usd_cents_spent: paymentIntent.amount,
-          gold_spent: 0,
-        });
+      if (boosterTypeForLog) {
+        await supabaseClient
+          .from('booster_purchases')
+          .insert({
+            user_id: user.id,
+            booster_type_id: boosterTypeForLog.id,
+            purchase_source: 'stripe_mobile',
+            iap_transaction_id: paymentIntentId,
+            usd_cents_spent: paymentIntent.amount,
+            gold_spent: 0,
+          });
+      }
     }
 
     console.log(`[verify-payment-intent] Success for user ${user.id}, type: ${productType}`);

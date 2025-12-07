@@ -4,13 +4,14 @@ import { ChevronUp, ChevronDown, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useI18n } from '@/i18n';
 import { toast } from 'sonner';
+import { useMobilePayment } from '@/hooks/useMobilePayment';
 import gameBackground from '@/assets/game-background.png';
 import BottomNav from '@/components/BottomNav';
 
 /**
  * Coin Shop - Aranyérme vásárlás
  * 
- * Fix árazási struktúra lépcsőkkel
+ * Fix árazási struktúra lépcsőkkel - Apple Pay / Google Pay támogatással
  */
 
 const COIN_TIERS = [
@@ -35,7 +36,7 @@ const CoinShop = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
   const [tierIndex, setTierIndex] = useState(0);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const { startPayment, isProcessing } = useMobilePayment();
 
   const currentTier = COIN_TIERS[tierIndex];
   const quantity = currentTier.coins;
@@ -51,8 +52,6 @@ const CoinShop = () => {
 
   const handlePurchase = async () => {
     try {
-      setIsProcessing(true);
-      
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error(t('errors.not_logged_in'));
@@ -60,26 +59,27 @@ const CoinShop = () => {
         return;
       }
 
-      toast.loading(t('payment.processing'), { id: 'coin-purchase' });
-
-      // Create Stripe checkout session
-      const { data, error } = await supabase.functions.invoke('create-coin-purchase', {
-        body: { quantity, priceInCents: Math.round(price * 100) },
-        headers: { Authorization: `Bearer ${session.access_token}` }
+      // Apple Pay / Google Pay indítása
+      await startPayment({
+        productType: 'coins',
+        amount: Math.round(price * 100), // cents
+        currency: 'usd',
+        displayName: `${quantity} Gold Coins`,
+        metadata: { 
+          coin_quantity: String(quantity) 
+        },
+        onSuccess: () => {
+          toast.success(t('payment.success'));
+          navigate('/dashboard');
+        },
+        onError: (error) => {
+          console.error('Coin purchase error:', error);
+          toast.error(t('errors.payment_failed'));
+        }
       });
-
-      if (error || !data?.url) {
-        throw new Error(error?.message || t('errors.payment_failed'));
-      }
-
-      // Redirect to Stripe Checkout
-      window.location.href = data.url;
     } catch (error) {
       console.error('Coin purchase error:', error);
-      const errorMsg = error instanceof Error ? error.message : t('errors.payment_failed');
-      toast.error(errorMsg, { id: 'coin-purchase' });
-    } finally {
-      setIsProcessing(false);
+      toast.error(t('errors.payment_failed'));
     }
   };
 
