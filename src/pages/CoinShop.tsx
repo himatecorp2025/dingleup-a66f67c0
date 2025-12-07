@@ -10,35 +10,43 @@ import BottomNav from '@/components/BottomNav';
 /**
  * Coin Shop - Aranyérme vásárlás
  * 
- * Árazás:
- * - Alap: 200 aranyérme = $0.99
- * - Lépésköz: 100 aranyérme
- * - Ár kalkuláció: quantity * $0.00495 (lineáris)
+ * Fix árazási struktúra lépcsőkkel
  */
 
-const BASE_COINS = 200;
-const STEP_COINS = 100;
-const PRICE_PER_COIN = 0.00495; // $0.99 / 200 = $0.00495
+const COIN_TIERS = [
+  { coins: 200, price: 0.99 },
+  { coins: 300, price: 1.39 },
+  { coins: 400, price: 1.79 },
+  { coins: 500, price: 2.19 },
+  { coins: 600, price: 2.59 },
+  { coins: 700, price: 2.99 },
+  { coins: 800, price: 3.39 },
+  { coins: 900, price: 3.79 },
+  { coins: 1000, price: 3.99 },
+  { coins: 1500, price: 5.49 },
+  { coins: 2000, price: 6.99 },
+  { coins: 2500, price: 8.49 },
+  { coins: 3000, price: 9.99 },
+  { coins: 4000, price: 12.99 },
+  { coins: 5000, price: 14.99 },
+];
 
 const CoinShop = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
-  const [quantity, setQuantity] = useState(BASE_COINS);
+  const [tierIndex, setTierIndex] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Calculate price based on quantity
-  const calculatePrice = (coins: number): number => {
-    return Math.round(coins * PRICE_PER_COIN * 100) / 100;
-  };
-
-  const price = calculatePrice(quantity);
+  const currentTier = COIN_TIERS[tierIndex];
+  const quantity = currentTier.coins;
+  const price = currentTier.price;
 
   const handleIncrease = () => {
-    setQuantity(prev => prev + STEP_COINS);
+    setTierIndex(prev => Math.min(COIN_TIERS.length - 1, prev + 1));
   };
 
   const handleDecrease = () => {
-    setQuantity(prev => Math.max(BASE_COINS, prev - STEP_COINS));
+    setTierIndex(prev => Math.max(0, prev - 1));
   };
 
   const handlePurchase = async () => {
@@ -246,7 +254,7 @@ const CoinShop = () => {
                 {/* 3D Decrease button */}
                 <button
                   onClick={handleDecrease}
-                  disabled={quantity <= BASE_COINS}
+                  disabled={tierIndex <= 0}
                   className="relative w-14 h-14 rounded-full disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 active:scale-95 transition-all"
                 >
                   {/* BASE SHADOW */}
