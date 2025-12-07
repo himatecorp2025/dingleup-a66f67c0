@@ -69,6 +69,7 @@ const AdminBoosterTypes = lazy(() => import("./pages/AdminBoosterTypes"));
 const AdminBoosterPurchases = lazy(() => import("./pages/AdminBoosterPurchases"));
 const AdminQuestionPools = lazy(() => import("./pages/AdminQuestionPools"));
 const AdminManualCredit = lazy(() => import("./pages/AdminManualCredit"));
+const AdminPlayerBehaviors = lazy(() => import("./pages/AdminPlayerBehaviors"));
 
 const AdminProfile = lazy(() => import("./pages/AdminProfile"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -184,7 +185,7 @@ const AppCore = () => {
               <Route path="/admin/booster-purchases" element={<ErrorBoundary><AdminBoosterPurchases /></ErrorBoundary>} />
               <Route path="/admin/question-pools" element={<ErrorBoundary><AdminQuestionPools /></ErrorBoundary>} />
               <Route path="/admin/manual-credit" element={<ErrorBoundary><AdminManualCredit /></ErrorBoundary>} />
-              
+              <Route path="/admin/player-behaviors" element={<ErrorBoundary><AdminPlayerBehaviors /></ErrorBoundary>} />
               <Route path="/admin/age-statistics" element={<ErrorBoundary><AdminAgeStatistics /></ErrorBoundary>} />
               <Route path="/admin/legal-documents" element={<ErrorBoundary><AdminLegalDocuments /></ErrorBoundary>} />
               <Route path="/admin/profile" element={<ErrorBoundary><AdminProfile /></ErrorBoundary>} />

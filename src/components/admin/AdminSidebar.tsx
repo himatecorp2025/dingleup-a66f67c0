@@ -172,6 +172,16 @@ export function AdminSidebar() {
                   <span>{t('admin.sidebar.ad_interests')}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => navigate('/admin/player-behaviors')}
+                  isActive={isActive('/admin/player-behaviors')}
+                  className={isActive('/admin/player-behaviors') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
+                >
+                  <Gamepad2 className="text-purple-400" />
+                  <span>{t('admin.player_behaviors.title')}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
