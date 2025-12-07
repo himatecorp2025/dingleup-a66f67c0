@@ -34,6 +34,7 @@ interface UseGameLifecycleOptions {
   setQuestionVisible: (visible: boolean) => void;
   correctAnswers: number;
   responseTimes: number[];
+  answerResults: boolean[]; // Per-question correct/wrong tracking
   coinsEarned: number;
   questions: Question[];
   questionStartTime: number;
@@ -73,6 +74,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
     setQuestionVisible,
     correctAnswers,
     responseTimes,
+    answerResults,
     coinsEarned,
     questions,
     questionStartTime,
@@ -436,11 +438,11 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
         return;
       }
 
-      // Build question analytics data for ad profiling
+      // Build question analytics data for ad profiling using actual answerResults
       const questionAnalytics = questions.map((q, idx) => ({
         questionId: q.id,
         topicId: q.topic_id || q.topic, // Use topic_id if available, fallback to topic name
-        wasCorrect: idx < correctAnswers, // Simplified: first N are correct
+        wasCorrect: answerResults[idx] ?? false, // Use actual per-question result
         responseTimeSeconds: responseTimes[idx] || 0,
         questionIndex: idx,
       }));
@@ -486,7 +488,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
       await refreshProfile();
     }
   }, [
-    profile, responseTimes, userId, correctAnswers, questionStartTime,
+    profile, responseTimes, answerResults, userId, correctAnswers, questionStartTime,
     questions, setCoinsEarned, refreshProfile, t
   ]);
 

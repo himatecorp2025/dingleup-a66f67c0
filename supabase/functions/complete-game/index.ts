@@ -229,12 +229,16 @@ Deno.serve(async (req) => {
       // NEW: Update user_topic_stats for ad profiling
       await measureStage(ctx, 'topic_stats', async () => {
         try {
-          // Group analytics by topic
-          const topicStats: Record<string, { correct: number; total: number }> = {};
+          // Group analytics by topic - topic_id is INTEGER in DB
+          const topicStats: Record<number, { correct: number; total: number }> = {};
           
           for (const qa of body.questionAnalytics!) {
-            const topicId = qa.topicId;
-            if (!topicId) continue;
+            // Parse topic_id to integer (DB column is INTEGER)
+            const topicIdRaw = qa.topicId;
+            if (!topicIdRaw) continue;
+            
+            const topicId = typeof topicIdRaw === 'string' ? parseInt(topicIdRaw, 10) : topicIdRaw;
+            if (isNaN(topicId)) continue;
             
             if (!topicStats[topicId]) {
               topicStats[topicId] = { correct: 0, total: 0 };
@@ -246,7 +250,8 @@ Deno.serve(async (req) => {
           }
 
           // Upsert topic stats for each topic
-          for (const [topicId, stats] of Object.entries(topicStats)) {
+          for (const [topicIdStr, stats] of Object.entries(topicStats)) {
+            const topicId = parseInt(topicIdStr, 10);
             incDbQuery(ctx);
             
             // First, try to get existing stats

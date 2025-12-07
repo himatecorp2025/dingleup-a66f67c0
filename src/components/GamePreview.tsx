@@ -63,7 +63,9 @@ const GamePreview = memo(() => {
     correctAnswers,
     incrementCorrectAnswers,
     responseTimes,
+    answerResults,
     addResponseTime,
+    recordAnswerResult,
     nextQuestion,
     resetGameState: resetGameStateHook
   } = useGameState();
@@ -188,6 +190,7 @@ const GamePreview = memo(() => {
     setQuestionVisible,
     correctAnswers,
     responseTimes,
+    answerResults,
     coinsEarned,
     questions,
     questionStartTime,
@@ -220,6 +223,7 @@ const GamePreview = memo(() => {
     setSelectedAnswer,
     addResponseTime,
     incrementCorrectAnswers,
+    recordAnswerResult,
     creditCorrectAnswer,
     setContinueType,
     setErrorBannerVisible,

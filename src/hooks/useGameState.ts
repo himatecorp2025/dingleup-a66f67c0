@@ -11,6 +11,8 @@ export const useGameState = () => {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [coinsEarned, setCoinsEarned] = useState(0);
   const [responseTimes, setResponseTimes] = useState<number[]>([]);
+  // Track per-question correct/wrong for accurate analytics
+  const [answerResults, setAnswerResults] = useState<boolean[]>([]);
   
   // Prevent race conditions with state update guards
   const isUpdatingRef = useRef(false);
@@ -23,6 +25,10 @@ export const useGameState = () => {
       isUpdatingRef.current = false;
       return newValue;
     });
+  }, []);
+
+  const recordAnswerResult = useCallback((wasCorrect: boolean) => {
+    setAnswerResults(prev => [...prev, wasCorrect]);
   }, []);
 
   const addResponseTime = useCallback((time: number) => {
@@ -61,6 +67,7 @@ export const useGameState = () => {
     setCorrectAnswers(0);
     setCoinsEarned(0);
     setResponseTimes([]);
+    setAnswerResults([]);
     setSelectedAnswer(null); // Clear selected answer on reset
   }, []);
 
@@ -76,7 +83,9 @@ export const useGameState = () => {
     correctAnswers,
     coinsEarned,
     responseTimes,
+    answerResults,
     incrementCorrectAnswers,
+    recordAnswerResult,
     addResponseTime,
     addCoins,
     nextQuestion,

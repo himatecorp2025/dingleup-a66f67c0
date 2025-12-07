@@ -17,6 +17,7 @@ interface UseGameAnswersOptions {
   setSelectedAnswer: (answer: string | null) => void;
   addResponseTime: (time: number) => void;
   incrementCorrectAnswers: () => void;
+  recordAnswerResult: (wasCorrect: boolean) => void;
   creditCorrectAnswer: () => Promise<void>;
   setContinueType: (type: 'timeout' | 'wrong' | 'out-of-lives') => void;
   setErrorBannerVisible: (visible: boolean) => void;
@@ -41,6 +42,7 @@ export const useGameAnswers = (options: UseGameAnswersOptions) => {
     setSelectedAnswer,
     addResponseTime,
     incrementCorrectAnswers,
+    recordAnswerResult,
     creditCorrectAnswer,
     setContinueType,
     setErrorBannerVisible,
@@ -54,6 +56,7 @@ export const useGameAnswers = (options: UseGameAnswersOptions) => {
     addResponseTime(responseTime);
     setSelectedAnswer(answerKey);
     incrementCorrectAnswers();
+    recordAnswerResult(true); // Track as correct
     triggerHaptic('success');
     
     // Track consecutive correct answers for answer streak
@@ -70,11 +73,12 @@ export const useGameAnswers = (options: UseGameAnswersOptions) => {
 
     // Trigger callback after answer is processed
     onAnswerProcessed?.();
-  }, [addResponseTime, incrementCorrectAnswers, triggerHaptic, creditCorrectAnswer, setSelectedAnswer, onAnswerProcessed, currentQuestionIndex]);
+  }, [addResponseTime, incrementCorrectAnswers, recordAnswerResult, triggerHaptic, creditCorrectAnswer, setSelectedAnswer, onAnswerProcessed, currentQuestionIndex]);
 
   const handleWrongAnswer = useCallback((responseTime: number, answerKey: string) => {
     addResponseTime(responseTime);
     setSelectedAnswer(answerKey);
+    recordAnswerResult(false); // Track as wrong
     setContinueType('wrong');
     triggerHaptic('error');
     
@@ -91,7 +95,7 @@ export const useGameAnswers = (options: UseGameAnswersOptions) => {
     
     // Return cleanup function
     return () => clearTimeout(timeoutId);
-  }, [addResponseTime, triggerHaptic, setSelectedAnswer, setContinueType, setErrorBannerVisible, setErrorBannerMessage, t, onAnswerProcessed]);
+  }, [addResponseTime, recordAnswerResult, triggerHaptic, setSelectedAnswer, setContinueType, setErrorBannerVisible, setErrorBannerMessage, t, onAnswerProcessed]);
 
   const handleAnswer = useCallback((answerKey: string) => {
     if (selectedAnswer || isAnimating) return;
