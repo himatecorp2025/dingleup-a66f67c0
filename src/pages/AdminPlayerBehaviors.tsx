@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,9 @@ const AdminPlayerBehaviors = () => {
   
   const [stats, setStats] = useState<CategoryStats[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const isInitialLoad = useRef(true);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -63,9 +65,17 @@ const AdminPlayerBehaviors = () => {
     }
   }, [navigate]);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (isBackground = false) => {
     try {
-      setLoading(true);
+      // Only show loading on initial load
+      if (!isBackground && isInitialLoad.current) {
+        setLoading(true);
+      }
+      // Show refresh indicator for manual refresh
+      if (!isBackground && !isInitialLoad.current) {
+        setIsRefreshing(true);
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
@@ -81,12 +91,24 @@ const AdminPlayerBehaviors = () => {
       }
 
       setStats(response.data?.stats || []);
+      isInitialLoad.current = false;
     } catch (error) {
       console.error('Error fetching player behaviors:', error);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }, []);
+
+  // Manual refresh
+  const handleRefresh = useCallback(() => {
+    fetchData(false);
+  }, [fetchData]);
+
+  // Background refresh (silent)
+  const backgroundRefresh = useCallback(() => {
+    fetchData(true);
+  }, [fetchData]);
 
   useEffect(() => {
     checkAuth();
@@ -94,11 +116,11 @@ const AdminPlayerBehaviors = () => {
 
   useEffect(() => {
     if (authChecked) {
-      fetchData();
+      fetchData(false);
     }
   }, [authChecked, fetchData]);
 
-  // Real-time subscriptions for game_results and game_help_usage
+  // Real-time subscriptions - silent background updates
   useEffect(() => {
     if (!authChecked) return;
 
@@ -108,14 +130,21 @@ const AdminPlayerBehaviors = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'game_results' },
         () => {
-          fetchData();
+          backgroundRefresh();
         }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'game_help_usage' },
         () => {
-          fetchData();
+          backgroundRefresh();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'game_exit_events' },
+        () => {
+          backgroundRefresh();
         }
       )
       .subscribe();
@@ -123,7 +152,7 @@ const AdminPlayerBehaviors = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [authChecked, fetchData]);
+  }, [authChecked, backgroundRefresh]);
 
   if (!authChecked) {
     return (
@@ -141,6 +170,23 @@ const AdminPlayerBehaviors = () => {
 
   const mixedStats = stats.find(s => s.category === 'mixed');
 
+  // Only show full loading screen on initial load
+  if (loading && !mixedStats) {
+    return (
+      <AdminLayout>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">{t('admin.player_behaviors.title')}</h1>
+              <p className="text-white/60">{t('admin.player_behaviors.description')}</p>
+            </div>
+          </div>
+          <div className="text-white/60 text-center py-8">{t('admin.loading')}</div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -151,18 +197,16 @@ const AdminPlayerBehaviors = () => {
             <p className="text-white/60">{t('admin.player_behaviors.description')}</p>
           </div>
           <Button
-            onClick={fetchData}
-            disabled={loading}
+            onClick={handleRefresh}
+            disabled={isRefreshing}
             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             {t('admin.refresh')}
           </Button>
         </div>
 
-        {loading && !mixedStats ? (
-          <div className="text-white/60 text-center py-8">{t('admin.loading')}</div>
-        ) : !mixedStats ? (
+        {!mixedStats ? (
           <div className="text-white/60 text-center py-8">{t('admin.no_data')}</div>
         ) : (
           <>
