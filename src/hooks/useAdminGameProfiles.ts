@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AdminUserGameProfileRow {
@@ -6,8 +6,6 @@ export interface AdminUserGameProfileRow {
   username: string;
   totalAnswered: number;
   overallCorrectRatio: number;
-  totalLikes: number;
-  totalDislikes: number;
   aiPersonalizedQuestionsEnabled: boolean;
   personalizationActive: boolean;
   topTopics: {
@@ -19,18 +17,27 @@ export interface AdminUserGameProfileRow {
 
 export function useAdminGameProfiles() {
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<AdminUserGameProfileRow[]>([]);
+  const isInitialLoad = useRef(true);
 
-  const fetchProfiles = useCallback(async () => {
+  const fetchProfiles = useCallback(async (isBackground = false) => {
     try {
-      setLoading(true);
+      // Only show loading spinner on initial load, not background refreshes
+      if (!isBackground && isInitialLoad.current) {
+        setLoading(true);
+      }
+      if (!isBackground && !isInitialLoad.current) {
+        setIsRefreshing(true);
+      }
       setError(null);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         setError('No session');
         setLoading(false);
+        setIsRefreshing(false);
         return;
       }
       
@@ -44,18 +51,30 @@ export function useAdminGameProfiles() {
 
       if (invokeError) throw invokeError;
       setProfiles(data || []);
+      isInitialLoad.current = false;
     } catch (err) {
       console.error('[useAdminGameProfiles] Error:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchProfiles();
+  // Manual refresh function (shows refresh indicator)
+  const refetch = useCallback(() => {
+    return fetchProfiles(false);
+  }, [fetchProfiles]);
 
-    // Realtime subscriptions for automatic updates
+  // Background refresh function (silent, no UI change)
+  const backgroundRefresh = useCallback(() => {
+    return fetchProfiles(true);
+  }, [fetchProfiles]);
+
+  useEffect(() => {
+    fetchProfiles(false);
+
+    // Realtime subscriptions for automatic background updates
     const gameResultsChannel = supabase
       .channel('admin-game-profiles-results')
       .on('postgres_changes', {
@@ -63,10 +82,9 @@ export function useAdminGameProfiles() {
         schema: 'public',
         table: 'game_results'
       }, () => {
-        fetchProfiles();
+        backgroundRefresh();
       })
       .subscribe();
-
 
     const analyticsChannel = supabase
       .channel('admin-game-profiles-analytics')
@@ -75,7 +93,7 @@ export function useAdminGameProfiles() {
         schema: 'public',
         table: 'game_question_analytics'
       }, () => {
-        fetchProfiles();
+        backgroundRefresh();
       })
       .subscribe();
 
@@ -83,32 +101,41 @@ export function useAdminGameProfiles() {
       supabase.removeChannel(gameResultsChannel);
       supabase.removeChannel(analyticsChannel);
     };
-  }, [fetchProfiles]);
+  }, [fetchProfiles, backgroundRefresh]);
 
   return {
     loading,
+    isRefreshing,
     error,
     profiles,
-    refetch: fetchProfiles,
+    refetch,
   };
 }
 
 export function useAdminGameProfileDetail(userId: string | undefined) {
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
+  const isInitialLoad = useRef(true);
 
-  const fetchProfile = useCallback(async () => {
+  const fetchProfile = useCallback(async (isBackground = false) => {
     if (!userId) return;
 
     try {
-      setLoading(true);
+      if (!isBackground && isInitialLoad.current) {
+        setLoading(true);
+      }
+      if (!isBackground && !isInitialLoad.current) {
+        setIsRefreshing(true);
+      }
       setError(null);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         setError('No session');
         setLoading(false);
+        setIsRefreshing(false);
         return;
       }
       
@@ -122,20 +149,31 @@ export function useAdminGameProfileDetail(userId: string | undefined) {
 
       if (invokeError) throw invokeError;
       setProfile(data);
+      isInitialLoad.current = false;
     } catch (err) {
       console.error('[useAdminGameProfileDetail] Error:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }, [userId]);
 
+  const refetch = useCallback(() => {
+    return fetchProfile(false);
+  }, [fetchProfile]);
+
+  const backgroundRefresh = useCallback(() => {
+    return fetchProfile(true);
+  }, [fetchProfile]);
+
   useEffect(() => {
-    fetchProfile();
+    isInitialLoad.current = true;
+    fetchProfile(false);
 
     if (!userId) return;
 
-    // Realtime subscriptions for automatic updates on user-specific data
+    // Realtime subscriptions for automatic background updates
     const gameResultsChannel = supabase
       .channel(`admin-profile-detail-results-${userId}`)
       .on('postgres_changes', {
@@ -143,13 +181,11 @@ export function useAdminGameProfileDetail(userId: string | undefined) {
         schema: 'public',
         table: 'game_results'
       }, (payload) => {
-        // Only refetch if this change affects the current user
         if (payload.new && (payload.new as any).user_id === userId) {
-          fetchProfile();
+          backgroundRefresh();
         }
       })
       .subscribe();
-
 
     const analyticsChannel = supabase
       .channel(`admin-profile-detail-analytics-${userId}`)
@@ -159,7 +195,7 @@ export function useAdminGameProfileDetail(userId: string | undefined) {
         table: 'game_question_analytics'
       }, (payload) => {
         if (payload.new && (payload.new as any).user_id === userId) {
-          fetchProfile();
+          backgroundRefresh();
         }
       })
       .subscribe();
@@ -168,12 +204,13 @@ export function useAdminGameProfileDetail(userId: string | undefined) {
       supabase.removeChannel(gameResultsChannel);
       supabase.removeChannel(analyticsChannel);
     };
-  }, [fetchProfile, userId]);
+  }, [fetchProfile, backgroundRefresh, userId]);
 
   return {
     loading,
+    isRefreshing,
     error,
     profile,
-    refetch: fetchProfile,
+    refetch,
   };
 }

@@ -1,11 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useAdminGameProfilesQuery } from '@/hooks/queries/useAdminGameProfilesQuery';
-import { Brain, Search, Info } from 'lucide-react';
+import { Brain, Search, Info, RefreshCw } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -14,7 +13,7 @@ import { useI18n } from '@/i18n';
 export default function AdminGameProfiles() {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { profiles, loading, error } = useAdminGameProfilesQuery();
+  const { profiles, loading, isRefreshing, error, refetch } = useAdminGameProfilesQuery();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'answered' | 'correctness'>('answered');
 
@@ -39,7 +38,8 @@ export default function AdminGameProfiles() {
     return result;
   }, [profiles, search, sortBy]);
 
-  if (loading) {
+  // Only show full loading on initial load when no data exists
+  if (loading && profiles.length === 0) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -67,14 +67,24 @@ export default function AdminGameProfiles() {
   return (
     <AdminLayout>
       <div className="container mx-auto max-w-7xl">
-        <div className="mb-8">
-          <h1 className="text-4xl font-black bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center gap-3 mb-2">
-            <Brain className="h-8 w-8 text-purple-400" />
-            {t('admin.game_profiles.title')}
-          </h1>
-          <p className="text-white/60">
-            {t('admin.game_profiles.subtitle')}
-          </p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-4xl font-black bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center gap-3 mb-2">
+              <Brain className="h-8 w-8 text-purple-400" />
+              {t('admin.game_profiles.title')}
+            </h1>
+            <p className="text-white/60">
+              {t('admin.game_profiles.subtitle')}
+            </p>
+          </div>
+          <Button
+            onClick={() => refetch()}
+            disabled={isRefreshing}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {t('admin.refresh')}
+          </Button>
         </div>
 
         <Alert className="mb-6 backdrop-blur-xl bg-blue-500/10 border-blue-500/30">

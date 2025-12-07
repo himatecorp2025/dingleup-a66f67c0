@@ -7,8 +7,6 @@ export interface AdminUserGameProfileRow {
   username: string;
   totalAnswered: number;
   overallCorrectRatio: number;
-  totalLikes: number;
-  totalDislikes: number;
   aiPersonalizedQuestionsEnabled: boolean;
   personalizationActive: boolean;
   topTopics: {
@@ -39,16 +37,14 @@ export function useAdminGameProfilesQuery() {
   const query = useQuery({
     queryKey: [ADMIN_GAME_PROFILES_KEY],
     queryFn: fetchAdminGameProfiles,
-    staleTime: 0, // No cache - always fetch fresh data
-    gcTime: 0, // No garbage collection delay
-    refetchOnWindowFocus: true, // Refetch when window gains focus
-    refetchOnMount: true, // Refetch on component mount
+    staleTime: 30000, // 30 seconds - prevent excessive refetches
+    gcTime: 60000, // 1 minute cache
+    refetchOnWindowFocus: false, // Don't auto-refetch on focus (causes flicker)
+    refetchOnMount: true,
   });
 
-  // Real-time subscription for instant updates
+  // Real-time subscription for silent background updates
   useEffect(() => {
-    console.log('[useAdminGameProfilesQuery] Setting up realtime subscription');
-
     const channel = supabase
       .channel('admin-game-profiles-realtime')
       .on(
@@ -58,11 +54,10 @@ export function useAdminGameProfilesQuery() {
           schema: 'public',
           table: 'game_results',
         },
-        (payload) => {
-          console.log('[useAdminGameProfilesQuery] Game results update received:', payload);
-          queryClient.refetchQueries({
+        () => {
+          // Silent background refetch - doesn't trigger loading state
+          queryClient.invalidateQueries({
             queryKey: [ADMIN_GAME_PROFILES_KEY],
-            exact: true,
           });
         }
       )
@@ -73,27 +68,24 @@ export function useAdminGameProfilesQuery() {
           schema: 'public',
           table: 'game_question_analytics',
         },
-        (payload) => {
-          console.log('[useAdminGameProfilesQuery] Game question analytics update received:', payload);
-          queryClient.refetchQueries({
+        () => {
+          queryClient.invalidateQueries({
             queryKey: [ADMIN_GAME_PROFILES_KEY],
-            exact: true,
           });
         }
       )
-      .subscribe((status) => {
-        console.log('[useAdminGameProfilesQuery] Subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
-      console.log('[useAdminGameProfilesQuery] Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [queryClient]);
 
   return {
     profiles: query.data || [],
-    loading: query.isLoading,
+    loading: query.isLoading, // Only true on initial load
+    isFetching: query.isFetching, // True during any fetch (including background)
+    isRefreshing: query.isFetching && !query.isLoading, // True only for background refreshes
     error: query.error?.message || null,
     refetch: query.refetch,
   };
