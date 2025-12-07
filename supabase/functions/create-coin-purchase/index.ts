@@ -8,8 +8,27 @@ import { checkRateLimit, rateLimitExceeded } from '../_shared/rateLimit.ts';
  * COIN PURCHASE - Stripe Checkout Session
  * 
  * Creates a Stripe Checkout session for purchasing gold coins.
- * Pricing: 200 coins = $0.99 (base), +100 coins increments
+ * Fixed pricing tiers
  */
+
+// Fixed pricing tiers - must match frontend
+const COIN_TIERS: Record<number, number> = {
+  200: 99,    // $0.99
+  300: 139,   // $1.39
+  400: 179,   // $1.79
+  500: 219,   // $2.19
+  600: 259,   // $2.59
+  700: 299,   // $2.99
+  800: 339,   // $3.39
+  900: 379,   // $3.79
+  1000: 399,  // $3.99
+  1500: 549,  // $5.49
+  2000: 699,  // $6.99
+  2500: 849,  // $8.49
+  3000: 999,  // $9.99
+  4000: 1299, // $12.99
+  5000: 1499, // $14.99
+};
 
 interface CoinPurchaseRequest {
   quantity: number; // Number of coins to purchase
@@ -49,16 +68,16 @@ serve(async (req) => {
     const body: CoinPurchaseRequest = await req.json();
     const { quantity, priceInCents } = body;
 
-    // Validate request
-    if (!quantity || quantity < 200 || !priceInCents || priceInCents < 99) {
-      throw new Error("Invalid purchase request: minimum 200 coins for $0.99");
+    // Validate request - must be a valid tier
+    const expectedPrice = COIN_TIERS[quantity];
+    if (!expectedPrice) {
+      throw new Error(`Invalid coin quantity: ${quantity}. Must be one of: ${Object.keys(COIN_TIERS).join(', ')}`);
     }
-
-    // Validate price calculation (should be ~$0.00495 per coin)
-    const expectedPrice = Math.round(quantity * 0.495); // cents
-    const priceDiff = Math.abs(priceInCents - expectedPrice);
-    if (priceDiff > 5) { // Allow 5 cent tolerance for rounding
+    
+    // Validate price matches expected tier price
+    if (priceInCents !== expectedPrice) {
       console.warn(`[create-coin-purchase] Price mismatch: expected ${expectedPrice}, got ${priceInCents}`);
+      throw new Error("Price validation failed");
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
