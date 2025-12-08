@@ -104,10 +104,10 @@ Deno.serve(async (req) => {
             .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
       service
         .from('game_results')
-        .select('user_id, correct_answers')
+        .select('user_id, correct_answers, category')
         .eq('completed', true)
         .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
-      service.from('topics').select('id, name, like_count, dislike_count')
+      service.from('topics').select('id, name')
     ]);
 
     const profiles = profilesRes.data || [];
@@ -242,11 +242,27 @@ Deno.serve(async (req) => {
       ? Math.round((totalCorrectAnswers / gameResults.length) * 10) / 10
       : 0;
 
-    // Topic popularity (direct from topics table)
-    const topicPopularity = topicsData.map((topic: any) => ({
-      category: topic.name,
-      count: (topic.like_count || 0) - (topic.dislike_count || 0),
-    })).sort((a, b) => b.count - a.count).slice(0, 10);
+    // Topic popularity (calculated from game_results category data)
+    const categoryCountMap = new Map<string, number>();
+    gameResults.forEach((g: any) => {
+      const category = g.category || 'unknown';
+      categoryCountMap.set(category, (categoryCountMap.get(category) || 0) + 1);
+    });
+    
+    const topicPopularity = Array.from(categoryCountMap.entries())
+      .map(([category, count]) => {
+        // Try to find matching topic name for better display
+        const topic = topicsData.find((t: any) => 
+          t.name?.toLowerCase() === category.toLowerCase() ||
+          t.name?.toLowerCase().includes(category.toLowerCase())
+        );
+        return {
+          category: topic?.name || category,
+          count,
+        };
+      })
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
 
     return new Response(JSON.stringify({
       avgSessionDuration,

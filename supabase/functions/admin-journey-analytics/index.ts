@@ -97,10 +97,36 @@ Deno.serve(async (req) => {
     ];
 
     // Game Funnel: játék kezdés → 5. kérdés elérése → 10. kérdés elérése → befejezés
-    const startedGame = new Set((gameExitEvents || []).filter((e: any) => e.event_type === 'game_start' || e.question_index >= 0).map((e: any) => e.user_id)).size;
-    const reached5Questions = new Set((gameExitEvents || []).filter((e: any) => e.event_type === 'question_5_reached' || e.question_index >= 5).map((e: any) => e.user_id)).size;
-    const reached10Questions = new Set((gameExitEvents || []).filter((e: any) => e.event_type === 'question_10_reached' || e.question_index >= 10).map((e: any) => e.user_id)).size;
-    const completedGame = new Set((gameExitEvents || []).filter((e: any) => e.event_type === 'game_complete' || e.question_index >= 15).map((e: any) => e.user_id)).size;
+    // Count unique users at each stage using event_type from game_exit_events
+    const gameStartedUsers = new Set<string>();
+    const reached5Users = new Set<string>();
+    const reached10Users = new Set<string>();
+    const completedUsers = new Set<string>();
+    
+    (gameExitEvents || []).forEach((e: any) => {
+      const userId = e.user_id;
+      const eventType = e.event_type;
+      const questionIndex = e.question_index || 0;
+      
+      // Any game exit event means the user started a game
+      gameStartedUsers.add(userId);
+      
+      // Check milestones
+      if (eventType === 'question_5_reached' || questionIndex >= 5) {
+        reached5Users.add(userId);
+      }
+      if (eventType === 'question_10_reached' || questionIndex >= 10) {
+        reached10Users.add(userId);
+      }
+      if (eventType === 'game_complete' || questionIndex >= 15) {
+        completedUsers.add(userId);
+      }
+    });
+
+    const startedGame = gameStartedUsers.size;
+    const reached5Questions = reached5Users.size;
+    const reached10Questions = reached10Users.size;
+    const completedGame = completedUsers.size;
 
     const gameFunnel = [
       { step: t('journey.funnel.game_start'), users: startedGame, dropoffRate: 0 },
