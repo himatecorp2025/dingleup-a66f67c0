@@ -180,15 +180,18 @@ const RegisterNew = () => {
 
   return (
     <div 
-      className="min-h-screen min-h-dvh w-screen fixed inset-0 overflow-hidden bg-gradient-to-br from-[#1a0033] via-[#2d1b69] to-[#0f0033] flex items-center justify-center animate-fade-in"
+      className="min-h-screen min-h-dvh w-screen fixed inset-0 overflow-hidden bg-gradient-to-br from-[#1a0033] via-[#2d1b69] to-[#0f0033] animate-fade-in"
       style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         paddingTop: isStandalone ? 'env(safe-area-inset-top)' : '0',
         paddingBottom: isStandalone ? 'env(safe-area-inset-bottom)' : '0'
       }}
     >
       {/* Background image with 75% opacity - optimized for mobile performance */}
       <div 
-        className="fixed inset-0 z-0 will-change-transform" 
+        className="fixed inset-0 z-0 will-change-transform pointer-events-none" 
         style={{
           backgroundImage: `url(${gameBackground})`,
           backgroundSize: 'cover',
@@ -198,7 +201,7 @@ const RegisterNew = () => {
         }}
       />
 
-      <div className="w-[90vw] max-w-[500px] relative z-10">
+      <div className="w-[90vw] max-w-[500px] relative z-10 m-auto">
         <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 relative w-full flex flex-col"
           style={{
             padding: 'clamp(1rem, 2vh, 2rem)'
