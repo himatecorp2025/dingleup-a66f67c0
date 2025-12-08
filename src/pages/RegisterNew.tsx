@@ -198,11 +198,10 @@ const RegisterNew = () => {
         }}
       />
 
-      <div className="w-[90vw] max-w-[500px] relative z-10 flex items-center justify-center" style={{ maxHeight: '90vh' }}>
+      <div className="w-[90vw] max-w-[500px] relative z-10">
         <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 relative w-full flex flex-col"
           style={{
-            padding: 'clamp(1rem, 2vh, 2rem)',
-            maxHeight: '90vh'
+            padding: 'clamp(1rem, 2vh, 2rem)'
           }}
         >
           <button 
