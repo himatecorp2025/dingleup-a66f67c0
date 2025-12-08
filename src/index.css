@@ -52,6 +52,9 @@ html, body {
 
 /* Extra layer for chat pages to prevent white background on keyboard */
 .chat-container {
+  background: transparent !important;
+  min-height: 100dvh;
+}
 
 /* ========================================
    GPU ACCELERATION FOR ALL BACKGROUNDS
@@ -67,9 +70,6 @@ html, body {
   transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-}
-  background: transparent !important;   /* a body::before adja a képet */
-  min-height: 100dvh;
 }
 
 *, *::before, *::after {
