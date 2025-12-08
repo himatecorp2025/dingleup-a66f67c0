@@ -108,15 +108,20 @@
 
   <style>
     /* TELJES IMMERSIVE MÓD - Safe-area kiterjesztéssel */
-    html, body, #root {
+    html, body {
       min-height: 100dvh;
-      height: 100dvh;
+      height: 100%;
       margin: 0;
       padding: 0;
       overflow-x: hidden;
       overscroll-behavior: none;
       -webkit-overflow-scrolling: touch;
-      position: fixed;
+      width: 100%;
+    }
+
+    #root {
+      min-height: 100dvh;
+      height: 100%;
       width: 100%;
     }
 
