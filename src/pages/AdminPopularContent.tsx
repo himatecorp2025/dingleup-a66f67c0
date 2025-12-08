@@ -197,9 +197,9 @@ const AdminPopularContent = () => {
                   <SelectValue placeholder={lang === 'hu' ? 'Ország' : 'Country'} />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
-                  {availableCountries.map(code => (
-                    <SelectItem key={code} value={code}>
-                      {getCountryName(code)}
+                  {COUNTRIES.map(country => (
+                    <SelectItem key={country.code} value={country.code}>
+                      {t(country.nameKey) || country.code}
                     </SelectItem>
                   ))}
                 </SelectContent>
