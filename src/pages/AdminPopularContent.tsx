@@ -47,8 +47,8 @@ const AdminPopularContent = () => {
   const [sortField, setSortField] = useState<SortField>('correctAnswers');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   
-  // Filters
-  const [selectedCountry, setSelectedCountry] = useState<string>('ALL');
+  // Filters - default to Hungary (HU)
+  const [selectedCountry, setSelectedCountry] = useState<string>('HU');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
