@@ -5,55 +5,75 @@ import BottomNav from '@/components/BottomNav';
 
 const Creators = () => {
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { lang, t } = useI18n();
+  const isHu = lang === 'hu';
 
   const benefits = [
     {
       icon: Clock,
-      huTitle: 'Fix 15 mp figyelem minden videódra',
-      huText: 'A rendszer garantálja, hogy aki találkozik a videóddal, legalább ~15 másodpercig látja azt a kvízfolyamon belül.',
-      enTitle: 'Guaranteed 15 sec attention',
-      enText: 'Everyone who sees your clip inside the quiz flow gets ~15 seconds of guaranteed exposure.',
+      title: isHu ? 'Fix 15 mp figyelem minden videódra' : 'Guaranteed 15 sec attention',
+      text: isHu 
+        ? 'A rendszer garantálja, hogy aki találkozik a videóddal, legalább ~15 másodpercig látja azt a kvízfolyamon belül.'
+        : 'Everyone who sees your clip inside the quiz flow gets ~15 seconds of guaranteed exposure.',
     },
     {
       icon: Target,
-      huTitle: 'Mindig a megfelelő témában látszol',
-      huText: 'Sport, beauty, tech, gasztro – a videóid azoknál jelennek meg, akik pont az adott témakör kvízét játszák.',
-      enTitle: 'Topic-based relevance',
-      enText: 'Sport, beauty, tech, food – your videos appear inside quizzes where players already care about that topic.',
+      title: isHu ? 'Mindig a megfelelő témában látszol' : 'Topic-based relevance',
+      text: isHu 
+        ? 'Sport, beauty, tech, gasztro – a videóid azoknál jelennek meg, akik pont az adott témakör kvízét játszák.'
+        : 'Sport, beauty, tech, food – your videos appear inside quizzes where players already care about that topic.',
     },
     {
       icon: Rocket,
-      huTitle: 'Garantált érdeklődői átirányítás',
-      huText: 'Ha rákattintanak, nem véletlen kattintás lesz: eleve elkötelezett, témára nyitott nézőket kapsz.',
-      enTitle: 'Guaranteed engaged clicks',
-      enText: 'When they tap through, it\'s not random – these are already engaged, topic-interested viewers.',
+      title: isHu ? 'Garantált érdeklődői átirányítás' : 'Guaranteed engaged clicks',
+      text: isHu 
+        ? 'Ha rákattintanak, nem véletlen kattintás lesz: eleve elkötelezett, témára nyitott nézőket kapsz.'
+        : 'When they tap through, it\'s not random – these are already engaged, topic-interested viewers.',
     },
   ];
 
   const steps = [
     {
       step: '1',
-      huTitle: '30 napig teljesen ingyen kipróbálhatod',
-      huText: 'Az előfizetés az aktiválástól számított 30 napig 0 Ft – csak akkor fizetsz, ha a próbaidő után is velünk akarsz maradni.',
-      enTitle: 'Enjoy 30 days for free',
-      enText: 'Your subscription is free for the first 30 days from activation – you only pay if you stay after the trial.',
+      title: isHu ? '30 napig teljesen ingyen kipróbálhatod' : 'Enjoy 30 days for free',
+      text: isHu 
+        ? 'Az előfizetés az aktiválástól számított 30 napig 0 Ft – csak akkor fizetsz, ha a próbaidő után is velünk akarsz maradni.'
+        : 'Your subscription is free for the first 30 days from activation – you only pay if you stay after the trial.',
     },
     {
       step: '2',
-      huTitle: 'Összekötöd a csatornáidat',
-      huText: 'TikTok, YouTube Shorts, Instagram Reels, Facebook Reels – néhány kattintással beállítod, honnan hozzuk a videóidat.',
-      enTitle: 'Connect your channels',
-      enText: 'TikTok, YouTube Shorts, Instagram Reels, Facebook Reels – set where we should pull your clips from in a few taps.',
+      title: isHu ? 'Összekötöd a csatornáidat' : 'Connect your channels',
+      text: isHu 
+        ? 'TikTok, YouTube Shorts, Instagram Reels, Facebook Reels – néhány kattintással beállítod, honnan hozzuk a videóidat.'
+        : 'TikTok, YouTube Shorts, Instagram Reels, Facebook Reels – set where we should pull your clips from in a few taps.',
     },
     {
       step: '3',
-      huTitle: 'Mi betesszük a videóidat a kvízfolyamba',
-      huText: 'Az AI-alapú rendszerünk releváns témakörök közé illeszti a klipjeidet, és figyel arra, hogy ne legyen túlismétlés, se spam.',
-      enTitle: 'We place your clips into the quiz flow',
-      enText: 'Our AI-based system injects your videos into the right quiz topics and avoids over-showing or spammy repetition.',
+      title: isHu ? 'Mi betesszük a videóidat a kvízfolyamba' : 'We place your clips into the quiz flow',
+      text: isHu 
+        ? 'Az AI-alapú rendszerünk releváns témakörök közé illeszti a klipjeidet, és figyel arra, hogy ne legyen túlismétlés, se spam.'
+        : 'Our AI-based system injects your videos into the right quiz topics and avoids over-showing or spammy repetition.',
     },
   ];
+
+  const content = {
+    heroTitle: isHu ? 'Válj népszerűvé a DingleUP!-ban!' : 'Become popular inside DingleUP!',
+    heroTagline: isHu 
+      ? 'Kapcsold össze TikTok, YouTube Shorts, Insta és Facebook Reels videóid, mi pedig releváns, témaspecifikus kvízjátékok közé tesszük őket – garantált figyelemmel.'
+      : 'Connect your TikTok, YouTube Shorts, Insta and Facebook Reels videos, and we\'ll place them inside topic-based quiz games – with guaranteed attention.',
+    ctaMain: isHu ? 'Aktiválom a Népszerűségemet!' : 'Activate my popularity!',
+    ctaNotice: isHu 
+      ? 'Hamarosan indul – az előfizetés aktiválása még fejlesztés alatt áll.'
+      : 'Coming soon – subscription activation is still under development.',
+    benefitsTitle: isHu ? 'Mi ez neked?' : 'What\'s in it for you?',
+    stepsTitle: isHu ? 'Hogyan működik?' : 'How does it work?',
+    closingText: isHu 
+      ? 'Ha tartalmat gyártasz, itt az idő, hogy valódi, témára éhes nézők elé kerülj – nem csak a véletlenre bízva az algoritmust.'
+      : 'If you create content, it\'s time to show up in front of people who actually care about the topic – not just random scroll-by traffic.',
+    closingNotice: isHu 
+      ? 'A „Válj népszerűvé!" előfizetés hamarosan indul. Jelenleg előregisztrációs szakaszban vagyunk – a gomb ezért még inaktív.'
+      : 'The "Become popular" subscription is launching soon. We are in pre-registration mode – that\'s why the button above is still inactive.',
+  };
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-[#1a0033] via-[#2d1b69] to-[#0f0033] flex flex-col">
@@ -130,20 +150,14 @@ const Creators = () => {
               </div>
 
               {/* Title */}
-              <h1 className="text-[clamp(1.5rem,6vw,2.5rem)] font-bold text-white leading-tight mb-2 tracking-tight">
-                Válj népszerűvé a DingleUP!-ban!
+              <h1 className="text-[clamp(1.5rem,6vw,2.5rem)] font-bold text-white leading-tight mb-4 tracking-tight">
+                {content.heroTitle}
               </h1>
-              <p className="text-[clamp(0.875rem,3.5vw,1.25rem)] text-white/80 font-medium mb-6">
-                Become popular inside DingleUP!
-              </p>
 
               {/* Tagline */}
-              <div className="max-w-lg mx-auto mb-8 space-y-3">
-                <p className="text-[clamp(0.813rem,3vw,1rem)] text-white/95 leading-relaxed">
-                  Kapcsold össze TikTok, YouTube Shorts, Insta és Facebook Reels videóid, mi pedig releváns, témaspecifikus kvízjátékok közé tesszük őket – garantált figyelemmel.
-                </p>
-                <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/70 leading-relaxed italic">
-                  Connect your TikTok, YouTube Shorts, Insta and Facebook Reels videos, and we'll place them inside topic-based quiz games – with guaranteed attention.
+              <div className="max-w-lg mx-auto mb-8">
+                <p className="text-[clamp(0.875rem,3vw,1.125rem)] text-white/90 leading-relaxed">
+                  {content.heroTagline}
                 </p>
               </div>
 
@@ -155,20 +169,14 @@ const Creators = () => {
                   className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 opacity-60 cursor-not-allowed shadow-lg transition-none"
                 >
                   <span className="block text-[clamp(1rem,4vw,1.25rem)] font-bold text-white whitespace-normal break-words">
-                    Aktiválom a Népszerűségemet!
-                  </span>
-                  <span className="block text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/70 mt-1">
-                    Activate my popularity
+                    {content.ctaMain}
                   </span>
                 </button>
                 
                 {/* Coming Soon Notice */}
-                <div className="mt-4 text-center space-y-1">
-                  <p className="text-[clamp(0.688rem,2.5vw,0.75rem)] text-white/60">
-                    Hamarosan indul – az előfizetés aktiválása még fejlesztés alatt áll.
-                  </p>
-                  <p className="text-[clamp(0.625rem,2vw,0.688rem)] text-white/40 italic">
-                    Coming soon – subscription activation is still under development.
+                <div className="mt-4 text-center">
+                  <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/60">
+                    {content.ctaNotice}
                   </p>
                 </div>
               </div>
@@ -177,12 +185,9 @@ const Creators = () => {
 
           {/* Benefits Section */}
           <section className="mt-8">
-            <h2 className="text-[clamp(1.125rem,4.5vw,1.5rem)] font-bold text-white text-center mb-2">
-              Mi ez neked?
+            <h2 className="text-[clamp(1.125rem,4.5vw,1.5rem)] font-bold text-white text-center mb-6">
+              {content.benefitsTitle}
             </h2>
-            <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/60 text-center mb-6 italic">
-              What's in it for you?
-            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {benefits.map((benefit, index) => (
@@ -194,16 +199,10 @@ const Creators = () => {
                     <benefit.icon className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="text-[clamp(0.875rem,3vw,1rem)] font-semibold text-white mb-2 text-center md:text-left">
-                    {benefit.huTitle}
+                    {benefit.title}
                   </h3>
-                  <p className="text-[clamp(0.75rem,2.5vw,0.813rem)] text-white/70 mb-3 text-center md:text-left leading-relaxed">
-                    {benefit.huText}
-                  </p>
-                  <h4 className="text-[clamp(0.75rem,2.5vw,0.875rem)] font-medium text-white/80 mb-1 text-center md:text-left">
-                    {benefit.enTitle}
-                  </h4>
-                  <p className="text-[clamp(0.688rem,2vw,0.75rem)] text-white/50 text-center md:text-left leading-relaxed italic">
-                    {benefit.enText}
+                  <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/70 text-center md:text-left leading-relaxed">
+                    {benefit.text}
                   </p>
                 </div>
               ))}
@@ -212,12 +211,9 @@ const Creators = () => {
 
           {/* How It Works Section */}
           <section className="mt-10">
-            <h2 className="text-[clamp(1.125rem,4.5vw,1.5rem)] font-bold text-white text-center mb-2">
-              Hogyan működik?
+            <h2 className="text-[clamp(1.125rem,4.5vw,1.5rem)] font-bold text-white text-center mb-6">
+              {content.stepsTitle}
             </h2>
-            <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/60 text-center mb-6 italic">
-              How does it work?
-            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {steps.map((step, index) => (
@@ -232,16 +228,10 @@ const Creators = () => {
 
                   <div className="mt-4">
                     <h3 className="text-[clamp(0.875rem,3vw,1rem)] font-semibold text-white mb-2 text-center md:text-left">
-                      {step.huTitle}
+                      {step.title}
                     </h3>
-                    <p className="text-[clamp(0.75rem,2.5vw,0.813rem)] text-white/70 mb-3 text-center md:text-left leading-relaxed">
-                      {step.huText}
-                    </p>
-                    <h4 className="text-[clamp(0.75rem,2.5vw,0.875rem)] font-medium text-white/80 mb-1 text-center md:text-left">
-                      {step.enTitle}
-                    </h4>
-                    <p className="text-[clamp(0.688rem,2vw,0.75rem)] text-white/50 text-center md:text-left leading-relaxed italic">
-                      {step.enText}
+                    <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/70 text-center md:text-left leading-relaxed">
+                      {step.text}
                     </p>
                   </div>
 
@@ -257,19 +247,13 @@ const Creators = () => {
           {/* Closing Section */}
           <section className="mt-10 mb-6 text-center">
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
-              <p className="text-[clamp(0.875rem,3vw,1rem)] text-white leading-relaxed mb-3">
-                Ha tartalmat gyártasz, itt az idő, hogy valódi, témára éhes nézők elé kerülj – nem csak a véletlenre bízva az algoritmust.
-              </p>
-              <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/60 leading-relaxed italic mb-6">
-                If you create content, it's time to show up in front of people who actually care about the topic – not just random scroll-by traffic.
+              <p className="text-[clamp(0.875rem,3vw,1rem)] text-white leading-relaxed mb-4">
+                {content.closingText}
               </p>
 
-              <div className="pt-4 border-t border-white/10 space-y-2">
-                <p className="text-[clamp(0.75rem,2.5vw,0.813rem)] text-yellow-400/80">
-                  🚀 A „Válj népszerűvé!" előfizetés hamarosan indul. Jelenleg előregisztrációs szakaszban vagyunk – a gomb ezért még inaktív.
-                </p>
-                <p className="text-[clamp(0.688rem,2vw,0.75rem)] text-white/40 italic">
-                  The „Become popular" subscription is launching soon. We are in pre-registration mode – that's why the button above is still inactive.
+              <div className="pt-4 border-t border-white/10">
+                <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-yellow-400/80">
+                  🚀 {content.closingNotice}
                 </p>
               </div>
             </div>
