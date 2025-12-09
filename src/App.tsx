@@ -24,10 +24,8 @@ import { useI18n } from "@/i18n";
 import { useTimezoneDetection } from "@/hooks/useTimezoneDetection";
 import loadingLogo from '@/assets/dingleup-loading-logo.png';
 
-// Eager load only landing page for instant initial render
+// Eager load all pages for instant navigation
 import Index from "./pages/Index";
-
-// Eager load frequently used game pages for instant navigation
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Leaderboard from "./pages/Leaderboard";
@@ -36,45 +34,38 @@ import CoinShop from "./pages/CoinShop";
 import Creators from "./pages/Creators";
 import LoginNew from "./pages/LoginNew";
 import RegisterNew from "./pages/RegisterNew";
-
-// Lazy load less frequently used pages
-const ForgotPin = lazy(() => import("./pages/ForgotPin"));
-const Game = lazy(() => import("./pages/Game"));
-const GameRules = lazy(() => import("./pages/GameRules"));
-const RegistrationSuccess = lazy(() => import("./pages/RegistrationSuccess"));
-const InstallApp = lazy(() => import("./pages/InstallApp"));
-const About = lazy(() => import("./pages/About"));
-
-
-// Lazy load admin pages
-const AdminLogin = lazy(() => import("./pages/AdminLogin"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const AdminAgeStatistics = lazy(() => import("./pages/AdminAgeStatistics"));
-const AdminTranslations = lazy(() => import("./pages/AdminTranslations"));
-const AdminLegalDocuments = lazy(() => import("./pages/AdminLegalDocuments"));
-const ASZF = lazy(() => import("./pages/ASZF"));
-const Adatkezeles = lazy(() => import("./pages/Adatkezeles"));
-
-const AdvancedAnalytics = lazy(() => import("./pages/AdvancedAnalytics"));
-const RetentionDashboard = lazy(() => import("./pages/RetentionDashboard"));
-const MonetizationDashboard = lazy(() => import("./pages/MonetizationDashboard"));
-const PerformanceDashboard = lazy(() => import("./pages/PerformanceDashboard"));
-const EngagementDashboard = lazy(() => import("./pages/EngagementDashboard"));
-const UserJourneyDashboard = lazy(() => import("./pages/UserJourneyDashboard"));
-const PopularContent = lazy(() => import("./pages/PopularContent"));
-const AdminPopularContent = lazy(() => import("./pages/AdminPopularContent"));
-const ProfileGame = lazy(() => import("./pages/ProfileGame"));
-const AdminGameProfiles = lazy(() => import("./pages/AdminGameProfiles"));
-const AdminGameProfileDetail = lazy(() => import("./pages/AdminGameProfileDetail"));
-const AdminAdInterests = lazy(() => import("./pages/AdminAdInterests"));
-const AdminBoosterTypes = lazy(() => import("./pages/AdminBoosterTypes"));
-const AdminBoosterPurchases = lazy(() => import("./pages/AdminBoosterPurchases"));
-const AdminQuestionPools = lazy(() => import("./pages/AdminQuestionPools"));
-const AdminManualCredit = lazy(() => import("./pages/AdminManualCredit"));
-const AdminPlayerBehaviors = lazy(() => import("./pages/AdminPlayerBehaviors"));
-
-const AdminProfile = lazy(() => import("./pages/AdminProfile"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+import ForgotPin from "./pages/ForgotPin";
+import Game from "./pages/Game";
+import GameRules from "./pages/GameRules";
+import RegistrationSuccess from "./pages/RegistrationSuccess";
+import InstallApp from "./pages/InstallApp";
+import About from "./pages/About";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminAgeStatistics from "./pages/AdminAgeStatistics";
+import AdminTranslations from "./pages/AdminTranslations";
+import AdminLegalDocuments from "./pages/AdminLegalDocuments";
+import ASZF from "./pages/ASZF";
+import Adatkezeles from "./pages/Adatkezeles";
+import AdvancedAnalytics from "./pages/AdvancedAnalytics";
+import RetentionDashboard from "./pages/RetentionDashboard";
+import MonetizationDashboard from "./pages/MonetizationDashboard";
+import PerformanceDashboard from "./pages/PerformanceDashboard";
+import EngagementDashboard from "./pages/EngagementDashboard";
+import UserJourneyDashboard from "./pages/UserJourneyDashboard";
+import PopularContent from "./pages/PopularContent";
+import AdminPopularContent from "./pages/AdminPopularContent";
+import ProfileGame from "./pages/ProfileGame";
+import AdminGameProfiles from "./pages/AdminGameProfiles";
+import AdminGameProfileDetail from "./pages/AdminGameProfileDetail";
+import AdminAdInterests from "./pages/AdminAdInterests";
+import AdminBoosterTypes from "./pages/AdminBoosterTypes";
+import AdminBoosterPurchases from "./pages/AdminBoosterPurchases";
+import AdminQuestionPools from "./pages/AdminQuestionPools";
+import AdminManualCredit from "./pages/AdminManualCredit";
+import AdminPlayerBehaviors from "./pages/AdminPlayerBehaviors";
+import AdminProfile from "./pages/AdminProfile";
+import NotFound from "./pages/NotFound";
 
 // Loading fallback component - uses fixed positioning to not affect layout
 const PageLoader = () => (
