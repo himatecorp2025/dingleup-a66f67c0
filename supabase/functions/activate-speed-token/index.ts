@@ -140,17 +140,7 @@ serve(async (req) => {
       );
     }
 
-    // If this was a premium booster token, mark premium as used
-    if (tokenToActivate.source === 'PREMIUM_BOOSTER') {
-      const { error: stateError } = await supabaseAdmin
-        .from("user_premium_booster_state")
-        .update({ has_pending_premium_booster: false })
-        .eq("user_id", userId);
-
-      if (stateError) {
-        console.error("[activate-speed-token] Error updating premium state:", stateError);
-      }
-    }
+    // Speed tokens are now only from gold-based booster purchases
 
     // Count remaining unused tokens
     const { count: remainingCount } = await supabaseAdmin

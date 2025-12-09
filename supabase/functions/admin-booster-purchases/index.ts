@@ -120,7 +120,7 @@ serve(async (req) => {
 
     if (!purchases || purchases.length === 0) {
       return new Response(
-        JSON.stringify({ purchases: [], summary: { totalFreePurchases: 0, totalPremiumPurchases: 0, totalGoldSpent: 0, totalUsdRevenue: 0 } }),
+        JSON.stringify({ purchases: [], summary: { totalFreePurchases: 0, totalGoldSaverPurchases: 0, totalGoldSpent: 0 } }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -162,24 +162,18 @@ serve(async (req) => {
       };
     });
 
-    // Calculate summary stats
+    // Calculate summary stats (only gold-based boosters now)
     const totalFreePurchases = response.filter(p => p.boosterCode === 'FREE').length;
-    const totalPremiumPurchases = response.filter(p => p.boosterCode === 'PREMIUM').length;
     const totalGoldSaverPurchases = response.filter(p => p.boosterCode === 'GOLD_SAVER').length;
-    const totalInstantRescuePurchases = response.filter(p => p.boosterCode === 'INSTANT_RESCUE').length;
     const totalGoldSpent = response.reduce((sum, p) => sum + p.goldSpent, 0);
-    const totalUsdRevenue = response.reduce((sum, p) => sum + p.usdCentsSpent, 0) / 100;
 
     return new Response(
       JSON.stringify({
         purchases: response,
         summary: {
           totalFreePurchases,
-          totalPremiumPurchases,
           totalGoldSaverPurchases,
-          totalInstantRescuePurchases,
-          totalGoldSpent,
-          totalUsdRevenue
+          totalGoldSpent
         }
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -24,11 +24,8 @@ interface BoosterPurchase {
 
 interface PurchaseSummary {
   total_free: number;
-  total_premium: number;
   total_gold_saver: number;
-  total_instant_rescue: number;
   total_gold_spent: number;
-  total_usd_revenue: number;
 }
 
 export default function AdminBoosterPurchases() {
@@ -36,11 +33,8 @@ export default function AdminBoosterPurchases() {
   const [purchases, setPurchases] = useState<BoosterPurchase[]>([]);
   const [summary, setSummary] = useState<PurchaseSummary>({
     total_free: 0,
-    total_premium: 0,
     total_gold_saver: 0,
-    total_instant_rescue: 0,
-    total_gold_spent: 0,
-    total_usd_revenue: 0
+    total_gold_spent: 0
   });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -102,11 +96,8 @@ export default function AdminBoosterPurchases() {
 
       setSummary({
         total_free: summaryResponse.totalFreePurchases || 0,
-        total_premium: summaryResponse.totalPremiumPurchases || 0,
         total_gold_saver: summaryResponse.totalGoldSaverPurchases || 0,
-        total_instant_rescue: summaryResponse.totalInstantRescuePurchases || 0,
         total_gold_spent: summaryResponse.totalGoldSpent || 0,
-        total_usd_revenue: summaryResponse.totalUsdRevenue || 0,
       });
     } catch (error) {
       console.error('Error fetching purchases:', error);
@@ -161,13 +152,6 @@ export default function AdminBoosterPurchases() {
           </Card>
           <Card className="p-6">
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">{t('admin.booster_purchases.premium_booster')}</p>
-              <p className="text-3xl font-bold text-green-400">{summary.total_premium}</p>
-              <p className="text-xs text-muted-foreground">{t('admin.booster_purchases.iap_purchase')}</p>
-            </div>
-          </Card>
-          <Card className="p-6">
-            <div className="space-y-2">
               <p className="text-sm text-muted-foreground">{t('admin.booster_purchases.gold_saver_booster')}</p>
               <p className="text-3xl font-bold text-orange-400">{summary.total_gold_saver}</p>
               <p className="text-xs text-muted-foreground">{t('admin.booster_purchases.during_game')}</p>
@@ -175,23 +159,9 @@ export default function AdminBoosterPurchases() {
           </Card>
           <Card className="p-6">
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">{t('admin.booster_purchases.instant_rescue')}</p>
-              <p className="text-3xl font-bold text-purple-400">{summary.total_instant_rescue}</p>
-              <p className="text-xs text-muted-foreground">{t('admin.booster_purchases.rescue_with_iap')}</p>
-            </div>
-          </Card>
-          <Card className="p-6">
-            <div className="space-y-2">
               <p className="text-sm text-muted-foreground">{t('admin.booster_purchases.gold_spent')}</p>
               <p className="text-3xl font-bold text-yellow-400">{summary.total_gold_spent.toLocaleString()}</p>
               <p className="text-xs text-muted-foreground">{t('admin.booster_purchases.total')}</p>
-            </div>
-          </Card>
-          <Card className="p-6">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">{t('admin.booster_purchases.usd_revenue')}</p>
-              <p className="text-3xl font-bold text-green-400">${summary.total_usd_revenue.toFixed(2)}</p>
-              <p className="text-xs text-muted-foreground">{t('admin.booster_purchases.from_iap')}</p>
             </div>
           </Card>
         </div>
@@ -221,9 +191,7 @@ export default function AdminBoosterPurchases() {
               <SelectContent>
                 <SelectItem value="all">{t('admin.booster_purchases.all_boosters')}</SelectItem>
                 <SelectItem value="FREE">{t('admin.booster_purchases.free_booster')}</SelectItem>
-                <SelectItem value="PREMIUM">{t('admin.booster_purchases.premium_booster')}</SelectItem>
                 <SelectItem value="GOLD_SAVER">{t('admin.booster_purchases.gold_saver')}</SelectItem>
-                <SelectItem value="INSTANT_RESCUE">{t('admin.booster_purchases.instant_rescue')}</SelectItem>
               </SelectContent>
             </Select>
           </div>

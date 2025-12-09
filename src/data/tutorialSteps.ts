@@ -44,8 +44,8 @@ export const tutorialSteps = {
         en: 'Gold Coins 🪙'
       },
       description: {
-        hu: 'Helyes válaszokért aranyérméket kapsz. Ezekkel vásárolhatsz a boltban extra életeket és prémium boostereket.',
-        en: 'You earn gold coins for correct answers. Use them to buy extra lives and premium boosters in the shop.'
+        hu: 'Helyes válaszokért aranyérméket kapsz. Ezekkel vásárolhatsz a boltban extra életeket és boostereket.',
+        en: 'You earn gold coins for correct answers. Use them to buy extra lives and boosters in the shop.'
       },
       position: 'bottom' as const
     },

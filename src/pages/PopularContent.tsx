@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, TrendingUp, Heart, Search } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/i18n';
 
@@ -13,7 +13,7 @@ interface TopicPopularity {
   topic_id: number;
   topic_name: string;
   topic_description: string | null;
-  total_likes: number;
+  play_count: number;
   question_count: number;
 }
 
@@ -24,7 +24,7 @@ export default function PopularContent() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof TopicPopularity; direction: 'asc' | 'desc' }>({
-    key: 'total_likes',
+    key: 'play_count',
     direction: 'desc',
   });
 
@@ -156,12 +156,12 @@ export default function PopularContent() {
                       </TableHead>
                       <TableHead
                         className="cursor-pointer hover:bg-muted/50 transition-colors text-right"
-                        onClick={() => handleSort('total_likes')}
+                        onClick={() => handleSort('play_count')}
                       >
                         <div className="flex items-center justify-end gap-2">
-                          <Heart className="w-4 h-4" />
-                          {t('popular.table_total_likes')}
-                          {sortConfig.key === 'total_likes' && (
+                          <TrendingUp className="w-4 h-4" />
+                          {t('popular.table_play_count')}
+                          {sortConfig.key === 'play_count' && (
                             <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
                           )}
                         </div>
@@ -195,13 +195,13 @@ export default function PopularContent() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Heart
+                            <TrendingUp
                               className={`w-4 h-4 ${
-                                topic.total_likes > 0 ? 'fill-red-500 text-red-500' : 'text-muted-foreground'
+                                topic.play_count > 0 ? 'text-primary' : 'text-muted-foreground'
                               }`}
                             />
-                            <span className={`font-bold ${topic.total_likes > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>
-                              {topic.total_likes}
+                            <span className={`font-bold ${topic.play_count > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>
+                              {topic.play_count}
                             </span>
                           </div>
                         </TableCell>
