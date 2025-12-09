@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, Clock, Target, Rocket, Sparkles } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import BottomNav from '@/components/BottomNav';
+import creatorsHeroBg from '@/assets/creators-hero-bg.png';
 
 const Creators = () => {
   const navigate = useNavigate();
@@ -81,26 +82,34 @@ const Creators = () => {
           </div>
         
           {/* Hero Section */}
-          <section className="relative rounded-3xl overflow-hidden shadow-2xl">
-            {/* Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-pink-500 to-blue-500 opacity-90" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" />
+          <section className="relative w-full overflow-hidden rounded-3xl shadow-2xl min-h-[60vh] sm:min-h-[50vh] md:min-h-[40vh]">
+            {/* Background Image - absolute positioned */}
+            <div 
+              className="absolute inset-0 bg-no-repeat bg-cover bg-center sm:bg-top md:bg-center"
+              style={{ 
+                backgroundImage: `url(${creatorsHeroBg})`,
+                imageRendering: 'auto'
+              }}
+            />
+            
+            {/* Gradient Overlay for readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60" />
             
             {/* Content */}
-            <div className="relative z-10 p-6 md:p-10 text-center">
+            <div className="relative z-10 p-6 md:p-10 text-center flex flex-col items-center justify-center min-h-[60vh] sm:min-h-[50vh] md:min-h-[40vh]">
               {/* Sparkle Icon */}
               <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/20 backdrop-blur-sm mb-4">
                 <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-yellow-300" />
               </div>
 
               {/* Title */}
-              <h1 className="text-[clamp(1.2rem,5vw,2.5rem)] font-bold text-white leading-tight mb-4 tracking-tight whitespace-nowrap">
+              <h1 className="text-[clamp(1.2rem,5vw,2.5rem)] font-bold text-white leading-tight mb-4 tracking-tight whitespace-nowrap drop-shadow-lg">
                 {t('creators.hero_title')}
               </h1>
 
               {/* Tagline */}
               <div className="max-w-lg mx-auto mb-8">
-                <p className="text-[clamp(0.875rem,3vw,1.125rem)] text-white/90 leading-relaxed">
+                <p className="text-[clamp(0.875rem,3vw,1.125rem)] text-white leading-relaxed drop-shadow-md">
                   {t('creators.hero_tagline')}
                 </p>
               </div>
@@ -112,14 +121,14 @@ const Creators = () => {
                   aria-disabled="true"
                   className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 opacity-60 cursor-not-allowed shadow-lg transition-none"
                 >
-                  <span className="block text-[clamp(1rem,4vw,1.25rem)] font-bold text-white whitespace-normal break-words">
+                  <span className="block text-[clamp(1rem,4vw,1.25rem)] font-bold text-white whitespace-normal break-words drop-shadow-md">
                     {t('creators.cta_button')}
                   </span>
                 </button>
                 
                 {/* Coming Soon Notice */}
                 <div className="mt-4 text-center">
-                  <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/60">
+                  <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/80 drop-shadow-sm">
                     {t('creators.cta_notice')}
                   </p>
                 </div>
