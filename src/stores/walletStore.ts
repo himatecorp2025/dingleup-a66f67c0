@@ -112,9 +112,9 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     }
   },
 
-  // Subscribe to real-time wallet updates (0 seconds delay)
+  // Subscribe to real-time wallet updates (0 seconds delay) - ALL relevant tables
   subscribeToWallet: () => {
-    const { userId, realtimeChannel, unsubscribeFromWallet } = get();
+    const { userId, realtimeChannel, unsubscribeFromWallet, fetchWallet } = get();
     if (!userId) return;
 
     // Cleanup existing subscription
@@ -134,6 +134,32 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
         },
         (payload: any) => {
           get().updateWalletFromRealtime(payload);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'wallet_ledger',
+          filter: `user_id=eq.${userId}`
+        },
+        () => {
+          // Refetch wallet on ledger changes for accurate balance
+          fetchWallet();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'lives_ledger',
+          filter: `user_id=eq.${userId}`
+        },
+        () => {
+          // Refetch wallet on lives ledger changes
+          fetchWallet();
         }
       )
       .subscribe();

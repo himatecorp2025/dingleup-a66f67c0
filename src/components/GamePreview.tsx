@@ -397,64 +397,10 @@ const GamePreview = memo(() => {
     trackMilestone();
   }, [currentQuestionIndex, userId, isGameReady, correctAnswers, lang]);
 
-  // Language change detection - reload questions when user changes language
-  // This works both during game AND when not playing (e.g., on Dashboard)
-  useEffect(() => {
-    const reloadQuestionsForLanguage = async () => {
-      // CRITICAL: Only reload if user is authenticated and language is set
-      if (!userId || !lang) return;
-      
-      // If game is not ready yet (initial load), let startGame handle it
-      if (!isGameReady) return;
-      
-      // If no questions loaded, nothing to reload
-      if (questions.length === 0) return;
-      
-      console.log(`[GamePreview] Language changed to ${lang}, reloading questions...`);
-      
-      try {
-        const { data: { session: authSession } } = await supabase.auth.getSession();
-        if (!authSession) return;
-
-        const { data, error } = await supabase.functions.invoke('start-game-session', {
-          headers: { Authorization: `Bearer ${authSession.access_token}` },
-          body: { lang }
-        });
-
-        if (error) throw error;
-        
-        if (!data?.questions || data.questions.length === 0) {
-          console.error('[GamePreview] No questions received for language change');
-          return;
-        }
-
-        // Preserve game state while updating questions with new language
-        const currentIndex = currentQuestionIndex;
-        const shuffledQuestions = data.questions.map((q: any) => {
-          const existingAnswers = q.answers;
-          const shuffledAnswers = [...existingAnswers].sort(() => Math.random() - 0.5);
-          return {
-            ...q,
-            answers: [
-              { key: 'A', text: shuffledAnswers[0].text, correct: shuffledAnswers[0].correct },
-              { key: 'B', text: shuffledAnswers[1].text, correct: shuffledAnswers[1].correct },
-              { key: 'C', text: shuffledAnswers[2].text, correct: shuffledAnswers[2].correct }
-            ]
-          };
-        });
-
-        setQuestions(shuffledQuestions);
-        // Ensure current index is maintained
-        setCurrentQuestionIndex(currentIndex);
-        console.log(`[GamePreview] ✓ Questions reloaded in ${lang}`);
-      } catch (error) {
-        console.error('[GamePreview] Error reloading questions for language:', error);
-      }
-    };
-
-    reloadQuestionsForLanguage();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lang]); // Only trigger when language changes
+  // REMOVED: Language change detection during active game
+  // Language is now locked when game starts - questions are loaded in the user's selected language at game start
+  // Changing language mid-game is not supported (would disrupt gameplay and cause inconsistencies)
+  // Users must restart the game if they want questions in a different language
 
   // Background detection - exit game if app goes to background (only after video ended)
   useEffect(() => {

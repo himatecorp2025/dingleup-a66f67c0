@@ -45,10 +45,10 @@ export function useProfileQuery(userId: string | undefined) {
     queryKey: PROFILE_QUERY_KEY(userId || ''),
     queryFn: () => fetchProfile(userId!),
     enabled: !!userId,
-    staleTime: 1000 * 60 * 5, // 5 minutes - data stays fresh
-    gcTime: 1000 * 60 * 10, // 10 minutes - cache kept in memory
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    staleTime: 0, // REAL-TIME: Always fetch fresh data
+    gcTime: 0, // No garbage collection delay
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnMount: true, // Refetch on component mount
   });
 
   // Update profile helper function
@@ -129,6 +129,6 @@ export function prefetchProfile(userId: string, queryClient: any) {
   return queryClient.prefetchQuery({
     queryKey: PROFILE_QUERY_KEY(userId),
     queryFn: () => fetchProfile(userId),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0, // REAL-TIME: No cache on prefetch
   });
 }

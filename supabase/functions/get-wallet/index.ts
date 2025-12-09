@@ -115,57 +115,12 @@ serve(async (req) => {
     let currentLives = Number(profile.lives ?? 0);
     let nextLifeAt = null;
     
-    if (currentLives < effectiveMaxLives && !skipRegen) {
+    // PERFORMANCE OPTIMIZATION: Always use read-only calculation to avoid UPDATE contention
+    // Life regeneration is handled by background cron job (regenerate-lives-background)
+    if (currentLives < effectiveMaxLives) {
       const nowMs = Date.now();
-      let lastRegenMs = new Date(profile.last_life_regeneration).getTime();
-      const regenIntervalMs = effectiveRegenMinutes * 60 * 1000;
-
-    // Guard: if last_life_regeneration is in the future, normalize it to now (no tolerance)
-    if (lastRegenMs > nowMs) {
-      lastRegenMs = nowMs;
-      await supabase
-        .from('profiles')
-        .update({ last_life_regeneration: new Date(lastRegenMs).toISOString() })
-        .eq('id', user.id);
-    }
-
-      // Ensure timeSinceLastRegen is never negative
-      const timeSinceLastRegen = Math.max(0, nowMs - lastRegenMs);
-
-      // Calculate how many lives should have been regenerated
-      const livesShouldBeAdded = Math.floor(timeSinceLastRegen / regenIntervalMs);
-
-      if (livesShouldBeAdded > 0) {
-        const newLastRegen = lastRegenMs + (livesShouldBeAdded * regenIntervalMs);
-        const newLives = Math.min(currentLives + livesShouldBeAdded, effectiveMaxLives);
-
-        // Update profile with new values
-        const { error: updateErr } = await supabase
-          .from('profiles')
-          .update({
-            lives: newLives,
-            last_life_regeneration: new Date(newLastRegen).toISOString()
-          })
-          .eq('id', user.id);
-
-        if (updateErr) {
-          // Non-critical error
-        } else {
-          currentLives = newLives;
-        }
-
-        if (newLives < effectiveMaxLives) {
-          nextLifeAt = new Date(newLastRegen + regenIntervalMs).toISOString();
-        }
-      } else {
-        // No lives added yet, calculate when next life will come
-        nextLifeAt = new Date(lastRegenMs + regenIntervalMs).toISOString();
-      }
-    } else if (currentLives < effectiveMaxLives && skipRegen) {
-      // READ-ONLY MODE: Calculate nextLifeAt without UPDATE (high-load optimization)
       const lastRegenMs = new Date(profile.last_life_regeneration).getTime();
       const regenIntervalMs = effectiveRegenMinutes * 60 * 1000;
-      const nowMs = Date.now();
       
       // Guard: if last_life_regeneration is in the future, use now
       const effectiveLastRegenMs = lastRegenMs > nowMs ? nowMs : lastRegenMs;
