@@ -21,10 +21,19 @@ const Creators = () => {
   ];
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-[#1a0033] via-[#2d1b69] to-[#0f0033] flex flex-col">
-      {/* Background extension for safe area */}
+    <div className="fixed inset-0 flex flex-col">
+      {/* Background Image */}
       <div 
-        className="fixed inset-0 bg-gradient-to-br from-[#1a0033] via-[#2d1b69] to-[#0f0033] pointer-events-none"
+        className="fixed inset-0 bg-no-repeat bg-cover bg-center"
+        style={{
+          backgroundImage: `url(${creatorsHeroBg})`,
+          top: 'calc(-1 * env(safe-area-inset-top, 0px))',
+          height: 'calc(100vh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))',
+        }}
+      />
+      {/* Dark overlay for readability */}
+      <div 
+        className="fixed inset-0 bg-black/40 pointer-events-none"
         style={{
           top: 'calc(-1 * env(safe-area-inset-top, 0px))',
           height: 'calc(100vh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))',
@@ -82,21 +91,9 @@ const Creators = () => {
           </div>
         
           {/* Hero Section */}
-          <section className="relative w-full overflow-hidden rounded-3xl shadow-2xl min-h-[60vh] sm:min-h-[50vh] md:min-h-[40vh]">
-            {/* Background Image - absolute positioned */}
-            <div 
-              className="absolute inset-0 bg-no-repeat bg-cover bg-center sm:bg-top md:bg-center"
-              style={{ 
-                backgroundImage: `url(${creatorsHeroBg})`,
-                imageRendering: 'auto'
-              }}
-            />
-            
-            {/* Gradient Overlay for readability */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60" />
-            
+          <section className="relative rounded-3xl overflow-hidden shadow-2xl bg-white/10 backdrop-blur-sm border border-white/10">
             {/* Content */}
-            <div className="relative z-10 p-6 md:p-10 text-center flex flex-col items-center justify-center min-h-[60vh] sm:min-h-[50vh] md:min-h-[40vh]">
+            <div className="relative z-10 p-6 md:p-10 text-center">
               {/* Sparkle Icon */}
               <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/20 backdrop-blur-sm mb-4">
                 <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-yellow-300" />
