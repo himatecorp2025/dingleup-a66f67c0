@@ -7,11 +7,8 @@ import { toast } from 'sonner';
 const COIN_PACKAGES = [
   { coins: 200, price: 0.99 },
   { coins: 300, price: 1.39 },
-  { coins: 400, price: 1.79 },
   { coins: 500, price: 2.19 },
-  { coins: 600, price: 2.59 },
   { coins: 700, price: 2.99 },
-  { coins: 800, price: 3.39 },
   { coins: 900, price: 3.79 },
   { coins: 1000, price: 3.99 },
   { coins: 1500, price: 5.49 },
