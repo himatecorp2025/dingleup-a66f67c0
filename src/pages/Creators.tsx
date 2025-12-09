@@ -44,6 +44,7 @@ const Creators = () => {
     { step: '1', titleKey: 'creators.step1_title', textKey: 'creators.step1_text' },
     { step: '2', titleKey: 'creators.step2_title', textKey: 'creators.step2_text' },
     { step: '3', titleKey: 'creators.step3_title', textKey: 'creators.step3_text' },
+    { step: '4', titleKey: 'creators.step4_title', textKey: 'creators.step4_text' },
   ];
 
   return (
@@ -267,7 +268,7 @@ const Creators = () => {
               {t('creators.steps_title')}
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {steps.map((step, index) => (
                 <div
                   key={index}
