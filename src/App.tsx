@@ -34,10 +34,10 @@ import Leaderboard from "./pages/Leaderboard";
 import Invitation from "./pages/Invitation";
 import CoinShop from "./pages/CoinShop";
 import Creators from "./pages/Creators";
+import LoginNew from "./pages/LoginNew";
+import RegisterNew from "./pages/RegisterNew";
 
 // Lazy load less frequently used pages
-const RegisterNew = lazy(() => import("./pages/RegisterNew"));
-const LoginNew = lazy(() => import("./pages/LoginNew"));
 const ForgotPin = lazy(() => import("./pages/ForgotPin"));
 const Game = lazy(() => import("./pages/Game"));
 const GameRules = lazy(() => import("./pages/GameRules"));
