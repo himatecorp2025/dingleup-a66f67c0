@@ -45,10 +45,10 @@ export function useProfileQuery(userId: string | undefined) {
     queryKey: PROFILE_QUERY_KEY(userId || ''),
     queryFn: () => fetchProfile(userId!),
     enabled: !!userId,
-    staleTime: 0, // REAL-TIME: Always fetch fresh data
-    gcTime: 0, // No garbage collection delay
+    staleTime: 30000, // OPTIMIZATION: 30s cache - realtime subscription handles updates
+    gcTime: 60000, // Keep in memory for 1 minute
     refetchOnWindowFocus: true, // Refetch when window gains focus
-    refetchOnMount: true, // Refetch on component mount
+    refetchOnMount: 'always', // Refetch on component mount
   });
 
   // Update profile helper function

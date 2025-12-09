@@ -14,7 +14,7 @@ interface I18nProviderProps {
 
 const CACHE_KEY_PREFIX = 'dingleup_translations_';
 const CACHE_VERSION_KEY = 'dingleup_translations_version';
-const CACHE_VERSION = '2.2'; // Force cache refresh - fix countdown translations
+const CACHE_VERSION = '2.3'; // Force cache refresh - removed lootbox/like legacy keys
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
 interface CachedTranslations {

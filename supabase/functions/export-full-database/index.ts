@@ -30,7 +30,6 @@ const TABLES = [
   'daily_winner_awarded', 'weekly_winner_awarded', 'daily_winners_popup_views',
   'daily_winner_popup_shown', 'weekly_winner_popup_shown', 'weekly_login_state',
   'purchases', 'booster_purchases',
-  'question_reactions',
   'friend_request_rate_limit', 'admin_audit_log',
   
   // Level 4: Depends on Level 3

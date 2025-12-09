@@ -69,10 +69,10 @@ export function useWalletQuery(userId: string | undefined) {
     queryKey: WALLET_QUERY_KEY(userId || ''),
     queryFn: () => fetchWallet(userId!),
     enabled: !!userId,
-    staleTime: 0, // No cache - always fetch fresh data
-    gcTime: 0, // No garbage collection delay
+    staleTime: 30000, // OPTIMIZATION: 30s cache - realtime subscription handles updates
+    gcTime: 60000, // Keep in memory for 1 minute
     refetchOnWindowFocus: true, // Refetch when window gains focus
-    refetchOnMount: true, // Refetch on component mount
+    refetchOnMount: 'always', // Refetch on component mount
   });
 
   // Manual refetch function
