@@ -119,7 +119,7 @@ const Creators = () => {
         
           {/* Hero Section - Glass Card Style */}
           <section 
-            className="relative min-h-[70vh] rounded-2xl overflow-hidden backdrop-blur-md border"
+            className="relative min-h-[63vh] rounded-2xl overflow-hidden backdrop-blur-md border"
             style={{
               background: 'rgba(0, 0, 0, 0.4)',
               borderColor: 'rgba(255, 255, 255, 0.13)'
@@ -143,7 +143,7 @@ const Creators = () => {
             </div>
             
             {/* Content */}
-            <div className="relative z-10 flex flex-col justify-center min-h-[70vh] px-6 py-8 md:px-10 text-center md:text-left">
+            <div className="relative z-10 flex flex-col justify-center min-h-[63vh] px-6 py-8 md:px-10 text-center md:text-left">
               <div className="md:max-w-[480px]">
                 {/* H1 - Main Title with fade-up animation */}
                 <h1 
