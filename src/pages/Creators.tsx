@@ -91,7 +91,7 @@ const Creators = () => {
           </div>
         
           {/* Hero Section */}
-          <section className="relative rounded-3xl overflow-hidden shadow-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+          <section className="relative rounded-3xl overflow-hidden shadow-2xl bg-black/60 backdrop-blur-sm border border-white/10">
             {/* Content */}
             <div className="relative z-10 p-6 md:p-10 text-center">
               {/* Sparkle Icon */}
@@ -143,7 +143,7 @@ const Creators = () => {
               {benefits.map((benefit, index) => (
                 <div
                   key={index}
-                  className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/10 hover:border-white/20 transition-colors"
+                  className="bg-black/60 backdrop-blur-sm rounded-2xl p-5 border border-white/10 hover:border-white/20 transition-colors"
                 >
                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 mb-4 mx-auto md:mx-0">
                     <benefit.icon className="w-6 h-6 text-white" />
@@ -169,7 +169,7 @@ const Creators = () => {
               {steps.map((step, index) => (
                 <div
                   key={index}
-                  className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10"
+                  className="relative bg-black/60 backdrop-blur-sm rounded-2xl p-5 border border-white/10"
                 >
                   {/* Step Number Badge */}
                   <div className="absolute -top-3 left-0 right-0 mx-auto w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
@@ -196,7 +196,7 @@ const Creators = () => {
 
           {/* Closing Section */}
           <section className="mt-10 mb-6 text-center">
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+            <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
               <p className="text-[clamp(0.875rem,3vw,1rem)] text-white leading-relaxed mb-4">
                 {t('creators.closing_text')}
               </p>
