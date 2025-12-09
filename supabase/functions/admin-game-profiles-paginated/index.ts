@@ -24,8 +24,6 @@ interface AdminUserGameProfileRow {
   username: string;
   totalAnswered: number;
   overallCorrectRatio: number;
-  totalLikes: number;
-  totalDislikes: number;
   aiPersonalizedQuestionsEnabled: boolean;
   personalizationActive: boolean;
   topTopics: {
@@ -111,7 +109,7 @@ Deno.serve(async (req) => {
     const [statsRes, topicsRes, settingsRes] = await Promise.all([
       supabaseClient
         .from('user_topic_stats')
-        .select('user_id, answered_count, correct_count, like_count, dislike_count, score, topic_id')
+        .select('user_id, answered_count, correct_count, score, topic_id')
         .in('user_id', userIds),
       
       supabaseClient.from('topics').select('id, name'),
@@ -134,8 +132,6 @@ Deno.serve(async (req) => {
     const userStatsMap = new Map<string, {
       totalAnswered: number;
       totalCorrect: number;
-      totalLikes: number;
-      totalDislikes: number;
       topicScores: { topicId: number; score: number }[];
     }>();
 
@@ -143,15 +139,11 @@ Deno.serve(async (req) => {
       const existing = userStatsMap.get(stat.user_id) || {
         totalAnswered: 0,
         totalCorrect: 0,
-        totalLikes: 0,
-        totalDislikes: 0,
         topicScores: [],
       };
 
       existing.totalAnswered += stat.answered_count;
       existing.totalCorrect += stat.correct_count;
-      existing.totalLikes += stat.like_count;
-      existing.totalDislikes += stat.dislike_count;
       existing.topicScores.push({ topicId: stat.topic_id, score: Number(stat.score) });
 
       userStatsMap.set(stat.user_id, existing);
@@ -164,8 +156,6 @@ Deno.serve(async (req) => {
       const stats = userStatsMap.get(userId) || {
         totalAnswered: 0,
         totalCorrect: 0,
-        totalLikes: 0,
-        totalDislikes: 0,
         topicScores: []
       };
 
@@ -186,8 +176,6 @@ Deno.serve(async (req) => {
         username: profileMap.get(userId) || 'Unknown',
         totalAnswered: stats.totalAnswered,
         overallCorrectRatio: stats.totalAnswered > 0 ? stats.totalCorrect / stats.totalAnswered : 0,
-        totalLikes: stats.totalLikes,
-        totalDislikes: stats.totalDislikes,
         aiPersonalizedQuestionsEnabled: aiEnabled,
         personalizationActive,
         topTopics,

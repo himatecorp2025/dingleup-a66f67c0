@@ -18,8 +18,6 @@ interface AdminUserGameProfileRow {
   username: string;
   totalAnswered: number;
   overallCorrectRatio: number;
-  totalLikes: number;
-  totalDislikes: number;
   aiPersonalizedQuestionsEnabled: boolean;
   personalizationActive: boolean;
   topTopics: { topicId: string; topicName: string; score: number; }[];
@@ -74,7 +72,7 @@ Deno.serve(async (req) => {
     const [allStats, topics, allSettings] = await Promise.all([
       supabaseClient
         .from('user_topic_stats')
-        .select('user_id, answered_count, correct_count, like_count, dislike_count, score, topic_id')
+        .select('user_id, answered_count, correct_count, score, topic_id')
         .in('user_id', userIds)
         .then(res => res.data || []),
       supabaseClient.from('topics').select('id, name').then(res => res.data || []),
@@ -93,19 +91,17 @@ Deno.serve(async (req) => {
     const userStatsMap = new Map();
     allStats.forEach(stat => {
       const existing = userStatsMap.get(stat.user_id) || {
-        totalAnswered: 0, totalCorrect: 0, totalLikes: 0, totalDislikes: 0, topicScores: []
+        totalAnswered: 0, totalCorrect: 0, topicScores: []
       };
       existing.totalAnswered += stat.answered_count;
       existing.totalCorrect += stat.correct_count;
-      existing.totalLikes += stat.like_count;
-      existing.totalDislikes += stat.dislike_count;
       existing.topicScores.push({ topicId: stat.topic_id, score: Number(stat.score) });
       userStatsMap.set(stat.user_id, existing);
     });
 
     const result: AdminUserGameProfileRow[] = [];
     userIds.forEach(userId => {
-      const stats = userStatsMap.get(userId) || { totalAnswered: 0, totalCorrect: 0, totalLikes: 0, totalDislikes: 0, topicScores: [] };
+      const stats = userStatsMap.get(userId) || { totalAnswered: 0, totalCorrect: 0, topicScores: [] };
       const aiEnabled = settingsMap.get(userId) ?? true;
       const personalizationActive = stats.totalAnswered >= 100 && aiEnabled;
       const topTopics = stats.topicScores
@@ -119,7 +115,6 @@ Deno.serve(async (req) => {
       result.push({
         userId, username: profileMap.get(userId) || 'Unknown', totalAnswered: stats.totalAnswered,
         overallCorrectRatio: stats.totalAnswered > 0 ? stats.totalCorrect / stats.totalAnswered : 0,
-        totalLikes: stats.totalLikes, totalDislikes: stats.totalDislikes,
         aiPersonalizedQuestionsEnabled: aiEnabled, personalizationActive, topTopics,
       });
     });

@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     // Fetch all user_topic_stats
     const { data: userTopicStats, error: statsError } = await supabaseServiceClient
       .from('user_topic_stats')
-      .select('user_id, topic_id, answered_count, correct_count, like_count, dislike_count');
+      .select('user_id, topic_id, answered_count, correct_count');
 
     if (statsError) {
       console.error('Error fetching user_topic_stats:', statsError);
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     console.log(`[Ad Interests] Fetched ${userTopicStats?.length || 0} user-topic stats`);
 
     // Calculate interest scores
-    const userMap = new Map<string, Map<number, { answered: number; correct: number; likes: number; dislikes: number }>>();
+    const userMap = new Map<string, Map<number, { answered: number; correct: number }>>();
 
     // Group by user
     for (const stat of userTopicStats || []) {
@@ -90,8 +90,6 @@ Deno.serve(async (req) => {
       topicMap.set(stat.topic_id, {
         answered: stat.answered_count || 0,
         correct: stat.correct_count || 0,
-        likes: stat.like_count || 0,
-        dislikes: stat.dislike_count || 0,
       });
     }
 
@@ -109,36 +107,26 @@ Deno.serve(async (req) => {
       // Find max values for this user across all topics
       let maxAnswered = 0;
       let maxCorrect = 0;
-      let totalLikes = 0;
-      let totalDislikes = 0;
 
       for (const stats of topicMap.values()) {
         maxAnswered = Math.max(maxAnswered, stats.answered);
         maxCorrect = Math.max(maxCorrect, stats.correct);
-        totalLikes += stats.likes;
-        totalDislikes += stats.dislikes;
       }
 
       // Normalize and calculate interest score for each topic
       for (const [topicId, stats] of topicMap.entries()) {
         const normalizedAnswered = maxAnswered > 0 ? stats.answered / maxAnswered : 0;
         const correctRate = stats.answered > 0 ? stats.correct / stats.answered : 0;
-        const normalizedLikes = totalLikes > 0 ? stats.likes / totalLikes : 0;
-        const normalizedDislikes = totalDislikes > 0 ? stats.dislikes / totalDislikes : 0;
 
         // Interest score formula:
-        // 40% based on how many questions answered in this topic (engagement)
-        // 30% based on correct answer rate (proficiency/interest)
-        // 20% based on likes
-        // 10% penalty for dislikes
+        // 60% based on how many questions answered in this topic (engagement)
+        // 40% based on correct answer rate (proficiency/interest)
         const interestScore = 
-          0.4 * normalizedAnswered +
-          0.3 * correctRate +
-          0.2 * normalizedLikes -
-          0.1 * normalizedDislikes;
+          0.6 * normalizedAnswered +
+          0.4 * correctRate;
 
         // Only store if there's any activity
-        if (stats.answered > 0 || stats.likes > 0) {
+        if (stats.answered > 0) {
           interestRecords.push({
             user_id: userId,
             topic_id: topicId,

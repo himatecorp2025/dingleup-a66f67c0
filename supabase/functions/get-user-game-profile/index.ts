@@ -11,8 +11,6 @@ interface TopicProfile {
   topicName: string;
   answeredCount: number;
   correctCount: number;
-  likeCount: number;
-  dislikeCount: number;
   correctRatio: number;
   score: number;
   isInTop3: boolean;
@@ -23,8 +21,6 @@ interface UserGameProfile {
   totalAnswered: number;
   totalCorrect: number;
   overallCorrectRatio: number;
-  totalLikes: number;
-  totalDislikes: number;
   topTopics: TopicProfile[];
   allTopics: TopicProfile[];
   aiPersonalizedQuestionsEnabled: boolean;
@@ -34,7 +30,6 @@ interface UserGameProfile {
     totalQuestions: number;
     preferredTopicsPercent: number;
     newQuestionsPercent: number;
-    dislikedTopicsPercent: number;
   };
 }
 
@@ -78,8 +73,6 @@ Deno.serve(async (req) => {
         topic_id,
         answered_count,
         correct_count,
-        like_count,
-        dislike_count,
         score
       `)
       .eq('user_id', userId);
@@ -102,14 +95,10 @@ Deno.serve(async (req) => {
     // Calculate aggregated stats
     let totalAnswered = 0;
     let totalCorrect = 0;
-    let totalLikes = 0;
-    let totalDislikes = 0;
 
     const allTopics: TopicProfile[] = (topicStats || []).map(stat => {
       totalAnswered += stat.answered_count;
       totalCorrect += stat.correct_count;
-      totalLikes += stat.like_count;
-      totalDislikes += stat.dislike_count;
 
       const correctRatio = stat.answered_count > 0 
         ? stat.correct_count / stat.answered_count 
@@ -120,8 +109,6 @@ Deno.serve(async (req) => {
         topicName: topicMap.get(stat.topic_id) || `Topic ${stat.topic_id}`,
         answeredCount: stat.answered_count,
         correctCount: stat.correct_count,
-        likeCount: stat.like_count,
-        dislikeCount: stat.dislike_count,
         correctRatio,
         score: Number(stat.score),
         isInTop3: false,
@@ -144,8 +131,6 @@ Deno.serve(async (req) => {
       totalAnswered,
       totalCorrect,
       overallCorrectRatio,
-      totalLikes,
-      totalDislikes,
       topTopics,
       allTopics,
       aiPersonalizedQuestionsEnabled: aiEnabled,
@@ -154,8 +139,7 @@ Deno.serve(async (req) => {
         personalized: personalizationReady && aiEnabled,
         totalQuestions: 15,
         preferredTopicsPercent: 70,
-        newQuestionsPercent: 20,
-        dislikedTopicsPercent: 10,
+        newQuestionsPercent: 30,
       },
     };
 

@@ -6,8 +6,6 @@ export interface TopicProfile {
   topicName: string;
   answeredCount: number;
   correctCount: number;
-  likeCount: number;
-  dislikeCount: number;
   correctRatio: number;
   score: number;
   isInTop3: boolean;
@@ -18,8 +16,6 @@ export interface UserGameProfile {
   totalAnswered: number;
   totalCorrect: number;
   overallCorrectRatio: number;
-  totalLikes: number;
-  totalDislikes: number;
   topTopics: TopicProfile[];
   allTopics: TopicProfile[];
   aiPersonalizedQuestionsEnabled: boolean;
@@ -29,7 +25,6 @@ export interface UserGameProfile {
     totalQuestions: number;
     preferredTopicsPercent: number;
     newQuestionsPercent: number;
-    dislikedTopicsPercent: number;
   };
 }
 
