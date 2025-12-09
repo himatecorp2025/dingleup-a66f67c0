@@ -27,20 +27,23 @@ import loadingLogo from '@/assets/dingleup-loading-logo.png';
 // Eager load only landing page for instant initial render
 import Index from "./pages/Index";
 
-// Lazy load all other pages for optimal bundle splitting
-const Dashboard = lazy(() => import("./pages/Dashboard"));
+// Eager load frequently used game pages for instant navigation
+import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import Leaderboard from "./pages/Leaderboard";
+import Invitation from "./pages/Invitation";
+import CoinShop from "./pages/CoinShop";
+import Creators from "./pages/Creators";
+
+// Lazy load less frequently used pages
 const RegisterNew = lazy(() => import("./pages/RegisterNew"));
 const LoginNew = lazy(() => import("./pages/LoginNew"));
 const ForgotPin = lazy(() => import("./pages/ForgotPin"));
 const Game = lazy(() => import("./pages/Game"));
 const GameRules = lazy(() => import("./pages/GameRules"));
-const Profile = lazy(() => import("./pages/Profile"));
-const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const RegistrationSuccess = lazy(() => import("./pages/RegistrationSuccess"));
 const InstallApp = lazy(() => import("./pages/InstallApp"));
-const Invitation = lazy(() => import("./pages/Invitation"));
 const About = lazy(() => import("./pages/About"));
-const Creators = lazy(() => import("./pages/Creators"));
 
 
 // Lazy load admin pages
@@ -159,6 +162,7 @@ const AppCore = () => {
               <Route path="/invitation" element={<ErrorBoundary><Invitation /></ErrorBoundary>} />
               <Route path="/about" element={<ErrorBoundary><About /></ErrorBoundary>} />
               <Route path="/creators" element={<ErrorBoundary><Creators /></ErrorBoundary>} />
+              <Route path="/coin-shop" element={<ErrorBoundary><CoinShop /></ErrorBoundary>} />
               
               <Route path="/popular-content" element={<ErrorBoundary><PopularContent /></ErrorBoundary>} />
               <Route path="/profile/game" element={<ErrorBoundary><ProfileGame /></ErrorBoundary>} />
