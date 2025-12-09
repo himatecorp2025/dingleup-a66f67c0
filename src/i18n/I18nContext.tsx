@@ -119,8 +119,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
         localStorage.setItem(CACHE_VERSION_KEY, CACHE_VERSION);
       }
 
-      // CRITICAL FIX: Check localStorage FIRST before database
-      // This preserves user's language choice across page refreshes
+      // OPTIMIZATION: Check localStorage FIRST - no async calls needed
       let targetLang: LangCode = DEFAULT_LANG;
       
       const storedLang = localStorage.getItem(STORAGE_KEY);
@@ -128,39 +127,14 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
         // Use stored language from localStorage (immediate, no database query needed)
         targetLang = storedLang as LangCode;
         console.log('[I18n] Using stored language from localStorage:', targetLang);
-      } else {
-        // No stored language - check user profile in database
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('preferred_language')
-            .eq('id', user.id)
-            .single();
-
-          if (profile?.preferred_language) {
-            // Use user's explicitly set preferred_language
-            targetLang = resolveInitialLang({ 
-              loggedInUserPreferredLanguage: profile.preferred_language 
-            });
-          }
-          // If no preferred_language set, stay with default English
-          
-          localStorage.setItem(STORAGE_KEY, targetLang);
-        } else {
-          // No user logged in - ALWAYS default to English
-          targetLang = 'en';
-          localStorage.setItem(STORAGE_KEY, targetLang);
-        }
       }
 
       setLangState(targetLang);
 
-      // OPTIMIZATION: Check cache first for instant render
+      // OPTIMIZATION: Check cache FIRST for instant render
       const cachedTranslations = getCachedTranslations(targetLang);
       if (cachedTranslations && Object.keys(cachedTranslations).length > 100) {
-        // Cache hit - instant render
+        // Cache hit - instant render, no blocking
         setTranslations(cachedTranslations);
         setIsLoading(false);
         
@@ -170,8 +144,31 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
             setTranslations(freshTranslations);
           }
         });
+
+        // DEFERRED: Check user profile for language preference AFTER UI is ready
+        if (!storedLang) {
+          supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) {
+              supabase
+                .from('profiles')
+                .select('preferred_language')
+                .eq('id', user.id)
+                .single()
+                .then(({ data: profile }) => {
+                  if (profile?.preferred_language && profile.preferred_language !== targetLang) {
+                    const newLang = resolveInitialLang({ 
+                      loggedInUserPreferredLanguage: profile.preferred_language 
+                    });
+                    if (newLang !== targetLang) {
+                      setLang(newLang, true);
+                    }
+                  }
+                });
+            }
+          });
+        }
       } else {
-        // Cache miss - fetch translations
+        // Cache miss - fetch translations (still fast with edge function cache)
         const trans = await fetchTranslations(targetLang);
         setTranslations(trans);
         setIsLoading(false);

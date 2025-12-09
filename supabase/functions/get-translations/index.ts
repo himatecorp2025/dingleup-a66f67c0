@@ -10,6 +10,10 @@ type LangCode = 'hu' | 'en';
 
 const VALID_LANGUAGES: LangCode[] = ['hu', 'en'];
 
+// In-memory cache for translations (reduces DB queries)
+const translationCache: Record<string, { data: Record<string, string>; timestamp: number }> = {};
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -26,39 +30,39 @@ serve(async (req) => {
       );
     }
 
+    // Check in-memory cache first
+    const now = Date.now();
+    const cached = translationCache[lang];
+    if (cached && (now - cached.timestamp) < CACHE_TTL) {
+      console.log('[get-translations] Cache hit for language:', lang);
+      return new Response(
+        JSON.stringify({ translations: cached.data }),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, max-age=300, s-maxage=300', // 5 min browser + CDN cache
+          },
+          status: 200
+        }
+      );
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!; // Use service role for faster queries
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     console.log('[get-translations] Fetching translations for language:', lang);
 
-    const PAGE_SIZE = 1000;
-    const allTranslations: any[] = [];
-    let from = 0;
+    // Single query with limit instead of pagination (faster)
+    const { data: allTranslations, error } = await supabase
+      .from('translations')
+      .select('key, hu, en')
+      .limit(10000); // Get all at once
 
-    while (true) {
-      const { data, error } = await supabase
-        .from('translations')
-        .select(`key, hu, en, ${lang}`)
-        .order('key')
-        .range(from, from + PAGE_SIZE - 1);
-
-      if (error) {
-        console.error('[get-translations] Error loading page starting at', from, error);
-        throw error;
-      }
-
-      if (!data || data.length === 0) {
-        break;
-      }
-
-      allTranslations.push(...data);
-
-      if (data.length < PAGE_SIZE) {
-        break;
-      }
-
-      from += PAGE_SIZE;
+    if (error) {
+      console.error('[get-translations] Error:', error);
+      throw error;
     }
 
     if (!allTranslations || allTranslations.length === 0) {
@@ -76,14 +80,10 @@ serve(async (req) => {
     
     for (const row of allTranslations) {
       const key = row.key;
-      const rowData = row as any;
-      const targetLangText = rowData[lang] as string | null;
+      const targetLangText = (row as any)[lang] as string | null;
       const englishText = row.en as string | null;
       const hungarianText = row.hu;
       
-      // CRITICAL: Check if translation exists (even if empty string)
-      // Empty string is a valid translation (intentionally blank), not missing
-      // Only use fallback when value is NULL/undefined
       if (targetLangText !== null && targetLangText !== undefined) {
         translationMap[key] = targetLangText;
       } else if (englishText !== null && englishText !== undefined) {
@@ -93,12 +93,19 @@ serve(async (req) => {
       }
     }
 
+    // Store in cache
+    translationCache[lang] = { data: translationMap, timestamp: now };
+
     console.log('[get-translations] Returning', Object.keys(translationMap).length, 'translations');
 
     return new Response(
       JSON.stringify({ translations: translationMap }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=300, s-maxage=300', // 5 min browser + CDN cache
+        },
         status: 200
       }
     );

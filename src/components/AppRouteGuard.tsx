@@ -43,9 +43,22 @@ export const AppRouteGuard = ({ children }: AppRouteGuardProps) => {
     checkPWAMode();
   }, []);
 
-  // Optimized session check - only check once on mount, then rely on auth state changes
+  // Optimized session check - use cached session first
   useEffect(() => {
-    // Single session check on mount
+    // Try to get cached session synchronously first
+    const cachedSession = localStorage.getItem('sb-wdpxmwsxhckazwxufttk-auth-token');
+    if (cachedSession) {
+      try {
+        const parsed = JSON.parse(cachedSession);
+        setHasSession(!!parsed?.access_token);
+      } catch {
+        setHasSession(false);
+      }
+    } else {
+      setHasSession(false);
+    }
+
+    // Then verify with actual session (background)
     supabase.auth.getSession().then(({ data: { session } }) => {
       setHasSession(!!session);
     });
