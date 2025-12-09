@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { Coins, Heart, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
-
+import { CoinIcon3D } from '@/components/icons/CoinIcon3D';
+import { HeartIcon3D } from '@/components/icons/HeartIcon3D';
 const COIN_PACKAGES = [
   { coins: 300, price: 1.39, lives: 0 },
   { coins: 500, price: 2.19, lives: 0 },
@@ -106,18 +107,7 @@ const CoinShop = () => {
                   textShadow: '0 0 20px rgba(251, 191, 36, 0.4)'
                 }}
               >
-                <div className="relative">
-                  {/* 3D Coin Icon */}
-                  <div 
-                    className="w-[clamp(1.5rem,6vw,2rem)] h-[clamp(1.5rem,6vw,2rem)] rounded-full flex items-center justify-center"
-                    style={{
-                      background: 'linear-gradient(145deg, #fcd34d 0%, #f59e0b 50%, #b45309 100%)',
-                      boxShadow: '0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2), 0 0 15px rgba(251, 191, 36, 0.3)'
-                    }}
-                  >
-                    <Coins className="w-[clamp(0.875rem,4vw,1.25rem)] h-[clamp(0.875rem,4vw,1.25rem)] text-yellow-900" />
-                  </div>
-                </div>
+                <CoinIcon3D size={32} />
                 {t('shop.title')}
               </h1>
             </div>
@@ -159,30 +149,10 @@ const CoinShop = () => {
                   }}
                 />
 
-                {/* Coin and Life icons row */}
-                <div className="relative z-10 flex items-center justify-center gap-[clamp(0.25rem,1vw,0.5rem)] mb-[clamp(0.125rem,0.5vh,0.25rem)]">
-                  {/* 3D Coin Icon */}
-                  <div 
-                    className="w-[clamp(1.25rem,6vw,1.5rem)] h-[clamp(1.25rem,6vw,1.5rem)] rounded-full flex items-center justify-center"
-                    style={{
-                      background: 'linear-gradient(145deg, #fcd34d 0%, #f59e0b 50%, #b45309 100%)',
-                      boxShadow: '0 3px 6px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.4), inset 0 -1px 2px rgba(0,0,0,0.2), 0 0 10px rgba(251, 191, 36, 0.3)'
-                    }}
-                  >
-                    <Coins className="w-[clamp(0.75rem,4vw,1rem)] h-[clamp(0.75rem,4vw,1rem)] text-yellow-900" />
-                  </div>
-                  {pkg.lives > 0 && (
-                    /* 3D Heart Icon */
-                    <div 
-                      className="w-[clamp(1.25rem,6vw,1.5rem)] h-[clamp(1.25rem,6vw,1.5rem)] rounded-full flex items-center justify-center"
-                      style={{
-                        background: 'linear-gradient(145deg, #f87171 0%, #ef4444 50%, #b91c1c 100%)',
-                        boxShadow: '0 3px 6px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.4), inset 0 -1px 2px rgba(0,0,0,0.2), 0 0 10px rgba(239, 68, 68, 0.3)'
-                      }}
-                    >
-                      <Heart className="w-[clamp(0.75rem,4vw,1rem)] h-[clamp(0.75rem,4vw,1rem)] text-white fill-white" />
-                    </div>
-                  )}
+                {/* Coin and Life icons row - 3D SVG icons */}
+                <div className="relative z-10 flex items-center justify-center gap-[clamp(0.125rem,0.5vw,0.25rem)] mb-[clamp(0.125rem,0.5vh,0.25rem)]">
+                  <CoinIcon3D size={28} />
+                  {pkg.lives > 0 && <HeartIcon3D size={28} />}
                 </div>
 
                 {/* Coin amount with 3D text effect */}
