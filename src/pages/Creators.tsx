@@ -148,7 +148,7 @@ const Creators = () => {
                     textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.5)'
                   }}
                 >
-                  Érd el, hogy <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF4F8B] to-[#FFA800]">MINDENKI</span> megnézze a videóidat.
+                  {t('creators.hero_h1_part1')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF4F8B] to-[#FFA800]">{t('creators.hero_h1_highlight')}</span> {t('creators.hero_h1_part2')}
                 </h1>
 
                 {/* H2 - Subheadline */}
@@ -159,7 +159,7 @@ const Creators = () => {
                     fontWeight: 500
                   }}
                 >
-                  Mi garantáltan berakjuk a videóidat oda, ahol végignézik.
+                  {t('creators.hero_h2')}
                 </p>
 
                 {/* H3 - Micro line */}
@@ -170,7 +170,7 @@ const Creators = () => {
                     fontWeight: 400
                   }}
                 >
-                  Nincs több algoritmus-harc. Csak valódi figyelem.
+                  {t('creators.hero_h3')}
                 </p>
 
                 {/* CTA Button - Pill Shape with Gradient */}
@@ -192,7 +192,7 @@ const Creators = () => {
                         fontWeight: 600
                       }}
                     >
-                      Elindítom a népszerűségemet!
+                      {t('creators.hero_cta')}
                     </span>
                   </button>
                   
@@ -201,7 +201,7 @@ const Creators = () => {
                     className="mt-3 text-[clamp(0.65rem,2vw,0.75rem)] text-white/55 text-center md:text-left"
                     style={{ fontFamily: 'Poppins, sans-serif' }}
                   >
-                    Hamarosan elérhető – előregisztrációs mód.
+                    {t('creators.hero_coming_soon')}
                   </p>
                 </div>
               </div>
