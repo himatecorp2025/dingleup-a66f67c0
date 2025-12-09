@@ -14,7 +14,7 @@ interface I18nProviderProps {
 
 const CACHE_KEY_PREFIX = 'dingleup_translations_';
 const CACHE_VERSION_KEY = 'dingleup_translations_version';
-const CACHE_VERSION = '2.1'; // Bumped to force cache refresh - added registration page translations
+const CACHE_VERSION = '2.2'; // Force cache refresh - fix countdown translations
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
 interface CachedTranslations {
@@ -80,21 +80,33 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
 
   const fetchTranslations = async (targetLang: LangCode): Promise<TranslationMap> => {
     try {
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      
+      if (!supabaseUrl) {
+        console.error('[I18n] VITE_SUPABASE_URL not configured');
+        return {};
+      }
+
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-translations?lang=${targetLang}`,
+        `${supabaseUrl}/functions/v1/get-translations?lang=${targetLang}`,
         {
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+            ...(anonKey ? { 'Authorization': `Bearer ${anonKey}` } : {})
           }
         }
       );
 
       if (!response.ok) {
+        console.error('[I18n] Fetch failed:', response.status, response.statusText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
       const fetchedTranslations = data?.translations || {};
+      
+      console.log('[I18n] Fetched', Object.keys(fetchedTranslations).length, 'translations for', targetLang);
       
       // Cache the fetched translations
       setCachedTranslations(targetLang, fetchedTranslations);
@@ -169,8 +181,14 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
         }
       } else {
         // Cache miss - fetch translations (still fast with edge function cache)
+        console.log('[I18n] Cache miss, fetching translations for:', targetLang);
         const trans = await fetchTranslations(targetLang);
-        setTranslations(trans);
+        if (Object.keys(trans).length > 0) {
+          setTranslations(trans);
+          console.log('[I18n] Translations loaded:', Object.keys(trans).length, 'keys');
+        } else {
+          console.error('[I18n] No translations returned from edge function!');
+        }
         setIsLoading(false);
       }
     } catch (error) {
