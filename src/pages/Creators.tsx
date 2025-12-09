@@ -5,75 +5,19 @@ import BottomNav from '@/components/BottomNav';
 
 const Creators = () => {
   const navigate = useNavigate();
-  const { lang, t } = useI18n();
-  const isHu = lang === 'hu';
+  const { t } = useI18n();
 
   const benefits = [
-    {
-      icon: Clock,
-      title: isHu ? 'Fix 15 mp figyelem minden videódra' : 'Guaranteed 15 sec attention',
-      text: isHu 
-        ? 'A rendszer garantálja, hogy aki találkozik a videóddal, legalább ~15 másodpercig látja azt a kvízfolyamon belül.'
-        : 'Everyone who sees your clip inside the quiz flow gets ~15 seconds of guaranteed exposure.',
-    },
-    {
-      icon: Target,
-      title: isHu ? 'Mindig a megfelelő témában látszol' : 'Topic-based relevance',
-      text: isHu 
-        ? 'Sport, beauty, tech, gasztro – a videóid azoknál jelennek meg, akik pont az adott témakör kvízét játszák.'
-        : 'Sport, beauty, tech, food – your videos appear inside quizzes where players already care about that topic.',
-    },
-    {
-      icon: Rocket,
-      title: isHu ? 'Garantált érdeklődői átirányítás' : 'Guaranteed engaged clicks',
-      text: isHu 
-        ? 'Ha rákattintanak, nem véletlen kattintás lesz: eleve elkötelezett, témára nyitott nézőket kapsz.'
-        : 'When they tap through, it\'s not random – these are already engaged, topic-interested viewers.',
-    },
+    { icon: Clock, titleKey: 'creators.benefit1_title', textKey: 'creators.benefit1_text' },
+    { icon: Target, titleKey: 'creators.benefit2_title', textKey: 'creators.benefit2_text' },
+    { icon: Rocket, titleKey: 'creators.benefit3_title', textKey: 'creators.benefit3_text' },
   ];
 
   const steps = [
-    {
-      step: '1',
-      title: isHu ? '30 napig teljesen ingyen kipróbálhatod' : 'Enjoy 30 days for free',
-      text: isHu 
-        ? 'Az előfizetés az aktiválástól számított 30 napig 0 Ft – csak akkor fizetsz, ha a próbaidő után is velünk akarsz maradni.'
-        : 'Your subscription is free for the first 30 days from activation – you only pay if you stay after the trial.',
-    },
-    {
-      step: '2',
-      title: isHu ? 'Összekötöd a csatornáidat' : 'Connect your channels',
-      text: isHu 
-        ? 'TikTok, YouTube Shorts, Instagram Reels, Facebook Reels – néhány kattintással beállítod, honnan hozzuk a videóidat.'
-        : 'TikTok, YouTube Shorts, Instagram Reels, Facebook Reels – set where we should pull your clips from in a few taps.',
-    },
-    {
-      step: '3',
-      title: isHu ? 'Mi betesszük a videóidat a kvízfolyamba' : 'We place your clips into the quiz flow',
-      text: isHu 
-        ? 'Az AI-alapú rendszerünk releváns témakörök közé illeszti a klipjeidet, és figyel arra, hogy ne legyen túlismétlés, se spam.'
-        : 'Our AI-based system injects your videos into the right quiz topics and avoids over-showing or spammy repetition.',
-    },
+    { step: '1', titleKey: 'creators.step1_title', textKey: 'creators.step1_text' },
+    { step: '2', titleKey: 'creators.step2_title', textKey: 'creators.step2_text' },
+    { step: '3', titleKey: 'creators.step3_title', textKey: 'creators.step3_text' },
   ];
-
-  const content = {
-    heroTitle: isHu ? 'Válj népszerűvé a DingleUP!-ban!' : 'Become popular inside DingleUP!',
-    heroTagline: isHu 
-      ? 'Kapcsold össze TikTok, YouTube Shorts, Insta és Facebook Reels videóid, mi pedig releváns, témaspecifikus kvízjátékok közé tesszük őket – garantált figyelemmel.'
-      : 'Connect your TikTok, YouTube Shorts, Insta and Facebook Reels videos, and we\'ll place them inside topic-based quiz games – with guaranteed attention.',
-    ctaMain: isHu ? 'Aktiválom a Népszerűségemet!' : 'Activate my popularity!',
-    ctaNotice: isHu 
-      ? 'Hamarosan indul – az előfizetés aktiválása még fejlesztés alatt áll.'
-      : 'Coming soon – subscription activation is still under development.',
-    benefitsTitle: isHu ? 'Mi ez neked?' : 'What\'s in it for you?',
-    stepsTitle: isHu ? 'Hogyan működik?' : 'How does it work?',
-    closingText: isHu 
-      ? 'Ha tartalmat gyártasz, itt az idő, hogy valódi, témára éhes nézők elé kerülj – nem csak a véletlenre bízva az algoritmust.'
-      : 'If you create content, it\'s time to show up in front of people who actually care about the topic – not just random scroll-by traffic.',
-    closingNotice: isHu 
-      ? 'A „Válj népszerűvé!" előfizetés hamarosan indul. Jelenleg előregisztrációs szakaszban vagyunk – a gomb ezért még inaktív.'
-      : 'The "Become popular" subscription is launching soon. We are in pre-registration mode – that\'s why the button above is still inactive.',
-  };
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-[#1a0033] via-[#2d1b69] to-[#0f0033] flex flex-col">
@@ -151,13 +95,13 @@ const Creators = () => {
 
               {/* Title */}
               <h1 className="text-[clamp(1.5rem,6vw,2.5rem)] font-bold text-white leading-tight mb-4 tracking-tight">
-                {content.heroTitle}
+                {t('creators.hero_title')}
               </h1>
 
               {/* Tagline */}
               <div className="max-w-lg mx-auto mb-8">
                 <p className="text-[clamp(0.875rem,3vw,1.125rem)] text-white/90 leading-relaxed">
-                  {content.heroTagline}
+                  {t('creators.hero_tagline')}
                 </p>
               </div>
 
@@ -169,14 +113,14 @@ const Creators = () => {
                   className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 opacity-60 cursor-not-allowed shadow-lg transition-none"
                 >
                   <span className="block text-[clamp(1rem,4vw,1.25rem)] font-bold text-white whitespace-normal break-words">
-                    {content.ctaMain}
+                    {t('creators.cta_button')}
                   </span>
                 </button>
                 
                 {/* Coming Soon Notice */}
                 <div className="mt-4 text-center">
                   <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/60">
-                    {content.ctaNotice}
+                    {t('creators.cta_notice')}
                   </p>
                 </div>
               </div>
@@ -186,7 +130,7 @@ const Creators = () => {
           {/* Benefits Section */}
           <section className="mt-8">
             <h2 className="text-[clamp(1.125rem,4.5vw,1.5rem)] font-bold text-white text-center mb-6">
-              {content.benefitsTitle}
+              {t('creators.benefits_title')}
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -199,10 +143,10 @@ const Creators = () => {
                     <benefit.icon className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="text-[clamp(0.875rem,3vw,1rem)] font-semibold text-white mb-2 text-center md:text-left">
-                    {benefit.title}
+                    {t(benefit.titleKey)}
                   </h3>
                   <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/70 text-center md:text-left leading-relaxed">
-                    {benefit.text}
+                    {t(benefit.textKey)}
                   </p>
                 </div>
               ))}
@@ -212,7 +156,7 @@ const Creators = () => {
           {/* How It Works Section */}
           <section className="mt-10">
             <h2 className="text-[clamp(1.125rem,4.5vw,1.5rem)] font-bold text-white text-center mb-6">
-              {content.stepsTitle}
+              {t('creators.steps_title')}
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -228,10 +172,10 @@ const Creators = () => {
 
                   <div className="mt-4">
                     <h3 className="text-[clamp(0.875rem,3vw,1rem)] font-semibold text-white mb-2 text-center md:text-left">
-                      {step.title}
+                      {t(step.titleKey)}
                     </h3>
                     <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/70 text-center md:text-left leading-relaxed">
-                      {step.text}
+                      {t(step.textKey)}
                     </p>
                   </div>
 
@@ -248,12 +192,12 @@ const Creators = () => {
           <section className="mt-10 mb-6 text-center">
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
               <p className="text-[clamp(0.875rem,3vw,1rem)] text-white leading-relaxed mb-4">
-                {content.closingText}
+                {t('creators.closing_text')}
               </p>
 
               <div className="pt-4 border-t border-white/10">
                 <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-yellow-400/80">
-                  🚀 {content.closingNotice}
+                  🚀 {t('creators.closing_notice')}
                 </p>
               </div>
             </div>
