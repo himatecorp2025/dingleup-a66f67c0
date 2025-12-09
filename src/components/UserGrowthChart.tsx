@@ -7,7 +7,6 @@ import { useI18n } from '@/i18n';
 interface ChartDataPoint {
   date: string;
   users: number;
-  avgSpend: number;
 }
 
 export const UserGrowthChart = () => {
@@ -47,24 +46,15 @@ export const UserGrowthChart = () => {
       const recentUsersCount = profiles?.length ?? 0;
       const baselineUsers = Math.max(0, totalUsers - recentUsersCount);
 
-      // Fetch all purchases
-      const { data: purchases, error: purchasesError } = await supabase
-        .from('purchases')
-        .select('user_id, amount_usd, created_at')
-        .eq('status', 'completed')
-        .gte('created_at', thirtyDaysAgo.toISOString());
-
-      if (purchasesError) throw purchasesError;
-
       // Group by date
-      const dataMap = new Map<string, { users: number; totalSpend: number; uniqueSpenders: Set<string> }>();
+      const dataMap = new Map<string, { users: number }>();
 
       // Initialize last 30 nap and start from users who already léteztek a periódus előtt
       for (let i = 29; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
-        dataMap.set(dateStr, { users: baselineUsers, totalSpend: 0, uniqueSpenders: new Set() });
+        dataMap.set(dateStr, { users: baselineUsers });
       }
 
       // Count cumulative users (always cumulative from teljes user bázis)
@@ -81,27 +71,12 @@ export const UserGrowthChart = () => {
         }
       });
 
-      // Calculate spending per user per day
-      purchases?.forEach((purchase) => {
-        const date = new Date(purchase.created_at).toISOString().split('T')[0];
-        const data = dataMap.get(date);
-        if (data && purchase.amount_usd) {
-          data.totalSpend += Number(purchase.amount_usd);
-          data.uniqueSpenders.add(purchase.user_id);
-        }
-      });
-
       // Convert to chart data
       const chartArray: ChartDataPoint[] = [];
       dataMap.forEach((value, date) => {
-        const avgSpend = value.uniqueSpenders.size > 0 
-          ? value.totalSpend / value.uniqueSpenders.size 
-          : 0;
-        
         chartArray.push({
           date: new Date(date).toLocaleDateString('hu-HU', { month: 'short', day: 'numeric' }),
           users: value.users,
-          avgSpend: Number(avgSpend.toFixed(2))
         });
       });
 
@@ -131,7 +106,7 @@ export const UserGrowthChart = () => {
     <div className="bg-primary-darker/50 border border-primary/30 rounded-xl lg:rounded-2xl p-4 lg:p-6">
       <div className="flex items-center gap-3 mb-4 lg:mb-6">
         <TrendingUp className="w-6 h-6 lg:w-7 lg:h-7 text-primary-glow" />
-        <h3 className="text-lg lg:text-xl font-bold text-foreground">{t('admin.chart.users_spending_30days')}</h3>
+        <h3 className="text-lg lg:text-xl font-bold text-foreground">{t('admin.chart.users_30days')}</h3>
       </div>
       
       <ResponsiveContainer width="100%" height={320}>
@@ -146,17 +121,9 @@ export const UserGrowthChart = () => {
             height={80}
           />
           <YAxis 
-            yAxisId="left"
             stroke="hsl(var(--primary-glow))"
             tick={{ fill: 'hsl(var(--primary-glow))', fontSize: 12 }}
             label={{ value: t('admin.chart.users_axis'), angle: -90, position: 'insideLeft', fill: 'hsl(var(--primary-glow))' }}
-          />
-          <YAxis 
-            yAxisId="right"
-            orientation="right"
-            stroke="hsl(var(--success))"
-            tick={{ fill: 'hsl(var(--success))', fontSize: 12 }}
-            label={{ value: t('admin.chart.avg_spend_axis'), angle: 90, position: 'insideRight', fill: 'hsl(var(--success))' }}
           />
           <Tooltip 
             contentStyle={{ 
@@ -172,7 +139,6 @@ export const UserGrowthChart = () => {
             iconType="line"
           />
           <Line 
-            yAxisId="left"
             type="monotone" 
             dataKey="users" 
             stroke="hsl(var(--primary-glow))" 
@@ -181,30 +147,14 @@ export const UserGrowthChart = () => {
             activeDot={{ r: 6 }}
             name={t('admin.chart.all_users_label')}
           />
-          <Line 
-            yAxisId="right"
-            type="monotone" 
-            dataKey="avgSpend" 
-            stroke="hsl(var(--success))" 
-            strokeWidth={3}
-            dot={{ fill: 'hsl(var(--success))', r: 4 }}
-            activeDot={{ r: 6 }}
-            name={t('admin.chart.avg_spend_label')}
-          />
         </LineChart>
       </ResponsiveContainer>
 
-      <div className="grid grid-cols-2 gap-4 mt-6">
+      <div className="mt-6">
         <div className="bg-primary/10 border border-primary/30 rounded-lg p-3">
           <p className="text-primary-glow text-xs font-semibold mb-1">{t('admin.chart.current_users')}</p>
           <p className="text-foreground text-xl font-bold">
             {chartData.length > 0 ? chartData[chartData.length - 1].users : 0}
-          </p>
-        </div>
-        <div className="bg-success/10 border border-success/30 rounded-lg p-3">
-          <p className="text-success text-xs font-semibold mb-1">{t('admin.chart.avg_spend_per_user')}</p>
-          <p className="text-foreground text-xl font-bold">
-            ${chartData.length > 0 ? chartData[chartData.length - 1].avgSpend.toFixed(2) : '0.00'}
           </p>
         </div>
       </div>

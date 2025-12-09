@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfileQuery } from '@/hooks/useProfileQuery';
 import { useWallet } from '@/hooks/useWallet';
-import { useBoosterState } from '@/hooks/useBoosterState';
 import { useI18n, LangCode } from '@/i18n';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFullscreen } from '@/hooks/useFullscreen';
@@ -26,7 +25,6 @@ const Profile = () => {
   const [userId, setUserId] = useState<string | undefined>();
   const { profile, loading, updateProfile, refreshProfile } = useProfileQuery(userId);
   const { walletData, refetchWallet } = useWallet(userId);
-  const boosterState = useBoosterState(userId);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [weeklyCorrectAnswers, setWeeklyCorrectAnswers] = useState<number>(0);

@@ -2115,60 +2115,6 @@ export type Database = {
         }
         Relationships: []
       }
-      purchases: {
-        Row: {
-          amount_coins: number | null
-          amount_usd: number | null
-          country: string | null
-          created_at: string
-          currency: string | null
-          id: string
-          metadata: Json | null
-          payment_method: string
-          product_name: string | null
-          product_type: string
-          purchase_date: string | null
-          status: string
-          stripe_charge_id: string | null
-          stripe_payment_intent_id: string | null
-          user_id: string
-        }
-        Insert: {
-          amount_coins?: number | null
-          amount_usd?: number | null
-          country?: string | null
-          created_at?: string
-          currency?: string | null
-          id?: string
-          metadata?: Json | null
-          payment_method: string
-          product_name?: string | null
-          product_type: string
-          purchase_date?: string | null
-          status?: string
-          stripe_charge_id?: string | null
-          stripe_payment_intent_id?: string | null
-          user_id: string
-        }
-        Update: {
-          amount_coins?: number | null
-          amount_usd?: number | null
-          country?: string | null
-          created_at?: string
-          currency?: string | null
-          id?: string
-          metadata?: Json | null
-          payment_method?: string
-          product_name?: string | null
-          product_type?: string
-          purchase_date?: string | null
-          status?: string
-          stripe_charge_id?: string | null
-          stripe_payment_intent_id?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       question_pools: {
         Row: {
           created_at: string | null
@@ -3085,30 +3031,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_premium_booster_state: {
-        Row: {
-          created_at: string
-          has_pending_premium_booster: boolean
-          last_premium_purchase_at: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          has_pending_premium_booster?: boolean
-          last_premium_purchase_at?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          has_pending_premium_booster?: boolean
-          last_premium_purchase_at?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       user_presence: {
         Row: {
           is_online: boolean
@@ -3123,27 +3045,6 @@ export type Database = {
         Update: {
           is_online?: boolean
           last_seen?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_purchase_settings: {
-        Row: {
-          created_at: string
-          instant_premium_booster_enabled: boolean
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          instant_premium_booster_enabled?: boolean
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          instant_premium_booster_enabled?: boolean
-          updated_at?: string
           user_id?: string
         }
         Relationships: []

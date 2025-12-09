@@ -29,7 +29,6 @@ import Index from "./pages/Index";
 
 // Lazy load all other pages for optimal bundle splitting
 const Dashboard = lazy(() => import("./pages/Dashboard"));
-const CoinShop = lazy(() => import("./pages/CoinShop"));
 const RegisterNew = lazy(() => import("./pages/RegisterNew"));
 const LoginNew = lazy(() => import("./pages/LoginNew"));
 const ForgotPin = lazy(() => import("./pages/ForgotPin"));
@@ -38,7 +37,6 @@ const GameRules = lazy(() => import("./pages/GameRules"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const RegistrationSuccess = lazy(() => import("./pages/RegistrationSuccess"));
-const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const InstallApp = lazy(() => import("./pages/InstallApp"));
 const Invitation = lazy(() => import("./pages/Invitation"));
 const About = lazy(() => import("./pages/About"));
@@ -151,13 +149,11 @@ const AppCore = () => {
               
               {/* Protected routes wrapped in ErrorBoundary */}
               <Route path="/dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
-              <Route path="/coin-shop" element={<ErrorBoundary><CoinShop /></ErrorBoundary>} />
               <Route path="/profile" element={<ErrorBoundary><Profile /></ErrorBoundary>} />
               <Route path="/leaderboard" element={<ErrorBoundary><Leaderboard /></ErrorBoundary>} />
               <Route path="/game" element={<GameErrorBoundary><Game /></GameErrorBoundary>} />
               <Route path="/game-rules" element={<ErrorBoundary><GameRules /></ErrorBoundary>} />
               <Route path="/registration-success" element={<ErrorBoundary><RegistrationSuccess /></ErrorBoundary>} />
-              <Route path="/payment-success" element={<ErrorBoundary><PaymentSuccess /></ErrorBoundary>} />
               <Route path="/install" element={<ErrorBoundary><InstallApp /></ErrorBoundary>} />
               <Route path="/invitation" element={<ErrorBoundary><Invitation /></ErrorBoundary>} />
               <Route path="/about" element={<ErrorBoundary><About /></ErrorBoundary>} />

@@ -12,7 +12,6 @@ import { usePlatformDetection } from '@/hooks/usePlatformDetection';
 import { useWalletQuery } from '@/hooks/queries/useWalletQuery';
 import { useAutoLogout } from '@/hooks/useAutoLogout';
 import { useActivityTracker } from '@/hooks/useActivityTracker';
-import { useBoosterState } from '@/hooks/useBoosterState';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useDashboardPopupManager } from '@/hooks/useDashboardPopupManager';
 import { useFullscreen } from '@/hooks/useFullscreen';
@@ -48,7 +47,7 @@ import { PersonalWinnerDialog } from '@/components/PersonalWinnerDialog';
 import { LeaderboardCarousel } from '@/components/LeaderboardCarousel';
 import { DailyRankingsCountdown } from '@/components/DailyRankingsCountdown';
 import { NextLifeTimer } from '@/components/NextLifeTimer';
-import { usePaymentPolling } from '@/hooks/usePaymentPolling';
+
 
 
 import { TutorialManager } from '@/components/tutorial/TutorialManager';
@@ -95,9 +94,7 @@ const Dashboard = () => {
   
   // Auto logout on inactivity with warning
   const { showWarning, remainingSeconds, handleStayActive } = useAutoLogout();
-  const boosterState = useBoosterState(userId);
   const [currentRank, setCurrentRank] = useState<number | null>(null);
-  const [personalWinnerError, setPersonalWinnerError] = useState<string | null>(null);
   
   
   // PERFORMANCE OPTIMIZATION: Centralized popup manager
@@ -108,9 +105,6 @@ const Dashboard = () => {
     username: profile?.username,
     profileLoading: profileLoading,
   });
-  
-  // Mobile WebView fallback: Poll for pending payments (delayed)
-  usePaymentPolling();
   
   // Pull-to-refresh functionality
   const { isPulling, pullProgress } = usePullToRefresh({
