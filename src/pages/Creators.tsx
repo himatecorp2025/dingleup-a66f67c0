@@ -115,10 +115,14 @@ const Creators = () => {
             </button>
           </div>
         
-          {/* Hero Section - Ultra Modern */}
-          <section className="relative min-h-[80vh] rounded-3xl overflow-hidden shadow-2xl">
-            {/* Gradient Overlay for Readability */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60 z-0" />
+          {/* Hero Section - Glass Card Style */}
+          <section 
+            className="relative min-h-[70vh] rounded-2xl overflow-hidden backdrop-blur-md border"
+            style={{
+              background: 'rgba(0, 0, 0, 0.4)',
+              borderColor: 'rgba(255, 255, 255, 0.13)'
+            }}
+          >
             
             {/* Floating Social Icons - Parallax Animation */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-[1]">
@@ -137,7 +141,7 @@ const Creators = () => {
             </div>
             
             {/* Content */}
-            <div className="relative z-10 flex flex-col justify-center min-h-[80vh] px-6 py-8 md:px-10 text-center md:text-left">
+            <div className="relative z-10 flex flex-col justify-center min-h-[70vh] px-6 py-8 md:px-10 text-center md:text-left">
               <div className="md:max-w-[480px]">
                 {/* H1 - Main Title with fade-up animation */}
                 <h1 
