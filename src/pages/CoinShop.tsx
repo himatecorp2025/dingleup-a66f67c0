@@ -1,19 +1,19 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Coins } from 'lucide-react';
+import { ArrowLeft, Coins, Heart } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
 
 const COIN_PACKAGES = [
-  { coins: 300, price: 1.39 },
-  { coins: 500, price: 2.19 },
-  { coins: 700, price: 2.99 },
-  { coins: 900, price: 3.79 },
-  { coins: 1000, price: 3.99 },
-  { coins: 1500, price: 5.49 },
-  { coins: 2500, price: 8.49 },
-  { coins: 3000, price: 9.99 },
-  { coins: 5000, price: 14.99 },
+  { coins: 300, price: 1.39, lives: 0 },
+  { coins: 500, price: 2.19, lives: 0 },
+  { coins: 700, price: 2.99, lives: 0 },
+  { coins: 900, price: 3.79, lives: 10 },
+  { coins: 1000, price: 3.99, lives: 15 },
+  { coins: 1500, price: 5.49, lives: 25 },
+  { coins: 2500, price: 8.49, lives: 40 },
+  { coins: 3000, price: 9.99, lives: 60 },
+  { coins: 5000, price: 14.99, lives: 100 },
 ];
 
 const CoinShop = () => {
@@ -63,17 +63,29 @@ const CoinShop = () => {
               {/* Glow effect */}
               <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-yellow-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity" />
               
-              {/* Coin icon */}
-              <div className="relative z-10 mb-[clamp(0.125rem,0.5vh,0.25rem)]">
-                <div className="w-[clamp(1.5rem,8vw,2rem)] h-[clamp(1.5rem,8vw,2rem)] rounded-full bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 flex items-center justify-center shadow-lg shadow-yellow-500/30">
-                  <Coins className="w-[clamp(0.875rem,5vw,1.25rem)] h-[clamp(0.875rem,5vw,1.25rem)] text-yellow-900" />
+              {/* Coin and Life icons row */}
+              <div className="relative z-10 flex items-center justify-center gap-[clamp(0.25rem,1vw,0.5rem)] mb-[clamp(0.125rem,0.5vh,0.25rem)]">
+                <div className="w-[clamp(1.25rem,6vw,1.5rem)] h-[clamp(1.25rem,6vw,1.5rem)] rounded-full bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 flex items-center justify-center shadow-lg shadow-yellow-500/30">
+                  <Coins className="w-[clamp(0.75rem,4vw,1rem)] h-[clamp(0.75rem,4vw,1rem)] text-yellow-900" />
                 </div>
+                {pkg.lives > 0 && (
+                  <div className="w-[clamp(1.25rem,6vw,1.5rem)] h-[clamp(1.25rem,6vw,1.5rem)] rounded-full bg-gradient-to-br from-red-400 via-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/30">
+                    <Heart className="w-[clamp(0.75rem,4vw,1rem)] h-[clamp(0.75rem,4vw,1rem)] text-white fill-white" />
+                  </div>
+                )}
               </div>
 
               {/* Coin amount */}
-              <span className="relative z-10 text-yellow-400 font-bold text-[clamp(0.875rem,4vw,1.125rem)] leading-tight">
+              <span className="relative z-10 text-yellow-400 font-bold text-[clamp(0.75rem,3.5vw,1rem)] leading-tight">
                 {pkg.coins.toLocaleString()}
               </span>
+
+              {/* Lives amount */}
+              {pkg.lives > 0 && (
+                <span className="relative z-10 text-red-400 font-bold text-[clamp(0.625rem,2.5vw,0.75rem)] leading-tight">
+                  +{pkg.lives} ❤️
+                </span>
+              )}
 
               {/* Price - doubled size */}
               <span className="relative z-10 text-white font-bold text-[clamp(1rem,5vw,1.5rem)] mt-[clamp(0.25rem,1vh,0.5rem)] bg-yellow-600/40 px-[clamp(0.5rem,2vw,0.75rem)] py-[clamp(0.125rem,0.5vh,0.25rem)] rounded-full border border-yellow-500/50">
