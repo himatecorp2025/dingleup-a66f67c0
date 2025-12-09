@@ -764,7 +764,7 @@ const Profile = () => {
                   <Globe className="w-4 h-4" />
                   {t('profile.language_label')}
                 </p>
-                <Select value={lang} onValueChange={(newLang: LangCode) => setLang(newLang, true)}>
+                <Select value={lang} onValueChange={(newLang: LangCode) => setLang(newLang, false)}>
                   <SelectTrigger className="bg-black/30 border-purple-500/30 text-white hover:border-purple-400/50 focus:border-purple-400">
                     <SelectValue />
                   </SelectTrigger>
