@@ -40,6 +40,7 @@ const RegistrationSuccess = lazy(() => import("./pages/RegistrationSuccess"));
 const InstallApp = lazy(() => import("./pages/InstallApp"));
 const Invitation = lazy(() => import("./pages/Invitation"));
 const About = lazy(() => import("./pages/About"));
+const Creators = lazy(() => import("./pages/Creators"));
 
 
 // Lazy load admin pages
@@ -157,6 +158,7 @@ const AppCore = () => {
               <Route path="/install" element={<ErrorBoundary><InstallApp /></ErrorBoundary>} />
               <Route path="/invitation" element={<ErrorBoundary><Invitation /></ErrorBoundary>} />
               <Route path="/about" element={<ErrorBoundary><About /></ErrorBoundary>} />
+              <Route path="/creators" element={<ErrorBoundary><Creators /></ErrorBoundary>} />
               
               <Route path="/popular-content" element={<ErrorBoundary><PopularContent /></ErrorBoundary>} />
               <Route path="/profile/game" element={<ErrorBoundary><ProfileGame /></ErrorBoundary>} />

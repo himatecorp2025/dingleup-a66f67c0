@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useEffect, useState, useRef } from 'react';
 import { useI18n } from '@/i18n';
-import { Users } from 'lucide-react';
+import { Users, Zap } from 'lucide-react';
 
 const BottomNav = () => {
   const [isDesktop, setIsDesktop] = useState(false);
@@ -87,6 +87,14 @@ const BottomNav = () => {
       label: t('nav.dashboard'), 
       path: '/dashboard' 
     },
+    {
+      icon: () => (
+        <Zap style={{ width: 'clamp(18px, 3vh, 22px)', height: 'clamp(18px, 3vh, 22px)' }} />
+      ),
+      label: t('nav.creators'),
+      path: '/creators',
+      isGold: true
+    },
     { 
       icon: () => (
         <svg style={{ width: 'clamp(18px, 3vh, 22px)', height: 'clamp(18px, 3vh, 22px)' }} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -142,6 +150,7 @@ const BottomNav = () => {
         {navItems.map((item, index) => {
           const IconComponent = item.icon;
           const isActive = location.pathname === item.path;
+          const isGold = (item as any).isGold;
           
           return (
             <button
@@ -150,9 +159,11 @@ const BottomNav = () => {
               className={`
                 flex flex-col items-center justify-center rounded-lg
                 transition-all duration-200 relative overflow-hidden flex-1
-                ${isActive 
-                  ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white shadow-lg shadow-purple-500/20' 
-                  : 'text-white/60 hover:bg-white/5'}
+                ${isGold 
+                  ? 'bg-gradient-to-r from-yellow-600/30 to-amber-500/30 text-yellow-400 shadow-lg shadow-yellow-500/20 border border-yellow-500/30' 
+                  : isActive 
+                    ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white shadow-lg shadow-purple-500/20' 
+                    : 'text-white/60 hover:bg-white/5'}
               `}
               style={{
                 padding: 'clamp(0.5rem, 1.5vh, 0.75rem) clamp(0.5rem, 1.5vh, 0.75rem)',
@@ -161,13 +172,16 @@ const BottomNav = () => {
               aria-label={item.label}
               aria-current={isActive ? 'page' : undefined}
             >
-              {isActive && (
+              {isActive && !isGold && (
                 <div className="absolute inset-0 bg-gradient-to-t from-purple-600/20 to-transparent animate-pulse"></div>
               )}
-              <div className="relative z-10 text-purple-400" style={{ marginBottom: 'clamp(2px, 0.5vh, 4px)' }}>
+              {isGold && (
+                <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/20 to-transparent animate-pulse"></div>
+              )}
+              <div className={`relative z-10 ${isGold ? 'text-yellow-400' : 'text-purple-400'}`} style={{ marginBottom: 'clamp(2px, 0.5vh, 4px)' }}>
                 <IconComponent />
               </div>
-              <span className="font-medium relative z-10 leading-tight"
+              <span className={`font-medium relative z-10 leading-tight ${isGold ? 'text-yellow-400' : ''}`}
                 style={{ fontSize: 'clamp(0.625rem, 1.4vh, 0.6875rem)' }}
               >{item.label}</span>
             </button>
