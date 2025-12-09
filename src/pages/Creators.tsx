@@ -1,8 +1,33 @@
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Clock, Target, Rocket, Sparkles } from 'lucide-react';
+import { LogOut, Clock, Target, Rocket } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import BottomNav from '@/components/BottomNav';
 import creatorsHeroBg from '@/assets/creators-hero-bg.png';
+
+// Social Media Icons as inline SVGs for floating animation
+const TikTokIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white/60">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+  </svg>
+);
+
+const YouTubeIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white/60">
+    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+  </svg>
+);
+
+const InstagramIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white/60">
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+  </svg>
+);
+
+const FacebookIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white/60">
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+  </svg>
+);
 
 const Creators = () => {
   const navigate = useNavigate();
@@ -90,43 +115,93 @@ const Creators = () => {
             </button>
           </div>
         
-          {/* Hero Section */}
-          <section className="relative rounded-3xl overflow-hidden shadow-2xl bg-black/60 backdrop-blur-sm border border-white/10">
+          {/* Hero Section - Ultra Modern */}
+          <section className="relative min-h-[80vh] rounded-3xl overflow-hidden shadow-2xl">
+            {/* Gradient Overlay for Readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60 z-0" />
+            
+            {/* Floating Social Icons - Parallax Animation */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none z-[1]">
+              <div className="absolute top-[15%] left-[8%] animate-[float_4s_ease-in-out_infinite]">
+                <TikTokIcon />
+              </div>
+              <div className="absolute top-[25%] right-[10%] animate-[float_5s_ease-in-out_infinite_0.5s]">
+                <YouTubeIcon />
+              </div>
+              <div className="absolute bottom-[30%] left-[12%] animate-[float_6s_ease-in-out_infinite_1s]">
+                <InstagramIcon />
+              </div>
+              <div className="absolute bottom-[20%] right-[8%] animate-[float_4.5s_ease-in-out_infinite_0.8s]">
+                <FacebookIcon />
+              </div>
+            </div>
+            
             {/* Content */}
-            <div className="relative z-10 p-6 md:p-10 text-center">
-              {/* Sparkle Icon */}
-              <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/20 backdrop-blur-sm mb-4">
-                <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-yellow-300" />
-              </div>
-
-              {/* Title */}
-              <h1 className="text-[clamp(1.2rem,5vw,2.5rem)] font-bold text-white leading-tight mb-4 tracking-tight whitespace-nowrap drop-shadow-lg">
-                {t('creators.hero_title')}
-              </h1>
-
-              {/* Tagline */}
-              <div className="max-w-lg mx-auto mb-8">
-                <p className="text-[clamp(0.875rem,3vw,1.125rem)] text-white leading-relaxed drop-shadow-md">
-                  {t('creators.hero_tagline')}
-                </p>
-              </div>
-
-              {/* CTA Button - Disabled */}
-              <div className="max-w-[360px] md:max-w-[450px] mx-auto">
-                <button
-                  disabled
-                  aria-disabled="true"
-                  className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 opacity-60 cursor-not-allowed shadow-lg transition-none"
+            <div className="relative z-10 flex flex-col justify-center min-h-[80vh] px-6 py-8 md:px-10 text-center md:text-left">
+              <div className="md:max-w-[480px]">
+                {/* H1 - Main Title with fade-up animation */}
+                <h1 
+                  className="text-[clamp(1.5rem,6vw,3rem)] text-white leading-[1.1] mb-3 tracking-[0.02em] animate-[fadeUp_0.6s_ease-out_0.25s_both]"
+                  style={{ 
+                    fontFamily: 'Poppins, sans-serif',
+                    fontWeight: 800,
+                    textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.5)'
+                  }}
                 >
-                  <span className="block text-[clamp(1rem,4vw,1.25rem)] font-bold text-white whitespace-normal break-words drop-shadow-md">
-                    {t('creators.cta_button')}
-                  </span>
-                </button>
-                
-                {/* Coming Soon Notice */}
-                <div className="mt-4 text-center">
-                  <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/80 drop-shadow-sm">
-                    {t('creators.cta_notice')}
+                  Érd el, hogy <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF4F8B] to-[#FFA800]">MINDENKI</span> megnézze a videóidat.
+                </h1>
+
+                {/* H2 - Subheadline */}
+                <p 
+                  className="text-[clamp(0.95rem,3.5vw,1.25rem)] text-white/80 leading-relaxed mb-3 animate-[fadeUp_0.6s_ease-out_0.35s_both]"
+                  style={{ 
+                    fontFamily: 'Poppins, sans-serif',
+                    fontWeight: 500
+                  }}
+                >
+                  Mi garantáltan berakjuk a videóidat oda, ahol végignézik.
+                </p>
+
+                {/* H3 - Micro line */}
+                <p 
+                  className="text-[clamp(0.8rem,2.8vw,1rem)] text-white/65 mb-6 animate-[fadeUp_0.6s_ease-out_0.4s_both]"
+                  style={{ 
+                    fontFamily: 'Poppins, sans-serif',
+                    fontWeight: 400
+                  }}
+                >
+                  Nincs több algoritmus-harc. Csak valódi figyelem.
+                </p>
+
+                {/* CTA Button - Pill Shape with Gradient */}
+                <div className="animate-[fadeUp_0.6s_ease-out_0.45s_both]">
+                  <button
+                    disabled
+                    aria-disabled="true"
+                    className="w-full md:w-auto px-10 rounded-full opacity-60 cursor-not-allowed shadow-2xl transition-transform duration-200"
+                    style={{
+                      height: 'clamp(52px, 12vw, 60px)',
+                      background: 'linear-gradient(90deg, #FF4F8B 0%, #FFA800 100%)',
+                      boxShadow: '0 8px 32px rgba(255,79,139,0.4), 0 4px 16px rgba(255,168,0,0.3)'
+                    }}
+                  >
+                    <span 
+                      className="text-[clamp(1rem,4vw,1.2rem)] text-white drop-shadow-lg"
+                      style={{ 
+                        fontFamily: 'Poppins, sans-serif',
+                        fontWeight: 600
+                      }}
+                    >
+                      Elindítom a népszerűségemet!
+                    </span>
+                  </button>
+                  
+                  {/* Coming Soon Notice */}
+                  <p 
+                    className="mt-3 text-[clamp(0.65rem,2vw,0.75rem)] text-white/55 text-center md:text-left"
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    Hamarosan elérhető – előregisztrációs mód.
                   </p>
                 </div>
               </div>
