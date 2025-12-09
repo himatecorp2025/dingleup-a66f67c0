@@ -119,7 +119,7 @@ serve(async (req) => {
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/json',
-          'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1 hour browser + CDN cache
+          'Cache-Control': 'no-cache, no-store, must-revalidate', // Force fresh data
         },
         status: 200
       }
