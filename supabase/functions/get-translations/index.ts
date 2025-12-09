@@ -10,9 +10,84 @@ type LangCode = 'hu' | 'en';
 
 const VALID_LANGUAGES: LangCode[] = ['hu', 'en'];
 
-// In-memory cache for translations (reduces DB queries)
-const translationCache: Record<string, { data: Record<string, string>; timestamp: number }> = {};
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+// ============================================================================
+// IN-MEMORY TRANSLATION CACHE - Same pattern as question pools
+// Translations are static data, loaded once and served from memory
+// ============================================================================
+const TRANSLATIONS_CACHE: Record<LangCode, Record<string, string>> = {
+  hu: {},
+  en: {}
+};
+let CACHE_INITIALIZED = false;
+let CACHE_INIT_PROMISE: Promise<void> | null = null;
+
+// Initialize translation cache from database (runs once per cold start)
+async function initializeTranslationsCache(): Promise<void> {
+  if (CACHE_INITIALIZED) return;
+  if (CACHE_INIT_PROMISE) return CACHE_INIT_PROMISE;
+
+  CACHE_INIT_PROMISE = (async () => {
+    const startTime = Date.now();
+    console.log('[get-translations] Initializing in-memory cache...');
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Fetch ALL translations with pagination (Supabase limit is 1000)
+    let allTranslations: any[] = [];
+    let offset = 0;
+    const batchSize = 1000;
+
+    while (true) {
+      const { data: batch, error } = await supabase
+        .from('translations')
+        .select('key, hu, en')
+        .range(offset, offset + batchSize - 1);
+
+      if (error) {
+        console.error('[get-translations] Cache init error:', error);
+        CACHE_INIT_PROMISE = null;
+        throw error;
+      }
+
+      if (!batch || batch.length === 0) break;
+
+      allTranslations = allTranslations.concat(batch);
+
+      if (batch.length < batchSize) break; // Last page
+      offset += batchSize;
+    }
+
+    // Build language-specific maps
+    for (const row of allTranslations) {
+      const key = row.key;
+      
+      // Hungarian map
+      if (row.hu) {
+        TRANSLATIONS_CACHE.hu[key] = row.hu;
+      }
+      
+      // English map (with fallback to Hungarian)
+      if (row.en) {
+        TRANSLATIONS_CACHE.en[key] = row.en;
+      } else if (row.hu) {
+        TRANSLATIONS_CACHE.en[key] = row.hu; // Fallback to Hungarian
+      }
+    }
+
+    CACHE_INITIALIZED = true;
+    const elapsed = Date.now() - startTime;
+
+    console.log(`[get-translations] Cache initialized in ${elapsed}ms:`, {
+      total_keys: allTranslations.length,
+      hu_keys: Object.keys(TRANSLATIONS_CACHE.hu).length,
+      en_keys: Object.keys(TRANSLATIONS_CACHE.en).length
+    });
+  })();
+
+  return CACHE_INIT_PROMISE;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -30,94 +105,21 @@ serve(async (req) => {
       );
     }
 
-    // Check in-memory cache first
-    const now = Date.now();
-    const cached = translationCache[lang];
-    if (cached && (now - cached.timestamp) < CACHE_TTL) {
-      console.log('[get-translations] Cache hit for language:', lang);
-      return new Response(
-        JSON.stringify({ translations: cached.data }),
-        { 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json',
-            'Cache-Control': 'public, max-age=300, s-maxage=300', // 5 min browser + CDN cache
-          },
-          status: 200
-        }
-      );
-    }
+    // Initialize cache if needed (only runs once per cold start)
+    await initializeTranslationsCache();
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!; // Use service role for faster queries
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    console.log('[get-translations] Fetching translations for language:', lang);
-
-    // Fetch ALL translations - Supabase default limit is 1000, so we need pagination
-    let allTranslations: any[] = [];
-    let offset = 0;
-    const batchSize = 1000;
+    // Serve from in-memory cache - ZERO database queries!
+    const translations = TRANSLATIONS_CACHE[lang];
     
-    while (true) {
-      const { data: batch, error } = await supabase
-        .from('translations')
-        .select('key, hu, en')
-        .range(offset, offset + batchSize - 1);
-      
-      if (error) {
-        console.error('[get-translations] Error:', error);
-        throw error;
-      }
-      
-      if (!batch || batch.length === 0) break;
-      
-      allTranslations = allTranslations.concat(batch);
-      
-      if (batch.length < batchSize) break; // Last page
-      offset += batchSize;
-    }
-
-    if (!allTranslations || allTranslations.length === 0) {
-      console.log('[get-translations] No translations found');
-      return new Response(
-        JSON.stringify({ translations: {} }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-      );
-    }
-
-    console.log('[get-translations] Fetched', allTranslations.length, 'translations');
-
-    // Build translation map with fallback chain: target → en → hu
-    const translationMap: Record<string, string> = {};
-    
-    for (const row of allTranslations) {
-      const key = row.key;
-      const targetLangText = (row as any)[lang] as string | null;
-      const englishText = row.en as string | null;
-      const hungarianText = row.hu;
-      
-      if (targetLangText !== null && targetLangText !== undefined) {
-        translationMap[key] = targetLangText;
-      } else if (englishText !== null && englishText !== undefined) {
-        translationMap[key] = englishText;
-      } else {
-        translationMap[key] = hungarianText || key;
-      }
-    }
-
-    // Store in cache
-    translationCache[lang] = { data: translationMap, timestamp: now };
-
-    console.log('[get-translations] Returning', Object.keys(translationMap).length, 'translations');
+    console.log(`[get-translations] Serving ${Object.keys(translations).length} translations for ${lang} from memory`);
 
     return new Response(
-      JSON.stringify({ translations: translationMap }),
+      JSON.stringify({ translations }),
       { 
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/json',
-          'Cache-Control': 'public, max-age=300, s-maxage=300', // 5 min browser + CDN cache
+          'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1 hour browser + CDN cache
         },
         status: 200
       }
