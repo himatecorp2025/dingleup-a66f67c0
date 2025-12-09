@@ -54,15 +54,28 @@ serve(async (req) => {
 
     console.log('[get-translations] Fetching translations for language:', lang);
 
-    // Single query with limit instead of pagination (faster)
-    const { data: allTranslations, error } = await supabase
-      .from('translations')
-      .select('key, hu, en')
-      .limit(10000); // Get all at once
-
-    if (error) {
-      console.error('[get-translations] Error:', error);
-      throw error;
+    // Fetch ALL translations - Supabase default limit is 1000, so we need pagination
+    let allTranslations: any[] = [];
+    let offset = 0;
+    const batchSize = 1000;
+    
+    while (true) {
+      const { data: batch, error } = await supabase
+        .from('translations')
+        .select('key, hu, en')
+        .range(offset, offset + batchSize - 1);
+      
+      if (error) {
+        console.error('[get-translations] Error:', error);
+        throw error;
+      }
+      
+      if (!batch || batch.length === 0) break;
+      
+      allTranslations = allTranslations.concat(batch);
+      
+      if (batch.length < batchSize) break; // Last page
+      offset += batchSize;
     }
 
     if (!allTranslations || allTranslations.length === 0) {
