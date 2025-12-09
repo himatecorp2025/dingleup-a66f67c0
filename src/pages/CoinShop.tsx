@@ -19,7 +19,7 @@ const COIN_PACKAGES = [
 
 const CoinShop = () => {
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
 
   const handlePurchase = (coins: number, price: number) => {
     toast.info(`${coins} ${t('shop.coins_purchase')} - $${price.toFixed(2)}`);
@@ -98,7 +98,7 @@ const CoinShop = () => {
             {/* 3D Title */}
             <div className="relative text-center flex-1">
               <h1 
-                className="text-[clamp(1rem,4vw,1.5rem)] font-bold"
+                className="text-[clamp(1.5rem,6vw,2.25rem)] font-bold"
                 style={{
                   background: 'linear-gradient(180deg, #fcd34d 0%, #f59e0b 50%, #d97706 100%)',
                   WebkitBackgroundClip: 'text',
@@ -107,10 +107,10 @@ const CoinShop = () => {
                   textShadow: '0 0 20px rgba(251, 191, 36, 0.4)'
                 }}
               >
-                Szerezz előnyt még ma!
+                {lang === 'hu' ? 'Szerezz előnyt még ma!' : 'Get an advantage today!'}
               </h1>
               <p 
-                className="text-[clamp(0.65rem,2.5vw,0.875rem)] font-medium mt-0.5"
+                className="text-[clamp(1rem,3.75vw,1.3rem)] font-medium mt-0.5"
                 style={{
                   background: 'linear-gradient(180deg, #ffffff 0%, #a1a1aa 100%)',
                   WebkitBackgroundClip: 'text',
@@ -118,7 +118,7 @@ const CoinShop = () => {
                   filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))'
                 }}
               >
-                Gyűjts be az aranyakat és az extra életeket!
+                {lang === 'hu' ? 'Gyűjtsd be az aranyakat és az extra életeket!' : 'Collect gold and extra lives!'}
               </p>
             </div>
 
