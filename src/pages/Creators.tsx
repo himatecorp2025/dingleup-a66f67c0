@@ -166,7 +166,7 @@ const Creators = () => {
                   className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10"
                 >
                   {/* Step Number Badge */}
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                  <div className="absolute -top-3 left-0 right-0 mx-auto w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
                     <span className="text-white font-bold text-sm">{step.step}</span>
                   </div>
 
