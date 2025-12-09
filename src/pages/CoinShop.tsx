@@ -5,17 +5,14 @@ import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
 
 const COIN_PACKAGES = [
-  { coins: 200, price: 0.99 },
   { coins: 300, price: 1.39 },
   { coins: 500, price: 2.19 },
   { coins: 700, price: 2.99 },
   { coins: 900, price: 3.79 },
   { coins: 1000, price: 3.99 },
   { coins: 1500, price: 5.49 },
-  { coins: 2000, price: 6.99 },
   { coins: 2500, price: 8.49 },
   { coins: 3000, price: 9.99 },
-  { coins: 4000, price: 12.99 },
   { coins: 5000, price: 14.99 },
 ];
 
