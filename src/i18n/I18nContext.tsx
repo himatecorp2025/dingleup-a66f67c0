@@ -299,6 +299,11 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
   };
 
   const t = (key: string): string => {
+    // If still loading, return empty string to avoid showing keys
+    if (isLoading && Object.keys(translations).length === 0) {
+      return ''; // Return empty while loading to prevent key flash
+    }
+    
     // The edge function already returns the correct language with fallback to Hungarian
     // So we just need to return the value directly from the translations map
     const value = translations[key];
@@ -307,8 +312,8 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
       return value;
     }
 
-    // Log missing translation in development
-    if (import.meta.env.DEV) {
+    // Log missing translation in development (only if translations loaded)
+    if (import.meta.env.DEV && Object.keys(translations).length > 0) {
       console.warn(`[I18n] Missing translation for key: ${key} (lang: ${lang})`);
     }
 
