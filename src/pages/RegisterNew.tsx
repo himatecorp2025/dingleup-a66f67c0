@@ -180,11 +180,9 @@ const RegisterNew = () => {
 
   return (
     <div 
-      className="min-h-screen min-h-dvh w-screen fixed inset-0 overflow-hidden bg-gradient-to-br from-[#1a0033] via-[#2d1b69] to-[#0f0033] animate-fade-in"
+      className="w-screen fixed inset-0 overflow-hidden bg-gradient-to-br from-[#1a0033] via-[#2d1b69] to-[#0f0033] animate-fade-in flex items-center justify-center"
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        height: '100dvh',
         paddingTop: isStandalone ? 'env(safe-area-inset-top)' : '0',
         paddingBottom: isStandalone ? 'env(safe-area-inset-bottom)' : '0'
       }}
@@ -201,7 +199,7 @@ const RegisterNew = () => {
         }}
       />
 
-      <div className="w-[90vw] max-w-[500px] relative z-10 m-auto">
+      <div className="w-[90vw] max-w-[500px] relative z-10" style={{ maxHeight: '90dvh' }}>
         <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 relative w-full flex flex-col"
           style={{
             padding: 'clamp(1rem, 2vh, 2rem)'
