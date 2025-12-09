@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Clock, Target, Rocket } from 'lucide-react';
+import { LogOut, Eye, Users, MousePointerClick } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import BottomNav from '@/components/BottomNav';
 import creatorsHeroBg from '@/assets/creators-hero-bg.png';
@@ -34,9 +34,9 @@ const Creators = () => {
   const { t } = useI18n();
 
   const benefits = [
-    { icon: Clock, titleKey: 'creators.benefit1_title', textKey: 'creators.benefit1_text' },
-    { icon: Target, titleKey: 'creators.benefit2_title', textKey: 'creators.benefit2_text' },
-    { icon: Rocket, titleKey: 'creators.benefit3_title', textKey: 'creators.benefit3_text' },
+    { icon: Eye, titleKey: 'creators.benefit1_title', textKey: 'creators.benefit1_text' },
+    { icon: Users, titleKey: 'creators.benefit2_title', textKey: 'creators.benefit2_text' },
+    { icon: MousePointerClick, titleKey: 'creators.benefit3_title', textKey: 'creators.benefit3_text' },
   ];
 
   const steps = [
@@ -208,25 +208,44 @@ const Creators = () => {
             </div>
           </section>
 
-          {/* Benefits Section */}
-          <section className="mt-8">
-            <h2 className="text-[clamp(1.125rem,4.5vw,1.5rem)] font-bold text-white text-center mb-6">
+          {/* Benefits Section - "Miért jó neked?" */}
+          <section className="mt-10">
+            <h2 
+              className="text-[clamp(1.25rem,5vw,2rem)] text-white text-center mb-8 animate-[fadeUp_0.6s_ease-out_both]"
+              style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800 }}
+            >
               {t('creators.benefits_title')}
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {benefits.map((benefit, index) => (
                 <div
                   key={index}
-                  className="bg-black/60 backdrop-blur-sm rounded-2xl p-5 border border-white/10 hover:border-white/20 transition-colors"
+                  className="backdrop-blur-md rounded-2xl p-6 border hover:scale-[1.02] transition-all duration-300"
+                  style={{
+                    background: 'rgba(0, 0, 0, 0.4)',
+                    borderColor: 'rgba(255, 255, 255, 0.13)',
+                    animation: `fadeUp 0.5s ease-out ${0.2 + index * 0.15}s both, subtleFloat 6s ease-in-out ${index * 0.5}s infinite`
+                  }}
                 >
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 mb-4 mx-auto md:mx-0">
-                    <benefit.icon className="w-6 h-6 text-white" />
+                  {/* Icon with gradient background */}
+                  <div 
+                    className="flex items-center justify-center w-14 h-14 rounded-full mb-5 mx-auto md:mx-0 shadow-lg"
+                    style={{ background: 'linear-gradient(135deg, #A855F7 0%, #EC4899 100%)' }}
+                  >
+                    <benefit.icon className="w-7 h-7 text-white" strokeWidth={2.5} />
                   </div>
-                  <h3 className="text-[clamp(0.875rem,3vw,1rem)] font-semibold text-white mb-2 text-center md:text-left">
+                  
+                  <h3 
+                    className="text-[clamp(1rem,3.5vw,1.125rem)] text-white mb-3 text-center md:text-left"
+                    style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600 }}
+                  >
                     {t(benefit.titleKey)}
                   </h3>
-                  <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/70 text-center md:text-left leading-relaxed">
+                  <p 
+                    className="text-[clamp(0.8rem,2.8vw,0.9rem)] text-center md:text-left leading-relaxed"
+                    style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 400, color: 'rgba(255,255,255,0.8)' }}
+                  >
                     {t(benefit.textKey)}
                   </p>
                 </div>
@@ -234,35 +253,61 @@ const Creators = () => {
             </div>
           </section>
 
-          {/* How It Works Section */}
-          <section className="mt-10">
-            <h2 className="text-[clamp(1.125rem,4.5vw,1.5rem)] font-bold text-white text-center mb-6">
+          {/* How It Works Section - "Hogyan működik?" */}
+          <section className="mt-12">
+            <h2 
+              className="text-[clamp(1.25rem,5vw,2rem)] text-white text-center mb-8 animate-[fadeUp_0.6s_ease-out_both]"
+              style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800 }}
+            >
               {t('creators.steps_title')}
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {steps.map((step, index) => (
                 <div
                   key={index}
-                  className="relative bg-black/60 backdrop-blur-sm rounded-2xl p-5 border border-white/10"
+                  className="relative backdrop-blur-md rounded-2xl p-6 pt-8 border"
+                  style={{
+                    background: 'rgba(0, 0, 0, 0.4)',
+                    borderColor: 'rgba(255, 255, 255, 0.13)',
+                    animation: `fadeUp 0.5s ease-out ${0.2 + index * 0.15}s both`
+                  }}
                 >
-                  {/* Step Number Badge */}
-                  <div className="absolute -top-3 left-0 right-0 mx-auto w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
-                    <span className="text-white font-bold text-sm">{step.step}</span>
+                  {/* Step Number Badge with gradient */}
+                  <div 
+                    className="absolute -top-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full flex items-center justify-center shadow-xl"
+                    style={{ 
+                      background: 'linear-gradient(135deg, #A855F7 0%, #EC4899 100%)',
+                      boxShadow: '0 4px 20px rgba(168, 85, 247, 0.4)'
+                    }}
+                  >
+                    <span 
+                      className="text-white text-lg"
+                      style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700 }}
+                    >
+                      {step.step}
+                    </span>
                   </div>
 
-                  <div className="mt-4">
-                    <h3 className="text-[clamp(0.875rem,3vw,1rem)] font-semibold text-white mb-2 text-center">
-                      {t(step.titleKey)}
-                    </h3>
-                    <p className="text-[clamp(0.75rem,2.5vw,0.875rem)] text-white/70 text-center leading-relaxed">
-                      {t(step.textKey)}
-                    </p>
-                  </div>
+                  <h3 
+                    className="text-[clamp(1rem,3.5vw,1.125rem)] text-white mb-3 text-center mt-2"
+                    style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600 }}
+                  >
+                    {t(step.titleKey)}
+                  </h3>
+                  <p 
+                    className="text-[clamp(0.8rem,2.8vw,0.9rem)] text-center leading-relaxed"
+                    style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 400, color: 'rgba(255,255,255,0.8)' }}
+                  >
+                    {t(step.textKey)}
+                  </p>
 
-                  {/* Connector Line (mobile only, between cards) */}
+                  {/* Connector Line (mobile only) */}
                   {index < steps.length - 1 && (
-                    <div className="md:hidden absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-0.5 h-4 bg-gradient-to-b from-purple-500/50 to-transparent" />
+                    <div 
+                      className="md:hidden absolute -bottom-6 left-1/2 -translate-x-1/2 w-0.5 h-6"
+                      style={{ background: 'linear-gradient(to bottom, rgba(168, 85, 247, 0.5), transparent)' }}
+                    />
                   )}
                 </div>
               ))}
