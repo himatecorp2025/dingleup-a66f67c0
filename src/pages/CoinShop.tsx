@@ -96,9 +96,9 @@ const CoinShop = () => {
             </button>
 
             {/* 3D Title */}
-            <div className="relative">
+            <div className="relative text-center flex-1">
               <h1 
-                className="text-[clamp(1.25rem,5vw,1.75rem)] font-bold flex items-center gap-2"
+                className="text-[clamp(1rem,4vw,1.5rem)] font-bold"
                 style={{
                   background: 'linear-gradient(180deg, #fcd34d 0%, #f59e0b 50%, #d97706 100%)',
                   WebkitBackgroundClip: 'text',
@@ -107,9 +107,19 @@ const CoinShop = () => {
                   textShadow: '0 0 20px rgba(251, 191, 36, 0.4)'
                 }}
               >
-                <CoinIcon3D size={32} />
-                {t('shop.title')}
+                Szerezz előnyt még ma!
               </h1>
+              <p 
+                className="text-[clamp(0.65rem,2.5vw,0.875rem)] font-medium mt-0.5"
+                style={{
+                  background: 'linear-gradient(180deg, #ffffff 0%, #a1a1aa 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))'
+                }}
+              >
+                Gyűjts be az aranyakat és az extra életeket!
+              </p>
             </div>
 
             {/* Spacer for alignment */}
