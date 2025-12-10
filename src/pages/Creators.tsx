@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Plus, Menu, X, Video, Info } from 'lucide-react';
+import { LogOut, Plus, Menu, X, Video, Info, Eye, Users, MousePointerClick, Hash } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import defaultProfileImage from '@/assets/default-profile.png';
 
 // Platform Icons
 const TikTokIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
@@ -50,6 +52,25 @@ const Creators = () => {
   const { t, lang } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<PlatformFilter>('all');
+  const [profile, setProfile] = useState<{ username: string; avatar_url: string | null } | null>(null);
+
+  // Fetch user profile
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('username, avatar_url')
+          .eq('id', session.user.id)
+          .single();
+        if (data) {
+          setProfile(data);
+        }
+      }
+    };
+    fetchProfile();
+  }, []);
 
   // Placeholder video data (empty for now)
   const videos: any[] = [];
@@ -69,6 +90,20 @@ const Creators = () => {
     { id: 'youtube', icon: <YouTubeIcon className="w-5 h-5" />, disabled: true },
     { id: 'instagram', icon: <InstagramIcon className="w-5 h-5" />, disabled: true },
     { id: 'facebook', icon: <FacebookIcon className="w-5 h-5" />, disabled: true },
+  ];
+
+  const benefits = [
+    { icon: Eye, titleKey: 'creators.benefit1_title', textKey: 'creators.benefit1_text' },
+    { icon: Hash, titleKey: 'creators.benefit4_title', textKey: 'creators.benefit4_text' },
+    { icon: Users, titleKey: 'creators.benefit2_title', textKey: 'creators.benefit2_text' },
+    { icon: MousePointerClick, titleKey: 'creators.benefit3_title', textKey: 'creators.benefit3_text' },
+  ];
+
+  const steps = [
+    { step: '1', titleKey: 'creators.step1_title', textKey: 'creators.step1_text' },
+    { step: '2', titleKey: 'creators.step2_title', textKey: 'creators.step2_text' },
+    { step: '3', titleKey: 'creators.step3_title', textKey: 'creators.step3_text' },
+    { step: '4', titleKey: 'creators.step4_title', textKey: 'creators.step4_text' },
   ];
 
   return (
@@ -105,72 +140,78 @@ const Creators = () => {
 
       {/* Header */}
       <header 
-        className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between"
+        className="bg-white border-b border-gray-200 px-4 py-3"
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
       >
-        {/* Back Button - Profile page style */}
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="relative rounded-full hover:scale-110 transition-all"
-          style={{
-            padding: 'clamp(8px, 2vw, 12px)',
-            minWidth: 'clamp(40px, 10vw, 56px)',
-            minHeight: 'clamp(40px, 10vw, 56px)'
-          }}
-          title={t('common.back')}
-        >
-          {/* BASE SHADOW */}
-          <div className="absolute inset-0 bg-black/40 rounded-full" style={{ transform: 'translate(3px, 3px)', filter: 'blur(4px)' }} aria-hidden />
-          
-          {/* OUTER FRAME */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-red-700 via-red-600 to-red-900 border-2 border-red-400/50 shadow-lg" aria-hidden />
-          
-          {/* MIDDLE FRAME */}
-          <div className="absolute inset-[3px] rounded-full bg-gradient-to-b from-red-600 via-red-500 to-red-800" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3)' }} aria-hidden />
-          
-          {/* INNER LAYER */}
-          <div className="absolute inset-[5px] rounded-full bg-gradient-to-b from-red-500 via-red-600 to-red-700" style={{ boxShadow: 'inset 0 8px 16px rgba(255,255,255,0.2), inset 0 -8px 16px rgba(0,0,0,0.3)' }} aria-hidden />
-          
-          {/* SPECULAR HIGHLIGHT */}
-          <div className="absolute inset-[5px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(ellipse 100% 60% at 30% 0%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.2) 30%, transparent 60%)' }} aria-hidden />
-          
-          {/* Icon */}
-          <LogOut 
-            className="text-white relative z-10 -scale-x-100" 
-            style={{ width: 'clamp(20px, 5vw, 24px)', height: 'clamp(20px, 5vw, 24px)' }}
-          />
-        </button>
-
-        {/* Title - Desktop */}
-        <h1 className="hidden md:block text-xl font-bold text-gray-900">
-          Creator Dashboard
-        </h1>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-4">
-          <button 
-            onClick={() => navigate('/creators/how-it-works')}
-            className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <Info className="w-4 h-4" />
-            {lang === 'hu' ? 'Hogyan működik' : 'How it works'}
-          </button>
+        {/* Top row: Back button + Menu */}
+        <div className="flex items-center justify-between mb-4">
+          {/* Back Button - Profile page style */}
           <button
-            onClick={handleAddVideo}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-pink-500 to-orange-400 text-white font-semibold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+            onClick={() => navigate('/dashboard')}
+            className="relative rounded-full hover:scale-110 transition-all"
+            style={{
+              padding: 'clamp(8px, 2vw, 12px)',
+              minWidth: 'clamp(40px, 10vw, 56px)',
+              minHeight: 'clamp(40px, 10vw, 56px)'
+            }}
+            title={t('common.back')}
           >
-            <Plus className="w-5 h-5" />
-            {lang === 'hu' ? 'Videolink hozzáadása' : 'Add video link'}
+            <div className="absolute inset-0 bg-black/40 rounded-full" style={{ transform: 'translate(3px, 3px)', filter: 'blur(4px)' }} aria-hidden />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-red-700 via-red-600 to-red-900 border-2 border-red-400/50 shadow-lg" aria-hidden />
+            <div className="absolute inset-[3px] rounded-full bg-gradient-to-b from-red-600 via-red-500 to-red-800" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3)' }} aria-hidden />
+            <div className="absolute inset-[5px] rounded-full bg-gradient-to-b from-red-500 via-red-600 to-red-700" style={{ boxShadow: 'inset 0 8px 16px rgba(255,255,255,0.2), inset 0 -8px 16px rgba(0,0,0,0.3)' }} aria-hidden />
+            <div className="absolute inset-[5px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(ellipse 100% 60% at 30% 0%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.2) 30%, transparent 60%)' }} aria-hidden />
+            <LogOut 
+              className="text-white relative z-10 -scale-x-100" 
+              style={{ width: 'clamp(20px, 5vw, 24px)', height: 'clamp(20px, 5vw, 24px)' }}
+            />
           </button>
-        </nav>
 
-        {/* Mobile Menu Button */}
-        <button 
-          onClick={() => setMobileMenuOpen(true)}
-          className="md:hidden p-2 text-gray-600"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
+          {/* Desktop: How it works + Add video button */}
+          <div className="hidden md:flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/creators/how-it-works')}
+              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Info className="w-4 h-4" />
+              {lang === 'hu' ? 'Hogyan működik' : 'How it works'}
+            </button>
+            <button
+              onClick={handleAddVideo}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-pink-500 to-orange-400 text-white font-semibold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+            >
+              <Plus className="w-5 h-5" />
+              {lang === 'hu' ? 'Videolink hozzáadása' : 'Add video link'}
+            </button>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button 
+            onClick={() => setMobileMenuOpen(true)}
+            className="md:hidden p-2 text-gray-600"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Profile row: Avatar + Name (centered on mobile) */}
+        <div className="flex flex-col items-center md:flex-row md:items-center md:justify-start gap-3">
+          {/* Avatar */}
+          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200 shadow-md">
+            <img 
+              src={profile?.avatar_url || defaultProfileImage} 
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          {/* Username */}
+          <div className="text-center md:text-left">
+            <h2 className="text-lg font-bold text-gray-900">
+              {profile?.username || 'Creator'}
+            </h2>
+            <p className="text-sm text-gray-500">Creator Dashboard</p>
+          </div>
+        </div>
       </header>
 
       {/* Scrollable Content */}
@@ -191,19 +232,35 @@ const Creators = () => {
             </button>
           </div>
 
+          {/* Hero Box */}
+          <section className="mb-8 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 md:p-8 text-white">
+            <h1 
+              className="text-[clamp(1.25rem,5vw,2rem)] leading-tight mb-3"
+              style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800 }}
+            >
+              {t('creators.hero_h1_part1')} <span className="text-[#dc2626]">{t('creators.hero_h1_highlight')}</span> {t('creators.hero_h1_part2')}
+            </h1>
+            <p className="text-white/80 text-[clamp(0.875rem,3vw,1rem)] mb-2">
+              {t('creators.hero_h2')}
+            </p>
+            <p className="text-white/60 text-[clamp(0.75rem,2.5vw,0.875rem)]">
+              {t('creators.hero_h3')}
+            </p>
+          </section>
+
           {/* Section Title */}
           <h2 className="text-lg font-bold text-gray-900 mb-4">
             {lang === 'hu' ? 'Megosztott videóid' : 'Your shared videos'}
           </h2>
 
-          {/* Platform Filter Icons */}
-          <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-200">
+          {/* Platform Filter Icons - Equally distributed */}
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
             {filters.map((filter) => (
               <button
                 key={filter.id}
                 onClick={() => !filter.disabled && setActiveFilter(filter.id)}
                 disabled={filter.disabled}
-                className={`p-3 rounded-xl transition-all ${
+                className={`flex-1 flex items-center justify-center p-3 mx-1 rounded-xl transition-all ${
                   activeFilter === filter.id
                     ? 'bg-gray-900 text-white shadow-lg'
                     : filter.disabled
@@ -222,8 +279,8 @@ const Creators = () => {
 
           {/* Video List / Empty State */}
           {videos.length === 0 ? (
-            <div className="text-center py-16 px-6">
-              <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+            <div className="text-center py-12 px-6 bg-gray-50 rounded-2xl">
+              <div className="w-20 h-20 mx-auto mb-6 bg-gray-200 rounded-full flex items-center justify-center">
                 <Video className="w-10 h-10 text-gray-400" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
@@ -241,11 +298,39 @@ const Creators = () => {
             </div>
           )}
 
-          {/* "How it works" Section - Always visible below */}
+          {/* "Miért jó neked?" Section */}
           <section className="mt-12 pt-8 border-t border-gray-200">
+            <h2 className="text-lg font-bold text-gray-900 mb-6">
+              {t('creators.benefits_title')}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {benefits.map((benefit, index) => (
+                <div
+                  key={index}
+                  className="bg-gray-50 rounded-2xl p-5 border border-gray-100"
+                >
+                  <div 
+                    className="flex items-center justify-center w-12 h-12 rounded-full mb-4 shadow-md"
+                    style={{ background: 'linear-gradient(135deg, #A855F7 0%, #EC4899 100%)' }}
+                  >
+                    <benefit.icon className="w-6 h-6 text-white" strokeWidth={2.5} />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-1">
+                    {t(benefit.titleKey)}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {t(benefit.textKey)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* "Hogyan működik?" Section */}
+          <section className="mt-10 pt-8 border-t border-gray-200">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-gray-900">
-                {lang === 'hu' ? 'Hogyan működik?' : 'How it works?'}
+                {t('creators.steps_title')}
               </h2>
               <button
                 onClick={() => navigate('/creators/how-it-works')}
@@ -256,63 +341,31 @@ const Creators = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Step 1 */}
-              <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
-                <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-sm mb-3">
-                  1
+              {steps.map((step, index) => (
+                <div key={index} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                  <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-sm mb-3">
+                    {step.step}
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-1">
+                    {t(step.titleKey)}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {t(step.textKey)}
+                  </p>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-1">
-                  {lang === 'hu' ? '30 napig kötetlenül!' : '30 days free trial!'}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {lang === 'hu' 
-                    ? 'Próbáld ki ingyen, és döntsd el később.'
-                    : 'Try it for free and decide later.'}
-                </p>
-              </div>
+              ))}
+            </div>
+          </section>
 
-              {/* Step 2 */}
-              <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
-                <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-sm mb-3">
-                  2
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-1">
-                  {lang === 'hu' ? 'Kiválasztod a videód linkjét!' : 'Select your video link!'}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {lang === 'hu' 
-                    ? 'Add meg a TikTok videód URL-jét.'
-                    : 'Enter your TikTok video URL.'}
-                </p>
-              </div>
-
-              {/* Step 3 */}
-              <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
-                <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-sm mb-3">
-                  3
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-1">
-                  {lang === 'hu' ? 'A többit mi intézzük!' : 'We handle the rest!'}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {lang === 'hu' 
-                    ? 'A videód automatikusan megjelenik a játékosainknak.'
-                    : 'Your video automatically appears to our players.'}
-                </p>
-              </div>
-
-              {/* Step 4 */}
-              <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
-                <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-sm mb-3">
-                  4
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-1">
-                  {lang === 'hu' ? 'Kövesd az eredményed!' : 'Track your results!'}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {lang === 'hu' 
-                    ? 'Nézd meg, hogyan alakulnak a számaid.'
-                    : 'See how your numbers are doing.'}
+          {/* Closing Section */}
+          <section className="mt-10 mb-6 text-center">
+            <div className="bg-gray-900 rounded-2xl p-6">
+              <p className="text-white text-sm leading-relaxed mb-4">
+                {t('creators.closing_text')}
+              </p>
+              <div className="pt-4 border-t border-white/10">
+                <p className="text-yellow-400/80 text-sm">
+                  🚀 {t('creators.closing_notice')}
                 </p>
               </div>
             </div>
