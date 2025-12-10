@@ -25,26 +25,26 @@ const packages: PackageInfo[] = [
     id: 'starter',
     name: { hu: 'Starter', en: 'Starter' },
     videos: 1,
-    priceHuf: 2990,
+    priceHuf: 1490,
   },
   {
     id: 'creator_plus',
     name: { hu: 'Creator Plus', en: 'Creator Plus' },
     videos: 3,
-    priceHuf: 5990,
+    priceHuf: 2990,
     popular: true,
   },
   {
     id: 'creator_pro',
     name: { hu: 'Creator Pro', en: 'Creator Pro' },
     videos: 5,
-    priceHuf: 8990,
+    priceHuf: 4990,
   },
   {
     id: 'creator_max',
     name: { hu: 'Creator Max', en: 'Creator Max' },
     videos: 10,
-    priceHuf: 14990,
+    priceHuf: 7990,
   },
 ];
 
