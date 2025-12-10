@@ -244,7 +244,7 @@ const Creators = () => {
             <div className="flex-1 flex flex-col items-center">
               <Trophy className="w-5 h-5 text-yellow-400 mb-1" />
               <span className="text-lg font-bold text-white">0</span>
-              <span className="text-xs text-white/60">{lang === 'hu' ? 'Látogatóim' : 'Visitors'}</span>
+              <span className="text-xs text-white/60">{lang === 'hu' ? 'Eléréseim' : 'Reach'}</span>
             </div>
             <div className="flex-1 flex flex-col items-center">
               <Eye className="w-5 h-5 text-purple-400 mb-1" />
