@@ -235,21 +235,21 @@ const Creators = () => {
           </div>
 
           {/* Stats - icon + number + label */}
-          <div className="flex items-center justify-center gap-12 mt-3">
-            <div className="flex flex-col items-center">
+          <div className="flex items-center justify-center w-full max-w-xs mx-auto mt-3">
+            <div className="flex-1 flex flex-col items-center">
               <Film className="w-5 h-5 text-purple-400 mb-1" />
               <span className="text-lg font-bold text-white">0</span>
-              <span className="text-xs text-white/60">{lang === 'hu' ? 'videóim' : 'videos'}</span>
+              <span className="text-xs text-white/60">{lang === 'hu' ? 'Videóim' : 'Videos'}</span>
             </div>
-            <div className="flex flex-col items-center">
+            <div className="flex-1 flex flex-col items-center">
               <Trophy className="w-5 h-5 text-yellow-400 mb-1" />
               <span className="text-lg font-bold text-white">0</span>
-              <span className="text-xs text-white/60">{lang === 'hu' ? 'látogatóim' : 'visitors'}</span>
+              <span className="text-xs text-white/60">{lang === 'hu' ? 'Látogatóim' : 'Visitors'}</span>
             </div>
-            <div className="flex flex-col items-center">
+            <div className="flex-1 flex flex-col items-center">
               <Eye className="w-5 h-5 text-purple-400 mb-1" />
               <span className="text-lg font-bold text-white">0</span>
-              <span className="text-xs text-white/60">{lang === 'hu' ? 'megtekintéseim' : 'views'}</span>
+              <span className="text-xs text-white/60">{lang === 'hu' ? 'Megtekintéseim' : 'Views'}</span>
             </div>
           </div>
         </div>
