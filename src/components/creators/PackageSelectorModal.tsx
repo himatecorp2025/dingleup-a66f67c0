@@ -117,15 +117,15 @@ const PackageSelectorModal = ({ isOpen, onClose, onSuccess, lang }: PackageSelec
   const isPopular = (plan: CreatorPlan) => plan.id === 'plus';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden">
       {/* Overlay */}
       <div 
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
       
-      {/* Modal */}
-      <div className="relative w-full h-[calc(100vh-70px)] md:h-auto md:min-h-[80vh] md:w-[95vw] md:max-w-xl bg-gradient-to-b from-[#0a0a2e] via-[#16213e] to-[#0f0f3d] md:rounded-2xl border border-white/10 flex flex-col overflow-hidden">
+      {/* Modal - fixed size, no scroll */}
+      <div className="relative w-[95vw] max-w-xl h-[85vh] max-h-[700px] bg-gradient-to-b from-[#0a0a2e] via-[#16213e] to-[#0f0f3d] rounded-2xl border border-white/10 flex flex-col overflow-hidden">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -134,16 +134,16 @@ const PackageSelectorModal = ({ isOpen, onClose, onSuccess, lang }: PackageSelec
           <X className="w-5 h-5 text-white" />
         </button>
 
-        <div className="p-4 md:p-6 flex flex-col h-full overflow-y-auto">
+        <div className="p-4 flex flex-col h-full overflow-hidden">
           {/* Header */}
-          <div className="text-center mb-4 pr-8">
-            <h2 className="text-lg md:text-xl font-bold text-white mb-2">
+          <div className="text-center mb-3 pr-8 flex-shrink-0">
+            <h2 className="text-base sm:text-lg md:text-xl font-bold text-white mb-1">
               {texts.title[lang]}
             </h2>
-            <p className="text-white/80 text-sm md:text-base mb-2">
+            <p className="text-white/80 text-xs sm:text-sm mb-1">
               {texts.subtitle[lang]}
             </p>
-            <p className="text-green-400 text-sm md:text-base font-semibold">
+            <p className="text-green-400 text-xs sm:text-sm font-semibold">
               {texts.highlight[lang]}
             </p>
           </div>
@@ -158,14 +158,14 @@ const PackageSelectorModal = ({ isOpen, onClose, onSuccess, lang }: PackageSelec
             </div>
           ) : (
             <>
-              {/* Package Cards - 2x2 Grid on mobile, can be 1x4 on larger screens */}
-              <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-4 flex-1 mb-4">
+              {/* Package Cards - 2x2 Grid */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 min-h-0">
                 {plans?.map((plan) => (
                   <button
                     key={plan.id}
                     onClick={() => handlePackageSelect(plan)}
                     disabled={isLoading}
-                    className={`relative p-4 md:p-5 rounded-xl border-2 transition-all text-center flex flex-col items-center justify-between min-h-[180px] md:min-h-[200px] ${
+                    className={`relative p-2 sm:p-3 rounded-xl border-2 transition-all text-center flex flex-col items-center justify-between h-full ${
                       selectedPackage === plan.id
                         ? 'border-purple-500 bg-purple-500/20'
                         : isPopular(plan)
@@ -175,41 +175,41 @@ const PackageSelectorModal = ({ isOpen, onClose, onSuccess, lang }: PackageSelec
                   >
                     {/* Popular badge */}
                     {isPopular(plan) && (
-                      <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full text-[10px] md:text-xs font-semibold text-white flex items-center gap-1 whitespace-nowrap">
-                        <Sparkles className="w-3 h-3" />
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full text-[9px] sm:text-[10px] font-semibold text-white flex items-center gap-0.5 whitespace-nowrap">
+                        <Sparkles className="w-2.5 h-2.5" />
                         {texts.popular[lang]}
                       </div>
                     )}
 
                     <div className="flex flex-col items-center">
                       {/* Package name */}
-                      <h3 className="text-lg md:text-xl font-bold text-white mb-1">
+                      <h3 className="text-sm sm:text-base md:text-lg font-bold text-white mb-0.5">
                         {plan.name}
                       </h3>
 
                       {/* Description (video count) */}
-                      <p className="text-white/80 text-sm md:text-base font-medium mb-2">
+                      <p className="text-white/80 text-[10px] sm:text-xs md:text-sm font-medium mb-1">
                         {plan.description}
                       </p>
 
                       {/* Trial text */}
-                      <p className="text-green-400 text-sm md:text-base font-semibold">
+                      <p className="text-green-400 text-[10px] sm:text-xs md:text-sm font-semibold">
                         {texts.trialText[lang]}
                       </p>
                     </div>
 
                     {/* Select button indicator */}
-                    <div className={`flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-lg w-full mt-3 ${
+                    <div className={`flex items-center justify-center gap-1 py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg w-full mt-2 ${
                       isPopular(plan)
                         ? 'bg-gradient-to-r from-pink-500 to-purple-500'
                         : 'bg-white/10'
                     }`}>
                       {isLoading && selectedPackage === plan.id ? (
-                        <span className="text-white text-sm md:text-base font-medium">{texts.processing[lang]}</span>
+                        <span className="text-white text-[10px] sm:text-xs md:text-sm font-medium">{texts.processing[lang]}</span>
                       ) : (
                         <>
-                          <Check className="w-4 h-4 text-white" />
-                          <span className="text-white text-sm md:text-base font-medium">
+                          <Check className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                          <span className="text-white text-[10px] sm:text-xs md:text-sm font-medium">
                             {texts.selectThis[lang]}
                           </span>
                         </>
@@ -217,7 +217,7 @@ const PackageSelectorModal = ({ isOpen, onClose, onSuccess, lang }: PackageSelec
                     </div>
 
                     {/* Price - BELOW the button */}
-                    <p className="text-white/60 text-xs md:text-sm mt-2">
+                    <p className="text-white/60 text-[9px] sm:text-[10px] md:text-xs mt-1">
                       {texts.afterTrial[lang]} {formatPrice(plan.monthly_price_huf)} {texts.perMonth[lang]}
                     </p>
                   </button>
@@ -227,7 +227,7 @@ const PackageSelectorModal = ({ isOpen, onClose, onSuccess, lang }: PackageSelec
           )}
 
           {/* Legal text */}
-          <p className="text-white/40 text-[10px] md:text-xs text-center leading-relaxed mt-auto">
+          <p className="text-white/40 text-[9px] sm:text-[10px] text-center leading-relaxed mt-3 flex-shrink-0">
             {texts.legalText[lang]}
           </p>
         </div>
