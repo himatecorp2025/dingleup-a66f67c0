@@ -165,8 +165,8 @@ const Creators = () => {
         className="px-4 py-2 border-b border-white/10"
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}
       >
-        {/* Top row: Back button + Profile + Menu */}
-        <div className="flex items-center justify-between">
+        {/* Top row: Back button + Menu */}
+        <div className="flex items-center justify-between mb-3">
           {/* Back Button - Profile page style */}
           <button
             onClick={() => navigate('/dashboard')}
@@ -189,27 +189,8 @@ const Creators = () => {
             />
           </button>
 
-          {/* Profile: Avatar + Name (centered) */}
-          <div className="flex items-center gap-3">
-            {/* Avatar - 50% larger */}
-            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-purple-400/50 shadow-lg">
-              <img 
-                src={profile?.avatar_url || defaultProfileImage} 
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            {/* Username */}
-            <div className="text-left">
-              <h2 className="text-lg font-bold text-white">
-                {profile?.username || 'Creator'}
-              </h2>
-              <p className="text-sm text-white/60">Creator Dashboard</p>
-            </div>
-          </div>
-
-          {/* Desktop: How it works button */}
-          <div className="hidden md:flex items-center">
+          {/* Desktop: How it works + Add video button - ONLY on desktop/laptop */}
+          <div className="hidden lg:flex items-center gap-4">
             <button 
               onClick={() => navigate('/creators/how-it-works')}
               className="flex items-center gap-2 px-4 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
@@ -217,15 +198,41 @@ const Creators = () => {
               <Info className="w-4 h-4" />
               {lang === 'hu' ? 'Hogyan működik' : 'How it works'}
             </button>
+            <button
+              onClick={handleAddVideo}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-pink-500 to-orange-400 text-white font-semibold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+            >
+              <Plus className="w-5 h-5" />
+              {lang === 'hu' ? 'Videolink hozzáadása' : 'Add video link'}
+            </button>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile/Tablet Menu Button - hidden on desktop */}
           <button 
             onClick={() => setMobileMenuOpen(true)}
-            className="md:hidden p-2 text-white"
+            className="lg:hidden p-2 text-white"
           >
             <Menu className="w-6 h-6" />
           </button>
+        </div>
+
+        {/* Profile: Avatar above Username (vertical stack, centered) */}
+        <div className="flex flex-col items-center gap-2">
+          {/* Avatar - 50% larger */}
+          <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-purple-400/50 shadow-lg">
+            <img 
+              src={profile?.avatar_url || defaultProfileImage} 
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          {/* Username + Dashboard text */}
+          <div className="text-center">
+            <h2 className="text-lg font-bold text-white">
+              {profile?.username || 'Creator'}
+            </h2>
+            <p className="text-sm text-white/60">Creator Dashboard</p>
+          </div>
         </div>
       </header>
 
