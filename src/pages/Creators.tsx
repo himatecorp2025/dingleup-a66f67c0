@@ -341,29 +341,29 @@ const Creators = () => {
 
           {/* Hero Box - Only shows when no videos */}
           {!hasVideos && (
-            <section className="mb-8 rounded-2xl overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 p-6 md:p-8 text-white text-center">
+            <section className="mb-4 rounded-xl overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 p-4 text-white text-center">
               <h1 
-                className="text-[clamp(1.25rem,5vw,2rem)] leading-tight mb-3"
+                className="text-[clamp(1rem,4vw,1.5rem)] leading-tight mb-2"
                 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800 }}
               >
                 {t('creators.hero_h1_part1')} <span className="text-[#dc2626]">{t('creators.hero_h1_highlight')}</span> {t('creators.hero_h1_part2')}
               </h1>
-              <p className="text-white/80 text-[clamp(0.875rem,3vw,1rem)] mb-4">
+              <p className="text-white/80 text-[clamp(0.75rem,2.5vw,0.875rem)] mb-2">
                 {t('creators.hero_h2')}
               </p>
-              <p className="text-white/60 text-[clamp(0.75rem,2.5vw,0.875rem)] mb-6">
+              <p className="text-white/60 text-[clamp(0.625rem,2vw,0.75rem)] mb-4">
                 {t('creators.hero_h3')}
               </p>
               
               {/* Empty state inside hero box */}
-              <div className="text-center py-8 px-6 bg-white/5 rounded-xl border border-white/10">
-                <div className="w-20 h-20 mx-auto mb-6 bg-white/10 rounded-full flex items-center justify-center">
-                  <Video className="w-10 h-10 text-white/40" />
+              <div className="text-center py-4 px-4 bg-white/5 rounded-lg border border-white/10">
+                <div className="w-14 h-14 mx-auto mb-3 bg-white/10 rounded-full flex items-center justify-center">
+                  <Video className="w-7 h-7 text-white/40" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">
+                <h3 className="text-base font-semibold text-white mb-1">
                   {lang === 'hu' ? 'Még nem osztottál meg videót' : "You haven't shared a video yet"}
                 </h3>
-                <p className="text-white/60 max-w-sm mx-auto">
+                <p className="text-white/60 text-xs max-w-sm mx-auto">
                   {lang === 'hu' 
                     ? 'Hamarosan itt fognak megjelenni a TikTok videóid, amelyeket a játékosaink látni fognak.'
                     : 'Your TikTok videos that our players will see will appear here soon.'}
@@ -381,26 +381,26 @@ const Creators = () => {
 
           {/* "Miért jó neked?" Section - Only shows when no videos */}
           {!hasVideos && (
-            <section className="mt-8 pt-8 border-t border-white/10">
-              <h2 className="text-lg font-bold text-white mb-6">
+            <section className="mt-4 pt-4 border-t border-white/10">
+              <h2 className="text-base font-bold text-white mb-3">
                 {t('creators.benefits_title')}
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2">
                 {benefits.map((benefit, index) => (
                   <div
                     key={index}
-                    className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10"
+                    className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10"
                   >
                     <div 
-                      className="flex items-center justify-center w-12 h-12 rounded-full mb-4 shadow-md"
+                      className="flex items-center justify-center w-8 h-8 rounded-full mb-2 shadow-md"
                       style={{ background: 'linear-gradient(135deg, #A855F7 0%, #EC4899 100%)' }}
                     >
-                      <benefit.icon className="w-6 h-6 text-white" strokeWidth={2.5} />
+                      <benefit.icon className="w-4 h-4 text-white" strokeWidth={2.5} />
                     </div>
-                    <h3 className="font-semibold text-white mb-1">
+                    <h3 className="font-semibold text-white text-xs mb-0.5">
                       {t(benefit.titleKey)}
                     </h3>
-                    <p className="text-sm text-white/60">
+                    <p className="text-[10px] text-white/60 leading-tight">
                       {t(benefit.textKey)}
                     </p>
                   </div>
@@ -411,29 +411,29 @@ const Creators = () => {
 
           {/* "Hogyan működik?" Section - Only shows when no videos */}
           {!hasVideos && (
-            <section className="mt-10 pt-8 border-t border-white/10">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-bold text-white">
+            <section className="mt-4 pt-4 border-t border-white/10">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-bold text-white">
                   {t('creators.steps_title')}
                 </h2>
                 <button
                   onClick={() => navigate('/creators/how-it-works')}
-                  className="text-sm text-pink-400 hover:text-pink-300 font-medium"
+                  className="text-xs text-pink-400 hover:text-pink-300 font-medium"
                 >
                   {lang === 'hu' ? 'Részletek →' : 'Details →'}
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2">
                 {steps.map((step, index) => (
-                  <div key={index} className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
-                    <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-sm mb-3">
+                  <div key={index} className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+                    <div className="w-6 h-6 bg-gradient-to-r from-pink-500 to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-xs mb-2">
                       {step.step}
                     </div>
-                    <h3 className="font-semibold text-white mb-1">
+                    <h3 className="font-semibold text-white text-xs mb-0.5">
                       {t(step.titleKey)}
                     </h3>
-                    <p className="text-sm text-white/60">
+                    <p className="text-[10px] text-white/60 leading-tight">
                       {t(step.textKey)}
                     </p>
                   </div>
@@ -444,18 +444,18 @@ const Creators = () => {
 
           {/* Closing Section - Only shows when no videos */}
           {!hasVideos && (
-            <section className="mt-10 mb-6 text-center">
-              <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/20">
-                <p className="text-white text-sm leading-relaxed mb-4">
+            <section className="mt-4 mb-4 text-center">
+              <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 backdrop-blur-sm rounded-xl p-4 border border-purple-500/20">
+                <p className="text-white text-xs leading-relaxed mb-3">
                   {t('creators.closing_text')}
                 </p>
                 <button
                   disabled
-                  className="px-6 py-3 rounded-full font-semibold text-white/60 bg-white/10 cursor-not-allowed"
+                  className="px-4 py-2 rounded-full font-semibold text-white/60 bg-white/10 cursor-not-allowed text-sm"
                 >
                   {t('creators.cta_button')}
                 </button>
-                <p className="text-white/40 text-xs mt-3">
+                <p className="text-white/40 text-[10px] mt-2">
                   {lang === 'hu' ? 'Hamarosan elérhető' : 'Coming soon'}
                 </p>
               </div>
