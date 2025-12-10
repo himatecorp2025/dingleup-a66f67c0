@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useEffect, useState, useRef } from 'react';
 import { useI18n } from '@/i18n';
-import { Users, Zap } from 'lucide-react';
+import { Users, Zap, Plus } from 'lucide-react';
 
 const BottomNav = () => {
   const [isDesktop, setIsDesktop] = useState(false);
@@ -100,12 +100,15 @@ const BottomNav = () => {
       path: '/invitation' 
     },
     {
-      icon: () => (
-        <Zap style={{ width: 'clamp(18px, 3vh, 22px)', height: 'clamp(18px, 3vh, 22px)' }} />
+      icon: (isOnCreatorsPage: boolean) => (
+        isOnCreatorsPage 
+          ? <Plus style={{ width: 'clamp(24px, 4vh, 32px)', height: 'clamp(24px, 4vh, 32px)' }} strokeWidth={3} />
+          : <Zap style={{ width: 'clamp(18px, 3vh, 22px)', height: 'clamp(18px, 3vh, 22px)' }} />
       ),
       label: t('nav.creators'),
       path: '/creators',
-      isGold: true
+      isGold: true,
+      isCreators: true
     },
     { 
       icon: () => (
@@ -148,9 +151,11 @@ const BottomNav = () => {
         style={{ gap: 'clamp(0.25rem, 1vh, 0.5rem)' }}
       >
         {navItems.map((item, index) => {
-          const IconComponent = item.icon;
           const isActive = location.pathname === item.path;
           const isGold = (item as any).isGold;
+          const isCreatorsItem = (item as any).isCreators;
+          const isOnCreatorsPage = location.pathname.startsWith('/creators');
+          const showPlusIcon = isCreatorsItem && isOnCreatorsPage;
           
           return (
             <button
@@ -178,12 +183,14 @@ const BottomNav = () => {
               {isGold && (
                 <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/20 to-transparent animate-pulse"></div>
               )}
-              <div className={`relative z-10 ${isGold ? 'text-yellow-400' : 'text-purple-400'}`} style={{ marginBottom: 'clamp(2px, 0.5vh, 4px)' }}>
-                <IconComponent />
+              <div className={`relative z-10 ${isGold ? 'text-yellow-400' : 'text-purple-400'}`} style={{ marginBottom: showPlusIcon ? '0' : 'clamp(2px, 0.5vh, 4px)' }}>
+                {isCreatorsItem ? item.icon(isOnCreatorsPage) : item.icon(false)}
               </div>
-              <span className={`font-medium relative z-10 leading-tight ${isGold ? 'text-yellow-400' : ''}`}
-                style={{ fontSize: 'clamp(0.625rem, 1.4vh, 0.6875rem)' }}
-              >{item.label}</span>
+              {!showPlusIcon && (
+                <span className={`font-medium relative z-10 leading-tight ${isGold ? 'text-yellow-400' : ''}`}
+                  style={{ fontSize: 'clamp(0.625rem, 1.4vh, 0.6875rem)' }}
+                >{item.label}</span>
+              )}
             </button>
           );
         })}
