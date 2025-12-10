@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Plus, Menu, X, Video, Info, Eye, Users, MousePointerClick, Hash } from 'lucide-react';
+import { LogOut, Plus, Menu, X, Video, Info, Eye, Users, MousePointerClick, Hash, Film, Trophy } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
@@ -232,6 +232,28 @@ const Creators = () => {
               {profile?.username || 'Creator'}
             </h2>
             <p className="text-sm text-white/60">Creator Dashboard</p>
+          </div>
+
+          {/* Stats Cards - 3 columns */}
+          <div className="flex items-center justify-center gap-4 mt-3">
+            {/* Shared Videos */}
+            <div className="flex flex-col items-center bg-white/5 rounded-xl px-4 py-3 border border-white/10">
+              <Film className="w-5 h-5 text-purple-400 mb-1" />
+              <span className="text-lg font-bold text-white">0</span>
+              <span className="text-xs text-white/60">{lang === 'hu' ? 'Megosztott videóim' : 'My shared videos'}</span>
+            </div>
+            {/* Views */}
+            <div className="flex flex-col items-center bg-white/5 rounded-xl px-4 py-3 border border-white/10">
+              <Eye className="w-5 h-5 text-purple-400 mb-1" />
+              <span className="text-lg font-bold text-white">0</span>
+              <span className="text-xs text-white/60">{lang === 'hu' ? 'Megtekintéseim' : 'My views'}</span>
+            </div>
+            {/* Visitors */}
+            <div className="flex flex-col items-center bg-white/5 rounded-xl px-4 py-3 border border-white/10">
+              <Trophy className="w-5 h-5 text-yellow-400 mb-1" />
+              <span className="text-lg font-bold text-white">0</span>
+              <span className="text-xs text-white/60">{lang === 'hu' ? 'Látogatóim' : 'My visitors'}</span>
+            </div>
           </div>
         </div>
       </header>

@@ -134,7 +134,7 @@ const CreatorHowItWorks = () => {
           </header>
 
           {/* Hero Box */}
-          <section className="mb-8 rounded-2xl overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 p-6 md:p-8 text-white">
+          <section className="mb-8 rounded-2xl overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 p-6 md:p-8 text-white text-center">
             <h1 
               className="text-[clamp(1.25rem,5vw,2rem)] leading-tight mb-3"
               style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800 }}
@@ -150,7 +150,7 @@ const CreatorHowItWorks = () => {
           </section>
 
           {/* Benefits Section */}
-          <section className="mb-10">
+          <section className="mb-10 text-center">
             <h2 
               className="text-white font-bold text-lg md:text-xl mb-6"
               style={{ fontFamily: 'Poppins, sans-serif' }}
@@ -162,7 +162,7 @@ const CreatorHowItWorks = () => {
               {benefits.map((benefit, index) => (
                 <div
                   key={index}
-                  className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-5 hover:border-purple-500/30 transition-all"
+                  className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-5 hover:border-purple-500/30 transition-all flex flex-col items-center text-center"
                 >
                   <div 
                     className="w-12 h-12 rounded-full flex items-center justify-center mb-4 shadow-lg"
@@ -183,7 +183,7 @@ const CreatorHowItWorks = () => {
           </section>
 
           {/* Steps Section */}
-          <section className="mb-10">
+          <section className="mb-10 text-center">
             <h2 
               className="text-white font-bold text-lg md:text-xl mb-6"
               style={{ fontFamily: 'Poppins, sans-serif' }}
@@ -195,11 +195,11 @@ const CreatorHowItWorks = () => {
               {steps.map((step, index) => (
                 <div
                   key={index}
-                  className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-5 flex gap-4 items-start hover:border-purple-500/30 transition-all"
+                  className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-5 flex flex-col items-center text-center hover:border-purple-500/30 transition-all"
                 >
                   {/* Step Number */}
                   <div 
-                    className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
+                    className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg mb-3"
                     style={{ 
                       background: 'linear-gradient(135deg, #A855F7 0%, #EC4899 100%)',
                       boxShadow: '0 4px 15px rgba(168, 85, 247, 0.3)'
@@ -208,17 +208,15 @@ const CreatorHowItWorks = () => {
                     <span className="text-white font-bold text-lg">{step.step}</span>
                   </div>
 
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <step.icon className="w-5 h-5 text-purple-400" />
-                      <h3 className="text-white font-semibold text-base">
-                        {step.title}
-                      </h3>
-                    </div>
-                    <p className="text-white/70 text-sm leading-relaxed">
-                      {step.text}
-                    </p>
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <step.icon className="w-5 h-5 text-purple-400" />
+                    <h3 className="text-white font-semibold text-base">
+                      {step.title}
+                    </h3>
                   </div>
+                  <p className="text-white/70 text-sm leading-relaxed max-w-md">
+                    {step.text}
+                  </p>
                 </div>
               ))}
             </div>
