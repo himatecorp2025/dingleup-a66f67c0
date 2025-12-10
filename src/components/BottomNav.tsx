@@ -142,13 +142,13 @@ const BottomNav = () => {
 
   return (
     <div ref={containerRef} className="fixed bottom-0 left-0 right-0 bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#0f0a1f] border-t border-white/10 z-[9999]"
-      style={{ padding: 'clamp(0.1rem, 0.5vh, 0.25rem)' }}
+      style={{ padding: 'clamp(0.08rem, 0.4vh, 0.2rem)' }}
     >
       <div className="absolute top-0 left-0 w-full bg-gradient-to-r from-transparent via-purple-500/50 to-transparent opacity-60"
         style={{ height: 'clamp(1px, 0.2vh, 2px)' }}
       ></div>
       <div className="flex justify-around items-center max-w-screen-sm mx-auto"
-        style={{ gap: 'clamp(0.1rem, 0.5vh, 0.25rem)' }}
+        style={{ gap: 'clamp(0.08rem, 0.4vh, 0.2rem)' }}
       >
         {navItems.map((item, index) => {
           const isActive = location.pathname === item.path;
@@ -182,8 +182,8 @@ const BottomNav = () => {
                     : 'text-white/60 hover:bg-white/5'}
               `}
               style={{
-                padding: 'clamp(0.25rem, 0.8vh, 0.4rem) clamp(0.25rem, 0.8vh, 0.4rem)',
-                minHeight: 'clamp(36px, 5.5vh, 46px)'
+                padding: 'clamp(0.2rem, 0.7vh, 0.35rem) clamp(0.2rem, 0.7vh, 0.35rem)',
+                minHeight: 'clamp(32px, 5vh, 42px)'
               }}
               aria-label={item.label}
               aria-current={isActive ? 'page' : undefined}
