@@ -157,10 +157,21 @@ const BottomNav = () => {
           const isOnCreatorsPage = location.pathname.startsWith('/creators');
           const showPlusIcon = isCreatorsItem && isOnCreatorsPage;
           
+          const handleClick = () => {
+            if (isCreatorsItem && isOnCreatorsPage) {
+              // Dispatch custom event for Creators page to handle
+              window.dispatchEvent(new CustomEvent('creator-add-video-click'));
+            } else if (item.action) {
+              item.action();
+            } else {
+              handleNavigation(item.path!);
+            }
+          };
+          
           return (
             <button
               key={index}
-              onClick={() => item.action ? item.action() : handleNavigation(item.path!)}
+              onClick={handleClick}
               className={`
                 flex flex-col items-center justify-center rounded-lg
                 transition-all duration-200 relative overflow-hidden flex-1

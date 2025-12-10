@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { LogOut, Plus, Menu, X, Video, Info, Eye, Users, MousePointerClick, Hash, Film, Trophy } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import BottomNav from '@/components/BottomNav';
@@ -7,6 +7,9 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import defaultProfileImage from '@/assets/default-profile.png';
 import { useAudioStore } from '@/stores/audioStore';
+import PackageSelectorModal from '@/components/creators/PackageSelectorModal';
+import VideoLinkModal from '@/components/creators/VideoLinkModal';
+import { useCreatorSubscription } from '@/hooks/useCreatorSubscription';
 
 // Platform Icons
 const TikTokIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
@@ -51,10 +54,13 @@ type PlatformFilter = 'all' | 'tiktok' | 'youtube' | 'instagram' | 'facebook';
 
 const Creators = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t, lang } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<PlatformFilter>('all');
-  const [profile, setProfile] = useState<{ username: string; avatar_url: string | null } | null>(null);
+  const [profile, setProfile] = useState<{ username: string; avatar_url: string | null; id: string } | null>(null);
+  const [showPackageModal, setShowPackageModal] = useState(false);
+  const [showVideoLinkModal, setShowVideoLinkModal] = useState(false);
   
   // Disable music on this page
   const { musicEnabled, setMusicEnabled } = useAudioStore();
@@ -82,7 +88,7 @@ const Creators = () => {
       if (session?.user) {
         const { data } = await supabase
           .from('profiles')
-          .select('username, avatar_url')
+          .select('id, username, avatar_url')
           .eq('id', session.user.id)
           .single();
         if (data) {
@@ -93,17 +99,65 @@ const Creators = () => {
     fetchProfile();
   }, []);
 
+  // Use creator subscription hook
+  const { hasActiveSubscription, maxVideos, refetch: refetchSubscription } = useCreatorSubscription(profile?.id);
+
+  // Handle checkout success from URL params
+  useEffect(() => {
+    const checkoutStatus = searchParams.get('checkout');
+    if (checkoutStatus === 'success') {
+      toast.success(
+        lang === 'hu'
+          ? 'Sikeres fizetés! Most már hozzáadhatod a videóidat.'
+          : 'Payment successful! You can now add your videos.'
+      );
+      refetchSubscription();
+      // Clean URL
+      window.history.replaceState({}, '', '/creators');
+    } else if (checkoutStatus === 'cancelled') {
+      toast.info(
+        lang === 'hu'
+          ? 'A fizetés megszakítva.'
+          : 'Payment cancelled.'
+      );
+      window.history.replaceState({}, '', '/creators');
+    }
+  }, [searchParams, lang, refetchSubscription]);
+
+  // Listen for BottomNav "+" click event
+  useEffect(() => {
+    const handleCreatorAddVideo = () => {
+      if (hasActiveSubscription) {
+        setShowVideoLinkModal(true);
+      } else {
+        setShowPackageModal(true);
+      }
+    };
+
+    window.addEventListener('creator-add-video-click', handleCreatorAddVideo);
+    return () => window.removeEventListener('creator-add-video-click', handleCreatorAddVideo);
+  }, [hasActiveSubscription]);
+
   // Placeholder video data (empty for now)
   const videos: any[] = [];
   const hasVideos = videos.length > 0;
 
   const handleAddVideo = () => {
-    // TODO: Implement package selection and payment modal here
-    toast.info(
-      lang === 'hu' 
-        ? 'Hamarosan innen tudod majd hozzáadni a videóidat.' 
-        : 'You will soon be able to add your videos from here.'
-    );
+    if (hasActiveSubscription) {
+      setShowVideoLinkModal(true);
+    } else {
+      setShowPackageModal(true);
+    }
+  };
+
+  const handlePackageSuccess = () => {
+    refetchSubscription();
+    setShowVideoLinkModal(true);
+  };
+
+  const handleVideoAdded = (videoUrl: string) => {
+    // TODO: Refresh video list
+    console.log('Video added:', videoUrl);
   };
 
   const filters: { id: PlatformFilter; icon: React.ReactNode; disabled?: boolean }[] = [
@@ -416,6 +470,24 @@ const Creators = () => {
       </div>
 
       <BottomNav />
+
+      {/* Package Selector Modal */}
+      <PackageSelectorModal
+        isOpen={showPackageModal}
+        onClose={() => setShowPackageModal(false)}
+        onSuccess={handlePackageSuccess}
+        lang={lang as 'hu' | 'en'}
+      />
+
+      {/* Video Link Modal */}
+      <VideoLinkModal
+        isOpen={showVideoLinkModal}
+        onClose={() => setShowVideoLinkModal(false)}
+        onSuccess={handleVideoAdded}
+        lang={lang as 'hu' | 'en'}
+        maxVideos={maxVideos}
+        currentVideoCount={videos.length}
+      />
     </div>
   );
 };
