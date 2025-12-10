@@ -154,7 +154,7 @@ const Creators = () => {
                     textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.5)'
                   }}
                 >
-                  {t('creators.hero_h1_part1')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF4F8B] to-[#FFA800]">{t('creators.hero_h1_highlight')}</span> {t('creators.hero_h1_part2')}
+                  {t('creators.hero_h1_part1')} <span className="text-[#dc2626]">{t('creators.hero_h1_highlight')}</span> {t('creators.hero_h1_part2')}
                 </h1>
 
                 {/* H2 - Subheadline */}
