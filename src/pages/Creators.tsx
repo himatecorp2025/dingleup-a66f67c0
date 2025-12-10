@@ -234,19 +234,22 @@ const Creators = () => {
             <p className="text-sm text-white/60">Creator Dashboard</p>
           </div>
 
-          {/* Stats - icon + number only */}
-          <div className="flex items-center justify-center gap-6 mt-3">
+          {/* Stats - icon + number + label */}
+          <div className="flex items-center justify-center gap-12 mt-3">
             <div className="flex flex-col items-center">
               <Film className="w-5 h-5 text-purple-400 mb-1" />
               <span className="text-lg font-bold text-white">0</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <Eye className="w-5 h-5 text-purple-400 mb-1" />
-              <span className="text-lg font-bold text-white">0</span>
+              <span className="text-xs text-white/60">{lang === 'hu' ? 'videóim' : 'videos'}</span>
             </div>
             <div className="flex flex-col items-center">
               <Trophy className="w-5 h-5 text-yellow-400 mb-1" />
               <span className="text-lg font-bold text-white">0</span>
+              <span className="text-xs text-white/60">{lang === 'hu' ? 'látogatóim' : 'visitors'}</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <Eye className="w-5 h-5 text-purple-400 mb-1" />
+              <span className="text-lg font-bold text-white">0</span>
+              <span className="text-xs text-white/60">{lang === 'hu' ? 'megtekintéseim' : 'views'}</span>
             </div>
           </div>
         </div>
