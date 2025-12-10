@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { X, Check, Sparkles } from 'lucide-react';
+import { X, Check, Sparkles, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useCreatorPlans, CreatorPlan } from '@/hooks/useCreatorPlans';
 
 interface PackageSelectorModalProps {
   isOpen: boolean;
@@ -10,68 +11,22 @@ interface PackageSelectorModalProps {
   lang: 'hu' | 'en';
 }
 
-type PackageType = 'starter' | 'creator_plus' | 'creator_pro' | 'creator_max';
-
-interface PackageInfo {
-  id: PackageType;
-  name: { hu: string; en: string };
-  videos: number;
-  priceHuf: number;
-  popular?: boolean;
-}
-
-const packages: PackageInfo[] = [
-  {
-    id: 'starter',
-    name: { hu: 'Starter', en: 'Starter' },
-    videos: 1,
-    priceHuf: 1490,
-  },
-  {
-    id: 'creator_plus',
-    name: { hu: 'Creator Plus', en: 'Creator Plus' },
-    videos: 3,
-    priceHuf: 2990,
-    popular: true,
-  },
-  {
-    id: 'creator_pro',
-    name: { hu: 'Creator Pro', en: 'Creator Pro' },
-    videos: 5,
-    priceHuf: 4990,
-  },
-  {
-    id: 'creator_max',
-    name: { hu: 'Creator Max', en: 'Creator Max' },
-    videos: 10,
-    priceHuf: 7990,
-  },
-];
-
 const texts = {
   title: {
-    hu: 'Még nem vagy aktív Creator tag!',
-    en: "You're not an active Creator member yet!",
+    hu: 'Indítsd el a Creator tagságod!',
+    en: 'Start your Creator membership!',
   },
   subtitle: {
-    hu: 'Válassz egy csomagot, és azonnal megoszthatod a videóidat a játékban!',
-    en: 'Choose a package and start sharing your videos in the game right away!',
+    hu: 'Válassz egy csomagot, és máris megoszthatod a videóidat a játékosainkkal.',
+    en: 'Choose a package and start sharing your videos with our players.',
   },
-  explanation: {
-    hu: '30 napig kötetlenül kipróbálhatod. A kártyádat most csak ellenőrizzük, terhelés nem történik.',
-    en: 'Try it free for 30 days. We only verify your card now, no charges will be made.',
-  },
-  videoActive: {
-    hu: 'videó egyszerre aktív',
-    en: 'video active at once',
-  },
-  videosActive: {
-    hu: 'videó egyszerre aktív',
-    en: 'videos active at once',
+  highlight: {
+    hu: '30 napig kötetlenül kipróbálhatod.',
+    en: 'Try it free for 30 days.',
   },
   trialText: {
     hu: '30 napig kötetlenül!',
-    en: '30 days free trial!',
+    en: '30 days free!',
   },
   afterTrial: {
     hu: 'Utána:',
@@ -90,16 +45,24 @@ const texts = {
     en: 'Most popular',
   },
   legalText: {
-    hu: 'A 30 napos próbaidőszak után az előfizetés automatikusan megújul az általad választott havi díjjal. A próbaidő alatt bármikor lemondhatod, terhelés nélkül. A kártyádat most csak 0 Ft-tal ellenőrizzük.',
-    en: 'After the 30-day trial period, the subscription will automatically renew at your chosen monthly rate. You can cancel anytime during the trial without being charged. We only verify your card with a 0 HUF authorization.',
+    hu: 'A 30 napos kötetlen időszak után az előfizetés automatikusan megújul az általad választott havi díjjal. A próba alatt bármikor lemondhatod.',
+    en: 'After the 30-day trial period, the subscription will automatically renew at your chosen monthly rate. You can cancel anytime during the trial.',
   },
   processing: {
-    hu: 'Feldolgozás...',
-    en: 'Processing...',
+    hu: 'Aktiválás...',
+    en: 'Activating...',
   },
   error: {
-    hu: 'Hiba történt. Kérlek próbáld újra!',
-    en: 'An error occurred. Please try again!',
+    hu: 'Valami hiba történt a csomag aktiválása közben. Próbáld újra később.',
+    en: 'Something went wrong while activating the package. Please try again later.',
+  },
+  success: {
+    hu: 'Sikeres aktiválás! Most már megoszthatod a videóidat.',
+    en: 'Successfully activated! You can now share your videos.',
+  },
+  loading: {
+    hu: 'Csomagok betöltése...',
+    en: 'Loading packages...',
   },
 };
 
@@ -109,51 +72,49 @@ const formatPrice = (price: number): string => {
 
 const PackageSelectorModal = ({ isOpen, onClose, onSuccess, lang }: PackageSelectorModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState<PackageType | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
+  const { data: plans, isLoading: plansLoading } = useCreatorPlans();
 
   if (!isOpen) return null;
 
-  const handlePackageSelect = async (pkg: PackageInfo) => {
-    setSelectedPackage(pkg.id);
+  const handlePackageSelect = async (plan: CreatorPlan) => {
+    setSelectedPackage(plan.id);
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('create-creator-checkout', {
-        body: {
-          packageType: pkg.id,
-          maxVideos: pkg.videos,
-          priceHuf: pkg.priceHuf,
-        },
+      const { data, error } = await supabase.rpc('activate_creator_trial', {
+        p_plan_id: plan.id,
       });
 
       if (error) throw error;
 
-      if (data?.url) {
-        // Open Stripe Checkout in new tab
-        window.open(data.url, '_blank');
-        
-        // For now, close modal and show success message
-        // In production, you'd want to use webhooks to verify payment
-        toast.success(
-          lang === 'hu'
-            ? 'Átirányítunk a fizetési oldalra...'
-            : 'Redirecting to payment page...'
-        );
-        
-        // Optionally close modal after redirect
-        setTimeout(() => {
+      const result = data as { success?: boolean; error?: string } | null;
+
+      if (result?.success) {
+        toast.success(texts.success[lang]);
+        onClose();
+        onSuccess();
+      } else {
+        const errorCode = result?.error;
+        if (errorCode === 'ALREADY_ACTIVE') {
+          toast.info(lang === 'hu' ? 'Már van aktív csomagod!' : 'You already have an active package!');
           onClose();
           onSuccess();
-        }, 2000);
+        } else {
+          throw new Error(errorCode || 'Unknown error');
+        }
       }
     } catch (err) {
-      console.error('Payment error:', err);
+      console.error('Activation error:', err);
       toast.error(texts.error[lang]);
     } finally {
       setIsLoading(false);
       setSelectedPackage(null);
     }
   };
+
+  // Check if this is the "plus" package (2nd in sort order, id = "plus")
+  const isPopular = (plan: CreatorPlan) => plan.id === 'plus';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -164,7 +125,7 @@ const PackageSelectorModal = ({ isOpen, onClose, onSuccess, lang }: PackageSelec
       />
       
       {/* Modal */}
-      <div className="relative w-full h-[calc(100vh-70px)] md:h-auto md:min-h-[80vh] md:w-[95vw] md:max-w-xl bg-gradient-to-b from-[#0a0a2e] via-[#16213e] to-[#0f0f3d] md:rounded-2xl border border-white/10 flex flex-col">
+      <div className="relative w-full h-[calc(100vh-70px)] md:h-auto md:min-h-[80vh] md:w-[95vw] md:max-w-xl bg-gradient-to-b from-[#0a0a2e] via-[#16213e] to-[#0f0f3d] md:rounded-2xl border border-white/10 flex flex-col overflow-hidden">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -173,83 +134,100 @@ const PackageSelectorModal = ({ isOpen, onClose, onSuccess, lang }: PackageSelec
           <X className="w-5 h-5 text-white" />
         </button>
 
-        <div className="p-4 md:p-6 flex flex-col h-full">
-          {/* Header - with padding-right to avoid close button */}
-          <div className="text-center mb-3 pr-8">
-            <h2 className="text-base md:text-lg font-bold text-white mb-1">
+        <div className="p-4 md:p-6 flex flex-col h-full overflow-y-auto">
+          {/* Header */}
+          <div className="text-center mb-4 pr-8">
+            <h2 className="text-lg md:text-xl font-bold text-white mb-2">
               {texts.title[lang]}
             </h2>
-            <p className="text-white/80 text-xs md:text-sm">
+            <p className="text-white/80 text-sm md:text-base mb-2">
               {texts.subtitle[lang]}
+            </p>
+            <p className="text-green-400 text-sm md:text-base font-semibold">
+              {texts.highlight[lang]}
             </p>
           </div>
 
-          {/* Package Cards - 2x2 Grid */}
-          <div className="grid grid-cols-2 gap-2 md:gap-3 flex-1 mb-3">
-            {packages.map((pkg) => (
-              <button
-                key={pkg.id}
-                onClick={() => handlePackageSelect(pkg)}
-                disabled={isLoading}
-                className={`relative p-3 md:p-4 rounded-xl border-2 transition-all text-center flex flex-col items-center justify-center ${
-                  selectedPackage === pkg.id
-                    ? 'border-purple-500 bg-purple-500/20'
-                    : pkg.popular
-                    ? 'border-pink-500/50 bg-white/5 hover:bg-white/10 hover:border-pink-500'
-                    : 'border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/40'
-                } ${isLoading && selectedPackage === pkg.id ? 'animate-pulse' : ''}`}
-              >
-                {/* Popular badge */}
-                {pkg.popular && (
-                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full text-[9px] md:text-xs font-semibold text-white flex items-center gap-1">
-                    <Sparkles className="w-2.5 h-2.5" />
-                    {texts.popular[lang]}
-                  </div>
-                )}
+          {/* Loading state */}
+          {plansLoading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+                <p className="text-white/60 text-sm">{texts.loading[lang]}</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Package Cards - 2x2 Grid on mobile, can be 1x4 on larger screens */}
+              <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-4 flex-1 mb-4">
+                {plans?.map((plan) => (
+                  <button
+                    key={plan.id}
+                    onClick={() => handlePackageSelect(plan)}
+                    disabled={isLoading}
+                    className={`relative p-4 md:p-5 rounded-xl border-2 transition-all text-center flex flex-col items-center justify-between min-h-[180px] md:min-h-[200px] ${
+                      selectedPackage === plan.id
+                        ? 'border-purple-500 bg-purple-500/20'
+                        : isPopular(plan)
+                        ? 'border-pink-500/50 bg-white/5 hover:bg-white/10 hover:border-pink-500'
+                        : 'border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/40'
+                    } ${isLoading && selectedPackage === plan.id ? 'animate-pulse' : ''}`}
+                  >
+                    {/* Popular badge */}
+                    {isPopular(plan) && (
+                      <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full text-[10px] md:text-xs font-semibold text-white flex items-center gap-1 whitespace-nowrap">
+                        <Sparkles className="w-3 h-3" />
+                        {texts.popular[lang]}
+                      </div>
+                    )}
 
-                {/* Package name */}
-                <h3 className="text-base md:text-lg font-bold text-white mb-1">
-                  {pkg.name[lang]}
-                </h3>
+                    <div className="flex flex-col items-center">
+                      {/* Package name */}
+                      <h3 className="text-lg md:text-xl font-bold text-white mb-1">
+                        {plan.name}
+                      </h3>
 
-                {/* Video count */}
-                <p className="text-white/80 text-sm md:text-base font-medium mb-1">
-                  {pkg.videos} {pkg.videos === 1 ? texts.videoActive[lang] : texts.videosActive[lang]}
-                </p>
+                      {/* Description (video count) */}
+                      <p className="text-white/80 text-sm md:text-base font-medium mb-2">
+                        {plan.description}
+                      </p>
 
-                {/* Trial text */}
-                <p className="text-green-400 text-sm md:text-base font-semibold mb-2">
-                  {texts.trialText[lang]}
-                </p>
+                      {/* Trial text */}
+                      <p className="text-green-400 text-sm md:text-base font-semibold">
+                        {texts.trialText[lang]}
+                      </p>
+                    </div>
 
-                {/* Select button indicator */}
-                <div className={`flex items-center justify-center gap-1.5 py-2 px-4 rounded-lg w-full ${
-                  pkg.popular
-                    ? 'bg-gradient-to-r from-pink-500 to-purple-500'
-                    : 'bg-white/10'
-                }`}>
-                  {isLoading && selectedPackage === pkg.id ? (
-                    <span className="text-white text-sm">{texts.processing[lang]}</span>
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4 text-white" />
-                      <span className="text-white text-sm font-medium">
-                        {texts.selectThis[lang]}
-                      </span>
-                    </>
-                  )}
-                </div>
+                    {/* Select button indicator */}
+                    <div className={`flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-lg w-full mt-3 ${
+                      isPopular(plan)
+                        ? 'bg-gradient-to-r from-pink-500 to-purple-500'
+                        : 'bg-white/10'
+                    }`}>
+                      {isLoading && selectedPackage === plan.id ? (
+                        <span className="text-white text-sm md:text-base font-medium">{texts.processing[lang]}</span>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4 text-white" />
+                          <span className="text-white text-sm md:text-base font-medium">
+                            {texts.selectThis[lang]}
+                          </span>
+                        </>
+                      )}
+                    </div>
 
-                {/* Price - BELOW the button */}
-                <p className="text-white/60 text-[10px] md:text-xs mt-1.5">
-                  {texts.afterTrial[lang]} {formatPrice(pkg.priceHuf)} {texts.perMonth[lang]}
-                </p>
-              </button>
-            ))}
-          </div>
+                    {/* Price - BELOW the button */}
+                    <p className="text-white/60 text-xs md:text-sm mt-2">
+                      {texts.afterTrial[lang]} {formatPrice(plan.monthly_price_huf)} {texts.perMonth[lang]}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Legal text */}
-          <p className="text-white/40 text-[9px] md:text-[10px] text-center leading-relaxed">
+          <p className="text-white/40 text-[10px] md:text-xs text-center leading-relaxed mt-auto">
             {texts.legalText[lang]}
           </p>
         </div>

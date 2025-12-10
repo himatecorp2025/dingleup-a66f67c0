@@ -3721,6 +3721,7 @@ export type Database = {
         Args: { invitation_code_input: string }
         Returns: Json
       }
+      activate_creator_trial: { Args: { p_plan_id: string }; Returns: Json }
       archive_old_lives_ledger: { Args: never; Returns: Json }
       archive_old_wallet_ledger: { Args: never; Returns: Json }
       archive_thread_for_user: { Args: { p_thread_id: string }; Returns: Json }
