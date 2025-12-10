@@ -286,42 +286,40 @@ const Creators = () => {
             </section>
           )}
 
-          {/* Section Title + Platform Filter - Only show when has videos */}
+          {/* Section Title */}
+          <h2 className="text-lg font-bold text-white mb-4">
+            {lang === 'hu' ? 'Megosztott videóid' : 'Your shared videos'}
+          </h2>
+
+          {/* Platform Filter Icons - Always visible, equally distributed */}
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+            {filters.map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => !filter.disabled && setActiveFilter(filter.id)}
+                disabled={filter.disabled}
+                className={`flex-1 flex items-center justify-center p-3 mx-1 rounded-xl transition-all ${
+                  activeFilter === filter.id
+                    ? 'bg-white/20 text-white shadow-lg'
+                    : filter.disabled
+                      ? 'bg-white/5 text-white/30 cursor-not-allowed'
+                      : 'bg-white/5 text-white/60 hover:bg-white/10'
+                }`}
+                title={filter.id === 'all' 
+                  ? (lang === 'hu' ? 'Összes' : 'All')
+                  : filter.id.charAt(0).toUpperCase() + filter.id.slice(1)
+                }
+              >
+                {filter.icon}
+              </button>
+            ))}
+          </div>
+
+          {/* Video List - Only when has videos */}
           {hasVideos && (
-            <>
-              <h2 className="text-lg font-bold text-white mb-4">
-                {lang === 'hu' ? 'Megosztott videóid' : 'Your shared videos'}
-              </h2>
-
-              {/* Platform Filter Icons - Equally distributed */}
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
-                {filters.map((filter) => (
-                  <button
-                    key={filter.id}
-                    onClick={() => !filter.disabled && setActiveFilter(filter.id)}
-                    disabled={filter.disabled}
-                    className={`flex-1 flex items-center justify-center p-3 mx-1 rounded-xl transition-all ${
-                      activeFilter === filter.id
-                        ? 'bg-white/20 text-white shadow-lg'
-                        : filter.disabled
-                          ? 'bg-white/5 text-white/30 cursor-not-allowed'
-                          : 'bg-white/5 text-white/60 hover:bg-white/10'
-                    }`}
-                    title={filter.id === 'all' 
-                      ? (lang === 'hu' ? 'Összes' : 'All')
-                      : filter.id.charAt(0).toUpperCase() + filter.id.slice(1)
-                    }
-                  >
-                    {filter.icon}
-                  </button>
-                ))}
-              </div>
-
-              {/* Video List */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Video cards will go here */}
-              </div>
-            </>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+              {/* Video cards will go here */}
+            </div>
           )}
 
           {/* "Miért jó neked?" Section - Only shows when no videos */}

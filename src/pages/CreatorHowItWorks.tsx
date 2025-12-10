@@ -1,12 +1,32 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Eye, Users, Target, Zap, Package, Link, Play, BarChart3 } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import BottomNav from '@/components/BottomNav';
-import creatorsHeroBg from '@/assets/creators-hero-bg.png';
+import { useAudioStore } from '@/stores/audioStore';
 
 const CreatorHowItWorks = () => {
   const navigate = useNavigate();
-  const { lang } = useI18n();
+  const { t, lang } = useI18n();
+
+  // Disable music on this page
+  const { musicEnabled, setMusicEnabled } = useAudioStore();
+  const [previousMusicState, setPreviousMusicState] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // Save current music state and disable
+    if (previousMusicState === null && musicEnabled) {
+      setPreviousMusicState(musicEnabled);
+      setMusicEnabled(false);
+    }
+    
+    // Restore music state on unmount
+    return () => {
+      if (previousMusicState !== null) {
+        setMusicEnabled(previousMusicState);
+      }
+    };
+  }, [musicEnabled, previousMusicState, setMusicEnabled]);
 
   const benefits = [
     {
@@ -75,51 +95,59 @@ const CreatorHowItWorks = () => {
   ];
 
   return (
-    <div className="fixed inset-0 flex flex-col">
-      {/* Background */}
-      <div 
-        className="fixed inset-0 bg-no-repeat bg-cover bg-center"
-        style={{
-          backgroundImage: `url(${creatorsHeroBg})`,
-          top: 'calc(-1 * env(safe-area-inset-top, 0px))',
-          height: 'calc(100vh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))',
-        }}
-      />
-      <div 
-        className="fixed inset-0 bg-black/60 pointer-events-none"
-        style={{
-          top: 'calc(-1 * env(safe-area-inset-top, 0px))',
-          height: 'calc(100vh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))',
-        }}
-      />
-
+    <div className="fixed inset-0 flex flex-col bg-gradient-to-b from-[#0a0a2e] via-[#16213e] to-[#0f0f3d]">
       {/* Content */}
       <div 
         className="flex-1 flex flex-col relative z-10 overflow-y-auto overflow-x-hidden"
         style={{ 
-          paddingTop: 'clamp(8px, 2vh, 16px)',
+          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
           paddingBottom: 'calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 24px)' 
         }}
       >
         <div className="w-[90vw] max-w-[800px] mx-auto">
           
-          {/* Header */}
+          {/* Header with red back button */}
           <header className="flex items-center gap-4 mb-6">
             <button
               onClick={() => navigate('/creators')}
-              className="relative rounded-full hover:scale-110 transition-all p-3"
-              style={{ minWidth: '48px', minHeight: '48px' }}
+              className="relative rounded-full hover:scale-110 transition-all"
+              style={{
+                padding: 'clamp(8px, 2vw, 12px)',
+                minWidth: 'clamp(40px, 10vw, 56px)',
+                minHeight: 'clamp(40px, 10vw, 56px)'
+              }}
             >
-              <div className="absolute inset-0 bg-black/40 rounded-full" style={{ transform: 'translate(3px, 3px)', filter: 'blur(4px)' }} />
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-700 via-purple-600 to-purple-900 border-2 border-purple-400/50" />
-              <div className="absolute inset-[3px] rounded-full bg-gradient-to-b from-purple-600 via-purple-500 to-purple-800" />
-              <LogOut className="text-white relative z-10 -scale-x-100 w-5 h-5" />
+              <div className="absolute inset-0 bg-black/40 rounded-full" style={{ transform: 'translate(3px, 3px)', filter: 'blur(4px)' }} aria-hidden />
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-red-700 via-red-600 to-red-900 border-2 border-red-400/50 shadow-lg" aria-hidden />
+              <div className="absolute inset-[3px] rounded-full bg-gradient-to-b from-red-600 via-red-500 to-red-800" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3)' }} aria-hidden />
+              <div className="absolute inset-[5px] rounded-full bg-gradient-to-b from-red-500 via-red-600 to-red-700" style={{ boxShadow: 'inset 0 8px 16px rgba(255,255,255,0.2), inset 0 -8px 16px rgba(0,0,0,0.3)' }} aria-hidden />
+              <div className="absolute inset-[5px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(ellipse 100% 60% at 30% 0%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.2) 30%, transparent 60%)' }} aria-hidden />
+              <LogOut 
+                className="text-white relative z-10 -scale-x-100" 
+                style={{ width: 'clamp(20px, 5vw, 24px)', height: 'clamp(20px, 5vw, 24px)' }}
+              />
             </button>
             
             <h1 className="text-white font-bold text-xl md:text-2xl">
               {lang === 'hu' ? 'Hogyan működik a Creator rendszer?' : 'How does the Creator system work?'}
             </h1>
           </header>
+
+          {/* Hero Box */}
+          <section className="mb-8 rounded-2xl overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 p-6 md:p-8 text-white">
+            <h1 
+              className="text-[clamp(1.25rem,5vw,2rem)] leading-tight mb-3"
+              style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800 }}
+            >
+              {t('creators.hero_h1_part1')} <span className="text-[#dc2626]">{t('creators.hero_h1_highlight')}</span> {t('creators.hero_h1_part2')}
+            </h1>
+            <p className="text-white/80 text-[clamp(0.875rem,3vw,1rem)] mb-2">
+              {t('creators.hero_h2')}
+            </p>
+            <p className="text-white/60 text-[clamp(0.75rem,2.5vw,0.875rem)]">
+              {t('creators.hero_h3')}
+            </p>
+          </section>
 
           {/* Benefits Section */}
           <section className="mb-10">
@@ -134,7 +162,7 @@ const CreatorHowItWorks = () => {
               {benefits.map((benefit, index) => (
                 <div
                   key={index}
-                  className="bg-black/40 backdrop-blur-sm rounded-2xl border border-white/10 p-5 hover:border-purple-500/30 transition-all"
+                  className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-5 hover:border-purple-500/30 transition-all"
                 >
                   <div 
                     className="w-12 h-12 rounded-full flex items-center justify-center mb-4 shadow-lg"
@@ -167,7 +195,7 @@ const CreatorHowItWorks = () => {
               {steps.map((step, index) => (
                 <div
                   key={index}
-                  className="bg-black/40 backdrop-blur-sm rounded-2xl border border-white/10 p-5 flex gap-4 items-start hover:border-purple-500/30 transition-all"
+                  className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-5 flex gap-4 items-start hover:border-purple-500/30 transition-all"
                 >
                   {/* Step Number */}
                   <div 
