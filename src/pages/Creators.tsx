@@ -216,19 +216,19 @@ const Creators = () => {
 
       {/* Header */}
       <header 
-        className="px-4 py-2 border-b border-white/10"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}
+        className="px-4 py-1 border-b border-white/10"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 4px)' }}
       >
         {/* Top row: Back button + Menu */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-1">
           {/* Back Button - Profile page style */}
           <button
             onClick={() => navigate('/dashboard')}
             className="relative rounded-full hover:scale-110 transition-all"
             style={{
-              padding: 'clamp(8px, 2vw, 12px)',
-              minWidth: 'clamp(40px, 10vw, 56px)',
-              minHeight: 'clamp(40px, 10vw, 56px)'
+              padding: 'clamp(6px, 1.5vw, 10px)',
+              minWidth: 'clamp(36px, 8vw, 48px)',
+              minHeight: 'clamp(36px, 8vw, 48px)'
             }}
             title={t('common.back')}
           >
@@ -239,7 +239,7 @@ const Creators = () => {
             <div className="absolute inset-[5px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(ellipse 100% 60% at 30% 0%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.2) 30%, transparent 60%)' }} aria-hidden />
             <LogOut 
               className="text-white relative z-10 -scale-x-100" 
-              style={{ width: 'clamp(20px, 5vw, 24px)', height: 'clamp(20px, 5vw, 24px)' }}
+              style={{ width: 'clamp(18px, 4vw, 22px)', height: 'clamp(18px, 4vw, 22px)' }}
             />
           </button>
 
@@ -271,9 +271,9 @@ const Creators = () => {
         </div>
 
         {/* Profile: Avatar above Username (vertical stack, centered) */}
-        <div className="flex flex-col items-center gap-2">
-          {/* Avatar - 50% larger */}
-          <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-purple-400/50 shadow-lg">
+        <div className="flex flex-col items-center gap-1">
+          {/* Avatar - smaller */}
+          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-purple-400/50 shadow-lg">
             <img 
               src={profile?.avatar_url || defaultProfileImage} 
               alt="Profile"
@@ -282,28 +282,28 @@ const Creators = () => {
           </div>
           {/* Username + Dashboard text */}
           <div className="text-center">
-            <h2 className="text-lg font-bold text-white">
+            <h2 className="text-base font-bold text-white">
               {profile?.username || 'Creator'}
             </h2>
-            <p className="text-sm text-white/60">Creator Dashboard</p>
+            <p className="text-xs text-white/60">Creator Dashboard</p>
           </div>
 
           {/* Stats - icon + number + label */}
-          <div className="flex items-center justify-center w-full max-w-xs mx-auto mt-3">
+          <div className="flex items-center justify-center w-full max-w-xs mx-auto mt-1">
             <div className="flex-1 flex flex-col items-center">
-              <Film className="w-5 h-5 text-purple-400 mb-1" />
-              <span className="text-lg font-bold text-white">0</span>
-              <span className="text-xs text-white/60">{lang === 'hu' ? 'Videóim' : 'Videos'}</span>
+              <Film className="w-4 h-4 text-purple-400 mb-0.5" />
+              <span className="text-base font-bold text-white">0</span>
+              <span className="text-[10px] text-white/60">{lang === 'hu' ? 'Videóim' : 'Videos'}</span>
             </div>
             <div className="flex-1 flex flex-col items-center">
-              <Trophy className="w-5 h-5 text-yellow-400 mb-1" />
-              <span className="text-lg font-bold text-white">0</span>
-              <span className="text-xs text-white/60">{lang === 'hu' ? 'Eléréseim' : 'Reach'}</span>
+              <Trophy className="w-4 h-4 text-yellow-400 mb-0.5" />
+              <span className="text-base font-bold text-white">0</span>
+              <span className="text-[10px] text-white/60">{lang === 'hu' ? 'Eléréseim' : 'Reach'}</span>
             </div>
             <div className="flex-1 flex flex-col items-center">
-              <Eye className="w-5 h-5 text-purple-400 mb-1" />
-              <span className="text-lg font-bold text-white">0</span>
-              <span className="text-xs text-white/60">{lang === 'hu' ? 'Megtekintéseim' : 'Views'}</span>
+              <Eye className="w-4 h-4 text-purple-400 mb-0.5" />
+              <span className="text-base font-bold text-white">0</span>
+              <span className="text-[10px] text-white/60">{lang === 'hu' ? 'Megtekintéseim' : 'Views'}</span>
             </div>
           </div>
         </div>
