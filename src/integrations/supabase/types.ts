@@ -498,6 +498,47 @@ export type Database = {
           },
         ]
       }
+      creator_video_impressions: {
+        Row: {
+          context: string
+          created_at: string
+          creator_video_id: string
+          id: string
+          is_relevant_viewer: boolean
+          sequence_position: number | null
+          viewer_user_id: string
+          watched_full_15s: boolean
+        }
+        Insert: {
+          context: string
+          created_at?: string
+          creator_video_id: string
+          id?: string
+          is_relevant_viewer?: boolean
+          sequence_position?: number | null
+          viewer_user_id: string
+          watched_full_15s?: boolean
+        }
+        Update: {
+          context?: string
+          created_at?: string
+          creator_video_id?: string
+          id?: string
+          is_relevant_viewer?: boolean
+          sequence_position?: number | null
+          viewer_user_id?: string
+          watched_full_15s?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_video_impressions_creator_video_id_fkey"
+            columns: ["creator_video_id"]
+            isOneToOne: false
+            referencedRelation: "creator_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_video_topics: {
         Row: {
           created_at: string
@@ -537,6 +578,7 @@ export type Database = {
       creator_videos: {
         Row: {
           created_at: string
+          duration_seconds: number | null
           embed_url: string | null
           expires_at: string | null
           first_activated_at: string | null
@@ -552,6 +594,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          duration_seconds?: number | null
           embed_url?: string | null
           expires_at?: string | null
           first_activated_at?: string | null
@@ -567,6 +610,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          duration_seconds?: number | null
           embed_url?: string | null
           expires_at?: string | null
           first_activated_at?: string | null
@@ -3384,6 +3428,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      video_ad_rewards: {
+        Row: {
+          coins_reward: number
+          id: string
+          is_active: boolean
+          lives_reward: number
+          updated_at: string
+          videos_required: number
+        }
+        Insert: {
+          coins_reward?: number
+          id: string
+          is_active?: boolean
+          lives_reward?: number
+          updated_at?: string
+          videos_required?: number
+        }
+        Update: {
+          coins_reward?: number
+          id?: string
+          is_active?: boolean
+          lives_reward?: number
+          updated_at?: string
+          videos_required?: number
+        }
+        Relationships: []
       }
       wallet_ledger: {
         Row: {
