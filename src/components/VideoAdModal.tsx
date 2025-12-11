@@ -88,11 +88,11 @@ export const VideoAdModal = ({
       }
     }
     
-    // TikTok - add autoplay parameter
+    // TikTok - no autoplay param (matches Daily Gift which works)
     if (url.includes('tiktok.com')) {
       const videoIdMatch = url.match(/video\/(\d+)/);
       if (videoIdMatch) {
-        const embedUrl = `https://www.tiktok.com/embed/v2/${videoIdMatch[1]}?autoplay=1`;
+        const embedUrl = `https://www.tiktok.com/embed/v2/${videoIdMatch[1]}`;
         console.log('[VideoAdModal] Generated TikTok embed:', embedUrl);
         return embedUrl;
       }
@@ -312,23 +312,33 @@ export const VideoAdModal = ({
           backgroundColor: '#000',
         }}
       >
-        {/* Video iframe - scaled and shifted up to hide bottom TikTok UI (username, description) but keep right icons */}
+        {/* Video iframe - matches Daily Gift styling for autoplay compatibility */}
         {hasVideos && !videoError ? (
-          <iframe
-            src={embedUrl}
-            style={{
-              position: 'absolute',
-              top: '40%', // Shift up to hide bottom UI (username, description)
-              left: '50%', // Keep centered to show right side icons
-              transform: 'translate(-50%, -50%) scale(1.6)', // Scale up to crop bottom
-              width: '100vw',
-              height: '100dvh',
-              border: 'none',
-            }}
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-            allowFullScreen
-            onError={() => setVideoError(true)}
-          />
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            overflow: 'hidden',
+            // Clip bottom 15% to hide TikTok username/description
+            clipPath: 'inset(0 0 15% 0)',
+          }}>
+            <iframe
+              src={embedUrl}
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '177.78vh', // 16:9 aspect ratio width based on height
+                height: '100vh',
+                minWidth: '100vw',
+                minHeight: '56.25vw', // 16:9 aspect ratio height based on width
+                border: 'none',
+              }}
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowFullScreen
+              onError={() => setVideoError(true)}
+            />
+          </div>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white">
             <AlertTriangle className="w-16 h-16 text-yellow-500" />
