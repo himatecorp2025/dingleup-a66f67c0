@@ -16,6 +16,47 @@ interface FullscreenRewardVideoViewProps {
   onClose: () => void;
 }
 
+// Build embed URL with autoplay parameters per platform
+const buildAutoplayUrl = (video: RewardVideo): string => {
+  let url = video.embedUrl;
+  
+  try {
+    const urlObj = new URL(url);
+    
+    // Platform-specific autoplay params
+    switch (video.platform) {
+      case 'youtube':
+        urlObj.searchParams.set('autoplay', '1');
+        urlObj.searchParams.set('mute', '1');
+        urlObj.searchParams.set('playsinline', '1');
+        urlObj.searchParams.set('controls', '0');
+        urlObj.searchParams.set('showinfo', '0');
+        urlObj.searchParams.set('rel', '0');
+        urlObj.searchParams.set('modestbranding', '1');
+        break;
+      case 'tiktok':
+        // TikTok embed auto-plays by default, but ensure it's set
+        urlObj.searchParams.set('autoplay', '1');
+        urlObj.searchParams.set('mute', '1');
+        break;
+      case 'instagram':
+        // Instagram Reels embed
+        urlObj.searchParams.set('autoplay', '1');
+        break;
+      case 'facebook':
+        // Facebook video embed
+        urlObj.searchParams.set('autoplay', '1');
+        urlObj.searchParams.set('mute', '1');
+        break;
+    }
+    
+    return urlObj.toString();
+  } catch (e) {
+    // If URL parsing fails, return original
+    return url;
+  }
+};
+
 export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps> = ({
   videos,
   durationSecondsPerVideo = 15,
@@ -23,13 +64,13 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
   onClose,
 }) => {
   const { lang } = useI18n();
+  const startTimeRef = useRef<number>(Date.now());
+  const [secondsLeft, setSecondsLeft] = useState(videos.length * durationSecondsPerVideo);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const [countdown, setCountdown] = useState(durationSecondsPerVideo);
   const [canClose, setCanClose] = useState(false);
-  const watchedIdsRef = useRef<string[]>([]);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const watchedIdsRef = useRef<Set<string>>(new Set());
 
-  const totalVideos = videos.length;
+  const totalDurationSeconds = videos.length * durationSecondsPerVideo;
   const currentVideo = videos[currentVideoIndex];
 
   // Lock body scroll
@@ -54,238 +95,148 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
     };
   }, []);
 
-  // Countdown timer logic
+  // Single unified timer - Date.now() based for accuracy
   useEffect(() => {
-    if (!currentVideo) return;
-    
-    setCountdown(durationSecondsPerVideo);
-
-    timerRef.current = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          if (!watchedIdsRef.current.includes(currentVideo.id)) {
-            watchedIdsRef.current.push(currentVideo.id);
-          }
-          
-          if (currentVideoIndex < totalVideos - 1) {
-            setCurrentVideoIndex(i => i + 1);
-            return durationSecondsPerVideo;
-          } else {
-            clearInterval(timerRef.current!);
-            setCanClose(true);
-            
-            toast.success(
-              lang === 'hu' 
-                ? 'Zárd be a videót a jutalom jóváírásához!' 
-                : 'Close the video to claim your reward!',
-              { position: 'top-center', duration: 5000 }
-            );
-            
-            return 0;
-          }
+    const interval = setInterval(() => {
+      const elapsed = (Date.now() - startTimeRef.current) / 1000;
+      const remaining = Math.max(0, totalDurationSeconds - Math.floor(elapsed));
+      
+      setSecondsLeft(remaining);
+      
+      // Calculate which video should be playing
+      const newIndex = Math.min(videos.length - 1, Math.floor(elapsed / durationSecondsPerVideo));
+      
+      if (newIndex !== currentVideoIndex) {
+        // Mark previous video as watched
+        if (videos[currentVideoIndex]) {
+          watchedIdsRef.current.add(videos[currentVideoIndex].id);
         }
-        return prev - 1;
-      });
-    }, 1000);
+        setCurrentVideoIndex(newIndex);
+      }
+      
+      // Timer finished
+      if (remaining === 0) {
+        // Mark all videos as watched
+        videos.forEach(v => watchedIdsRef.current.add(v.id));
+        
+        clearInterval(interval);
+        setCanClose(true);
+        
+        toast.success(
+          lang === 'hu' 
+            ? 'Zárd be a videót a jutalom jóváírásához!' 
+            : 'Close the video to claim your reward!',
+          { position: 'top-center', duration: 5000 }
+        );
+      }
+    }, 100); // Update frequently for smooth countdown
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [currentVideoIndex, currentVideo?.id, totalVideos, durationSecondsPerVideo, lang]);
+    return () => clearInterval(interval);
+  }, [totalDurationSeconds, durationSecondsPerVideo, videos, lang, currentVideoIndex]);
 
   const handleClose = useCallback(() => {
     if (!canClose) return;
-    onCompleted(watchedIdsRef.current);
+    onCompleted(Array.from(watchedIdsRef.current));
     onClose();
   }, [canClose, onCompleted, onClose]);
 
   if (!currentVideo) return null;
 
-  // Build embed URL with autoplay parameter
-  let embedSrc = currentVideo.embedUrl;
-  try {
-    const url = new URL(embedSrc);
-    url.searchParams.set('autoplay', '1');
-    embedSrc = url.toString();
-  } catch (e) {
-    // Keep original URL
-  }
+  const embedSrc = buildAutoplayUrl(currentVideo);
 
   return (
     <div 
+      className="fixed inset-0 z-[9999] bg-black overflow-hidden"
       style={{ 
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
         width: '100vw', 
         height: '100dvh',
-        backgroundColor: '#000',
-        zIndex: 99999,
       }}
     >
-      {/* FULLSCREEN iframe - scaled up to hide platform UI */}
+      {/* FULLSCREEN iframe - scaled and positioned to hide platform UI */}
       <iframe
-        key={currentVideo.id}
+        key={`${currentVideo.id}-${currentVideoIndex}`}
         src={embedSrc}
+        className="absolute border-0 pointer-events-none"
         style={{ 
-          position: 'absolute',
           top: '50%',
           left: '50%',
-          width: '100vw',
-          height: '100dvh',
-          border: 'none',
-          pointerEvents: 'none',
-          transform: 'translate(-50%, -50%) scale(2.5)',
+          width: '130vw',
+          height: '130vh',
+          // Center video, shift up slightly to hide bottom platform UI (username, hashtags, music)
+          transform: 'translate(-50%, -55%)',
           transformOrigin: 'center center',
         }}
         allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
         allowFullScreen
       />
 
-      {/* SOLID BLACK masks to completely cover platform UI */}
-      {/* Top mask - thick solid black */}
+      {/* Countdown timer - top left */}
       <div 
+        className="absolute z-30"
         style={{ 
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '20dvh',
-          backgroundColor: '#000',
-          zIndex: 10,
-        }} 
-      />
-      
-      {/* Bottom mask - thick solid black */}
-      <div 
-        style={{ 
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '20dvh',
-          backgroundColor: '#000',
-          zIndex: 10,
-        }} 
-      />
-      
-      {/* Left mask */}
-      <div 
-        style={{ 
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          left: 0,
-          width: '12vw',
-          backgroundColor: '#000',
-          zIndex: 10,
-        }} 
-      />
-      
-      {/* Right mask - wider to cover TikTok buttons */}
-      <div 
-        style={{ 
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          right: 0,
-          width: '18vw',
-          backgroundColor: '#000',
-          zIndex: 10,
-        }} 
-      />
-
-      {/* Countdown timer */}
-      <div 
-        style={{ 
-          position: 'absolute',
-          zIndex: 30,
           top: 'max(env(safe-area-inset-top, 0px), 16px)', 
           left: '16px',
         }}
       >
         <div 
+          className="flex items-center justify-center rounded-full"
           style={{
             width: '56px',
             height: '56px',
-            borderRadius: '50%',
             backgroundColor: 'rgba(0,0,0,0.85)',
             border: '2px solid rgba(255,255,255,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             fontWeight: 900,
             fontSize: '24px',
             color: '#fff',
             boxShadow: '0 4px 20px rgba(0,0,0,0.8)',
           }}
         >
-          {countdown}
+          {secondsLeft}
         </div>
       </div>
 
-      {/* Progress dots for multi-video */}
-      {totalVideos > 1 && (
+      {/* Progress dots for multi-video (only show if more than 1 video) */}
+      {videos.length > 1 && (
         <div 
+          className="absolute z-30 flex gap-2"
           style={{ 
-            position: 'absolute',
-            zIndex: 30,
             top: 'max(env(safe-area-inset-top, 0px), 16px)', 
             left: '50%', 
             transform: 'translateX(-50%)',
-            display: 'flex',
-            gap: '8px',
           }}
         >
           {videos.map((_, idx) => (
             <div 
               key={idx} 
+              className="transition-all duration-300"
               style={{ 
                 width: idx === currentVideoIndex ? '24px' : '8px', 
                 height: '8px',
                 borderRadius: '4px',
                 backgroundColor: idx <= currentVideoIndex ? '#fff' : 'rgba(255,255,255,0.3)',
-                transition: 'all 0.3s ease',
               }} 
             />
           ))}
         </div>
       )}
 
-      {/* Close button - only when countdown finished */}
+      {/* Close button - only visible when countdown finished */}
       {canClose && (
         <button 
           onClick={handleClose}
+          className="absolute z-30 flex items-center justify-center rounded-full border-0 cursor-pointer animate-pulse"
           style={{ 
-            position: 'absolute',
-            zIndex: 30,
             top: 'max(env(safe-area-inset-top, 0px), 16px)', 
             right: '16px',
             width: '48px',
             height: '48px',
-            borderRadius: '50%',
             backgroundColor: 'rgba(255,255,255,0.3)',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-            animation: 'pulse 2s infinite',
           }}
         >
           <X color="#fff" size={28} strokeWidth={3} />
         </button>
       )}
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.8; transform: scale(1.05); }
-        }
-      `}</style>
     </div>
   );
 };

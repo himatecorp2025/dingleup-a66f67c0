@@ -52,8 +52,8 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
     cancelSession,
   } = useRewardVideoStore();
 
-  // Video availability based on preloaded queue
-  const videoAdAvailable = isPreloaded && hasEnoughVideos(2); // Refill needs 2 videos
+  // Video availability - as long as there's at least 1 video, we can play (backend handles repetition)
+  const videoAdAvailable = isPreloaded && hasEnoughVideos(1);
 
   // Get userId on mount
   useEffect(() => {
@@ -92,14 +92,14 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
     }
   }, [isOpen]);
 
-  // Handle video refill click - starts 2×15s session
+  // Handle video refill click - starts 2×15s session (backend handles video repetition if needed)
   const handleVideoRefill = async () => {
     if (!userId) return;
     
-    // Start reward session for refill (2 videos required)
+    // Start reward session for refill (2 videos required - backend will repeat if only 1 exists)
     const session = await startRewardSession(userId, 'refill', 0);
     
-    if (session && session.videos.length >= 2) {
+    if (session && session.videos.length > 0) {
       // Close popup immediately and show fullscreen video
       setShowVideo(true);
     } else {
@@ -321,13 +321,11 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
               >
                 {isStartingSession ? (
                   <LoadingSpinner3D size={14} />
-                ) : videoAdAvailable ? (
+                ) : (
                   <span className="flex items-center gap-1">
                     <Film className="w-3 h-3" />
                     2×15s
                   </span>
-                ) : (
-                  <span className="text-[10px]">{lang === 'hu' ? 'Nincs videó' : 'No video'}</span>
                 )}
               </Button>
             </div>
@@ -375,12 +373,12 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
           </div>
         </div>
 
-        {/* Warning if neither option available */}
+        {/* Warning only if not enough gold (video always available if system has at least 1) */}
         {!hasEnoughGold && !videoAdAvailable && (
           <p className="text-yellow-200 text-[10px] text-center mt-2 font-bold" style={{ textShadow: '0 1px 4px rgba(0, 0, 0, 0.8)' }}>
             {lang === 'hu' 
-              ? 'Nincs elég aranyad és jelenleg nincs elérhető videó.' 
-              : 'Not enough gold and no video available at the moment.'}
+              ? 'Hamarosan érkeznek az alkotók videói...' 
+              : 'Creator videos coming soon...'}
           </p>
         )}
       </DialogContent>
