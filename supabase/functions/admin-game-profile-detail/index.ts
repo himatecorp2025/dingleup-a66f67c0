@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       };
     });
 
-    allTopics.sort((a, b) => b.score - a.score);
+    allTopics.sort((a, b) => b.correctCount - a.correctCount);
     const topTopics = allTopics.slice(0, 3);
 
     const aiEnabled = settings?.ai_personalized_questions_enabled ?? true;
