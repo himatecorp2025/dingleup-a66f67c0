@@ -262,6 +262,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
   const handleSwipeUp = useCallback(async () => {
     // If game completed, restart new game
     if (gameCompleted) {
+      toast.dismiss(); // Dismiss game results toast before new game
       await restartGameImmediately();
       return;
     }
@@ -310,8 +311,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
   ]);
 
   const handleSwipeDown = useCallback(async () => {
-    // CRITICAL: Only dismiss game result toast, not all toasts
-    // This prevents accidentally dismissing important error/success messages
+    toast.dismiss(); // Dismiss game results toast before new game
     if (errorBannerVisible) {
       setErrorBannerVisible(false);
     }
