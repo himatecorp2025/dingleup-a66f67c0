@@ -29,7 +29,7 @@ import { useGameErrorHandling } from "@/hooks/useGameErrorHandling";
 import { useGameAnimation } from "@/hooks/useGameAnimation";
 import { GameErrorBanner } from "./game/GameErrorBanner";
 import { GameQuestionContainer } from "./game/GameQuestionContainer";
-import { VideoAdModal } from "./VideoAdModal";
+import { FullscreenRewardVideoView } from "./FullscreenRewardVideoView";
 import { VideoAdPrompt } from "./VideoAdPrompt";
 import { useVideoAdFlow } from "@/hooks/useVideoAdFlow";
 import { useVideoAdStore } from "@/stores/videoAdStore";
@@ -587,14 +587,16 @@ const GamePreview = memo(() => {
             />
           )}
           {videoAdFlow.showVideo && videoAdFlow.videos.length > 0 && (
-            <VideoAdModal
-              isOpen={true}
-              onClose={() => videoAdFlow.onVideoComplete()}
-              videos={videoAdFlow.videos}
-              totalDurationSeconds={videoAdFlow.totalDuration}
-              onComplete={() => videoAdFlow.onVideoComplete()}
-              onCancel={videoAdFlow.cancelVideo}
-              context="game_end"
+            <FullscreenRewardVideoView
+              videos={videoAdFlow.videos.map(v => ({
+                id: v.id,
+                embedUrl: v.embed_url,
+                platform: v.platform as 'tiktok' | 'youtube' | 'instagram' | 'facebook',
+                durationSeconds: v.duration_seconds
+              }))}
+              durationSecondsPerVideo={15}
+              onCompleted={(watchedIds) => videoAdFlow.onVideoComplete()}
+              onClose={videoAdFlow.cancelVideo}
             />
           )}
         </>
@@ -715,15 +717,16 @@ const GamePreview = memo(() => {
 
         {/* Video Ad Modal for doubling reward */}
         {videoAdFlow.showVideo && videoAdFlow.videos.length > 0 && (
-          <VideoAdModal
-            isOpen={true}
-            onClose={() => videoAdFlow.onVideoComplete()}
-            videos={videoAdFlow.videos}
-            totalDurationSeconds={videoAdFlow.totalDuration}
-            onComplete={() => videoAdFlow.onVideoComplete()}
-            onCancel={videoAdFlow.cancelVideo}
-            context="game_end"
-            doubledAmount={coinsEarned * 2}
+          <FullscreenRewardVideoView
+            videos={videoAdFlow.videos.map(v => ({
+              id: v.id,
+              embedUrl: v.embed_url,
+              platform: v.platform as 'tiktok' | 'youtube' | 'instagram' | 'facebook',
+              durationSeconds: v.duration_seconds
+            }))}
+            durationSecondsPerVideo={15}
+            onCompleted={(watchedIds) => videoAdFlow.onVideoComplete()}
+            onClose={videoAdFlow.cancelVideo}
           />
         )}
       </>
@@ -748,20 +751,16 @@ const GamePreview = memo(() => {
 
       {/* Video Ad Modal for doubling reward */}
       {videoAdFlow.showVideo && videoAdFlow.videos.length > 0 && (
-        <VideoAdModal
-          isOpen={true}
-          onClose={() => {
-            videoAdFlow.onVideoComplete();
-            // After video completes, user stays in game - scroll to restart
-          }}
-          videos={videoAdFlow.videos}
-          totalDurationSeconds={videoAdFlow.totalDuration}
-          onComplete={() => {
-            videoAdFlow.onVideoComplete();
-          }}
-          onCancel={videoAdFlow.cancelVideo}
-          context="game_end"
-          doubledAmount={coinsEarned * 2}
+        <FullscreenRewardVideoView
+          videos={videoAdFlow.videos.map(v => ({
+            id: v.id,
+            embedUrl: v.embed_url,
+            platform: v.platform as 'tiktok' | 'youtube' | 'instagram' | 'facebook',
+            durationSeconds: v.duration_seconds
+          }))}
+          durationSecondsPerVideo={15}
+          onCompleted={(watchedIds) => videoAdFlow.onVideoComplete()}
+          onClose={videoAdFlow.cancelVideo}
         />
       )}
     </>
