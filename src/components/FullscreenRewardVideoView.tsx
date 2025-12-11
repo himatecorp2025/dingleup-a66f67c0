@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/i18n';
 import introVideo from '@/assets/loading-video.mp4';
+import dingleupLogo from '@/assets/dingleup-logo-loading.png';
 
 export interface RewardVideo {
   id: string;
@@ -235,15 +236,26 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         style={{ backgroundColor: '#000000', zIndex: 0 }}
       />
 
-      {/* TRANSITION OVERLAY - Covers iframe completely during video switch */}
+      {/* TRANSITION OVERLAY - Logo on black background during video switch */}
       {isTransitioning && (
         <div 
-          className="absolute inset-0"
+          className="absolute inset-0 flex items-center justify-center"
           style={{ 
             backgroundColor: '#000000', 
             zIndex: 50,
           }}
-        />
+        >
+          <img 
+            src={dingleupLogo} 
+            alt="DingleUP" 
+            className="animate-pulse"
+            style={{
+              width: 'min(200px, 50vw)',
+              height: 'auto',
+              objectFit: 'contain',
+            }}
+          />
+        </div>
       )}
 
       {/* Show intro video OR creator video */}
