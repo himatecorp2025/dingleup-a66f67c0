@@ -138,6 +138,10 @@ const texts = {
     hu: 'Eltávolítás',
     en: 'Remove',
   },
+  quickAccess: {
+    hu: 'Gyors hozzáférés az alkalmazásokhoz:',
+    en: 'Quick access to apps:',
+  },
 };
 
 // Detect platform from URL
@@ -432,6 +436,64 @@ const VideoLinkModal = ({
               </p>
             </div>
           )}
+
+          {/* Social Media Quick Links */}
+          <div className="mb-4">
+            <p className="text-white/50 text-xs text-center mb-3">
+              {texts.quickAccess[lang]}
+            </p>
+            <div className="flex justify-center gap-4">
+              {/* TikTok */}
+              <a
+                href="tiktok://feed"
+                onClick={(e) => {
+                  // Fallback to web if app not installed
+                  setTimeout(() => {
+                    window.open('https://www.tiktok.com', '_blank');
+                  }, 500);
+                }}
+                className="w-12 h-12 rounded-xl bg-black flex items-center justify-center hover:scale-110 transition-transform"
+              >
+                <TikTokIcon className="w-6 h-6 text-white" />
+              </a>
+              {/* YouTube */}
+              <a
+                href="youtube://www.youtube.com/feed/shorts"
+                onClick={(e) => {
+                  setTimeout(() => {
+                    window.open('https://www.youtube.com/shorts', '_blank');
+                  }, 500);
+                }}
+                className="w-12 h-12 rounded-xl bg-red-600 flex items-center justify-center hover:scale-110 transition-transform"
+              >
+                <YouTubeIcon className="w-6 h-6 text-white" />
+              </a>
+              {/* Instagram */}
+              <a
+                href="instagram://reels"
+                onClick={(e) => {
+                  setTimeout(() => {
+                    window.open('https://www.instagram.com/reels', '_blank');
+                  }, 500);
+                }}
+                className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center hover:scale-110 transition-transform"
+              >
+                <InstagramIcon className="w-6 h-6 text-white" />
+              </a>
+              {/* Facebook */}
+              <a
+                href="fb://reels"
+                onClick={(e) => {
+                  setTimeout(() => {
+                    window.open('https://www.facebook.com/reels', '_blank');
+                  }, 500);
+                }}
+                className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center hover:scale-110 transition-transform"
+              >
+                <FacebookIcon className="w-6 h-6 text-white" />
+              </a>
+            </div>
+          </div>
 
           {/* Input with clear button */}
           <div className="relative">

@@ -9,8 +9,9 @@ import defaultProfileImage from '@/assets/default-profile.png';
 import { useAudioStore } from '@/stores/audioStore';
 import PackageSelectorModal from '@/components/creators/PackageSelectorModal';
 import VideoLinkModal from '@/components/creators/VideoLinkModal';
+import VideoEditModal from '@/components/creators/VideoEditModal';
 import { useCreatorSubscription } from '@/hooks/useCreatorSubscription';
-import { useCreatorVideos } from '@/hooks/useCreatorVideos';
+import { useCreatorVideos, CreatorVideo } from '@/hooks/useCreatorVideos';
 import { CreatorVideoCard } from '@/components/creators/CreatorVideoCard';
 
 // Platform Icons
@@ -63,6 +64,7 @@ const Creators = () => {
   const [profile, setProfile] = useState<{ username: string; avatar_url: string | null; id: string } | null>(null);
   const [showPackageModal, setShowPackageModal] = useState(false);
   const [showVideoLinkModal, setShowVideoLinkModal] = useState(false);
+  const [selectedVideoForEdit, setSelectedVideoForEdit] = useState<CreatorVideo | null>(null);
   
   // Disable music on this page
   const { musicEnabled, setMusicEnabled } = useAudioStore();
@@ -391,6 +393,7 @@ const Creators = () => {
                   video={video}
                   lang={lang as 'hu' | 'en'}
                   onReactivate={refetchVideos}
+                  onEdit={() => setSelectedVideoForEdit(video)}
                   showReactivateButton={isExpiryFilter}
                   showDaysRemaining={isExpiryFilter}
                 />
@@ -501,6 +504,20 @@ const Creators = () => {
         lang={lang as 'hu' | 'en'}
         remainingActivations={remainingActivations}
       />
+
+      {/* Video Edit Modal */}
+      {selectedVideoForEdit && (
+        <VideoEditModal
+          isOpen={!!selectedVideoForEdit}
+          onClose={() => setSelectedVideoForEdit(null)}
+          onSuccess={() => {
+            refetchVideos();
+            setSelectedVideoForEdit(null);
+          }}
+          video={selectedVideoForEdit}
+          lang={lang as 'hu' | 'en'}
+        />
+      )}
     </div>
   );
 };

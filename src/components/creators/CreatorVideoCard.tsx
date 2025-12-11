@@ -63,6 +63,7 @@ interface CreatorVideoCardProps {
   video: CreatorVideo;
   lang: 'hu' | 'en';
   onReactivate: () => void;
+  onEdit?: () => void;
   showReactivateButton?: boolean;
   showDaysRemaining?: boolean;
 }
@@ -71,6 +72,7 @@ export const CreatorVideoCard = ({
   video, 
   lang, 
   onReactivate,
+  onEdit,
   showReactivateButton = false,
   showDaysRemaining = false
 }: CreatorVideoCardProps) => {
@@ -145,7 +147,10 @@ export const CreatorVideoCard = ({
   const thumbnailUrl = getThumbnailUrl();
 
   return (
-    <div className="relative overflow-hidden bg-black group">
+    <div 
+      className="relative overflow-hidden bg-black group cursor-pointer"
+      onClick={onEdit}
+    >
       {/* Thumbnail - 9:12.8 aspect ratio (20% shorter than 9:16) */}
       <div className="relative aspect-[9/12.8]">
         {thumbnailUrl ? (
