@@ -312,16 +312,17 @@ export const VideoAdModal = ({
           backgroundColor: '#000', // Matte black background for non-9:16 videos
         }}
       >
-        {/* Video iframe - fullscreen cover like native TikTok app */}
+        {/* Video iframe - scaled to crop platform UI (bottom creator info) */}
         {hasVideos && !videoError ? (
           <iframe
             src={embedUrl}
             style={{
               position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
+              top: '45%', // Shift up to crop bottom platform UI
+              left: '50%',
+              transform: 'translate(-50%, -50%) scale(1.25)', // Scale up to fill and crop edges
+              width: '100vw',
+              height: '100dvh',
               border: 'none',
               backgroundColor: '#000',
             }}

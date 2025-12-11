@@ -240,22 +240,22 @@ export const FullscreenRewardVideoView = ({
           width: '100vw',
           height: '100dvh',
           overflow: 'hidden',
+          backgroundColor: '#000', // Matte black background for non-9:16 videos
         }}
       >
-        {/* Video iframe - true fullscreen cover */}
+        {/* Video iframe - scaled to crop platform UI (bottom creator info) */}
         <iframe
           ref={iframeRef}
           src={embedUrl}
           style={{
             position: 'absolute',
-            top: '50%',
+            top: '45%', // Shift up to crop bottom platform UI
             left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '177.78vh', // 16:9 aspect ratio width based on height
-            height: '100vh',
-            minWidth: '100vw',
-            minHeight: '56.25vw', // 16:9 aspect ratio height based on width
+            transform: 'translate(-50%, -50%) scale(1.25)', // Scale up to fill and crop edges
+            width: '100vw',
+            height: '100dvh',
             border: 'none',
+            backgroundColor: '#000',
           }}
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
           allowFullScreen
