@@ -24,8 +24,9 @@ serve(async (req) => {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const userId = payload.sub;
 
-    const url = new URL(req.url);
-    const platform = url.searchParams.get('platform');
+    // Get params from request body
+    const body = await req.json().catch(() => ({}));
+    const platform = body.platform;
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -73,6 +74,8 @@ serve(async (req) => {
         heatmap[dayOfWeek][hour]++;
       }
     }
+
+    console.log(`[get-creator-analytics-heatmap] User ${userId}, platform: ${platform || 'all'}`);
 
     return new Response(JSON.stringify({ heatmap }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -24,9 +24,10 @@ serve(async (req) => {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const userId = payload.sub;
 
-    const url = new URL(req.url);
-    const platform = url.searchParams.get('platform');
-    const days = parseInt(url.searchParams.get('days') || '14');
+    // Get params from request body
+    const body = await req.json().catch(() => ({}));
+    const platform = body.platform;
+    const days = parseInt(body.days) || 14;
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -100,6 +101,8 @@ serve(async (req) => {
     const dailyData = Object.entries(dailyMap)
       .map(([date, stats]) => ({ date, ...stats }))
       .sort((a, b) => a.date.localeCompare(b.date));
+
+    console.log(`[get-creator-analytics-weekly] User ${userId}, platform: ${platform || 'all'}, days: ${days}`);
 
     return new Response(JSON.stringify({ daily: dailyData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
