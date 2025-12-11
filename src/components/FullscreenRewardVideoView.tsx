@@ -152,20 +152,11 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         height: '100dvh',
       }}
     >
-      {/* FULLSCREEN iframe - scaled and positioned to hide platform UI */}
+      {/* FULLSCREEN iframe - full width, taller than viewport, shifted DOWN to hide bottom platform UI */}
       <iframe
         key={`${currentVideo.id}-${currentVideoIndex}`}
         src={embedSrc}
-        className="absolute border-0 pointer-events-none"
-        style={{ 
-          top: '50%',
-          left: '50%',
-          width: '130vw',
-          height: '130vh',
-          // Center video, shift DOWN to hide bottom platform UI (username, hashtags, music)
-          transform: 'translate(-50%, -40%)',
-          transformOrigin: 'center center',
-        }}
+        className="absolute top-0 left-1/2 -translate-x-1/2 translate-y-[8vh] w-[100vw] h-[120vh] border-0 pointer-events-none"
         allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
         allowFullScreen
       />
