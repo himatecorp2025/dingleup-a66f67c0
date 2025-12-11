@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { X, Film } from 'lucide-react';
+import { X, Film, AlertTriangle } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import { toast } from 'sonner';
 
@@ -34,12 +34,14 @@ export const VideoAdModal = ({
   context,
 }: VideoAdModalProps) => {
   const { lang } = useI18n();
-  const [countdown, setCountdown] = useState(totalDurationSeconds);
+  const [countdown, setCountdown] = useState<number>(totalDurationSeconds);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [canClose, setCanClose] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [videoError, setVideoError] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const videoStartTimeRef = useRef<number>(0);
   const toastShownRef = useRef(false);
+  const countdownRef = useRef<number>(totalDurationSeconds);
 
   // Calculate how many 15-second segments we need
   const totalSegments = Math.ceil(totalDurationSeconds / SEGMENT_DURATION);
@@ -112,51 +114,80 @@ export const VideoAdModal = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    setCountdown(totalDurationSeconds);
+    // Reset all state
+    const initialCountdown = totalDurationSeconds > 0 ? totalDurationSeconds : 15;
+    setCountdown(initialCountdown);
+    countdownRef.current = initialCountdown;
     setCurrentVideoIndex(0);
     setCanClose(false);
+    setVideoError(false);
     toastShownRef.current = false;
     videoStartTimeRef.current = Date.now();
 
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    // Start countdown
     intervalRef.current = setInterval(() => {
-      setCountdown(prev => {
-        const newValue = prev - 1;
-        
-        // Check if we need to switch videos (every 15 seconds)
-        const elapsedTime = totalDurationSeconds - newValue;
-        const currentSegment = Math.floor(elapsedTime / SEGMENT_DURATION);
-        
-        if (currentSegment > currentVideoIndex && currentSegment < videos.length) {
-          setCurrentVideoIndex(currentSegment);
-          videoStartTimeRef.current = Date.now();
-        }
-        
-        if (newValue <= 0) {
-          setCanClose(true);
-          showRewardToast();
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
+      countdownRef.current -= 1;
+      const newValue = countdownRef.current;
+      
+      setCountdown(newValue);
+      
+      // Check if we need to switch videos (every 15 seconds)
+      const elapsedTime = initialCountdown - newValue;
+      const currentSegment = Math.floor(elapsedTime / SEGMENT_DURATION);
+      
+      if (currentSegment > 0 && currentSegment < videos.length) {
+        setCurrentVideoIndex(prev => {
+          if (currentSegment !== prev) {
+            videoStartTimeRef.current = Date.now();
+            return currentSegment;
           }
-          return 0;
+          return prev;
+        });
+      }
+      
+      if (newValue <= 0) {
+        setCanClose(true);
+        showRewardToast();
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
         }
-        
-        return newValue;
-      });
+      }
     }, 1000);
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
   }, [isOpen, totalDurationSeconds, videos.length, showRewardToast]);
 
   const handleClose = useCallback(() => {
     if (canClose) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       onComplete();
       onClose();
     }
   }, [canClose, onComplete, onClose]);
+
+  const handleForceClose = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    onCancel();
+    onClose();
+  }, [onCancel, onClose]);
 
   const handleBackdropClick = useCallback((e: Event) => {
     e.preventDefault();
@@ -165,25 +196,30 @@ export const VideoAdModal = ({
 
   const currentVideo = videos[currentVideoIndex];
   const embedUrl = currentVideo ? getEmbedUrl(currentVideo) : '';
+  const hasVideos = videos.length > 0 && embedUrl;
 
   // Text translations
   const texts = {
     hu: {
       secondsRemaining: 'mp',
+      noVideo: 'Nincs elérhető videó',
+      closeEarly: 'Bezárás',
     },
     en: {
       secondsRemaining: 's',
+      noVideo: 'No video available',
+      closeEarly: 'Close',
     },
   };
 
   const t_local = texts[lang as 'hu' | 'en'] || texts.en;
 
-  if (!isOpen || videos.length === 0) return null;
+  if (!isOpen) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent 
-        className="sm:max-w-[90vw] md:max-w-[600px] p-0 bg-black border-none overflow-hidden !z-[999999]"
+        className="sm:max-w-[90vw] md:max-w-[600px] p-0 bg-black border-none overflow-hidden"
         overlayClassName="!z-[999998]"
         style={{ zIndex: 999999 }}
         onPointerDownOutside={handleBackdropClick}
@@ -191,23 +227,37 @@ export const VideoAdModal = ({
       >
         <DialogTitle className="sr-only">Video Ad</DialogTitle>
         <DialogDescription className="sr-only">Watch video to earn rewards</DialogDescription>
-        <div className="relative w-full aspect-[9/16] md:aspect-video bg-black">
-          {/* Video iframe */}
-          <iframe
-            src={embedUrl}
-            className="absolute inset-0 w-full h-full"
-            allow="autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
-            frameBorder="0"
-          />
+        <div className="relative w-full aspect-[9/16] md:aspect-video bg-black min-h-[300px]">
+          {/* Video iframe or error state */}
+          {hasVideos && !videoError ? (
+            <iframe
+              src={embedUrl}
+              className="absolute inset-0 w-full h-full"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+              frameBorder="0"
+              onError={() => setVideoError(true)}
+            />
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white">
+              <AlertTriangle className="w-16 h-16 text-yellow-500" />
+              <p className="text-lg font-medium">{t_local.noVideo}</p>
+              <button
+                onClick={handleForceClose}
+                className="px-6 py-3 bg-primary text-white rounded-full font-bold text-base hover:bg-primary/90 active:scale-95 transition-all"
+              >
+                {t_local.closeEarly}
+              </button>
+            </div>
+          )}
           
           {/* Countdown overlay */}
-          <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
+          <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-50">
             {/* Countdown timer */}
-            <div className="bg-black/70 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-2">
-              <Film className="w-4 h-4 text-primary" />
-              <span className="text-white font-bold text-sm">
-                {countdown}{t_local.secondsRemaining}
+            <div className="bg-black/70 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2 pointer-events-none">
+              <Film className="w-5 h-5 text-primary" />
+              <span className="text-white font-bold text-base tabular-nums">
+                {Math.max(0, countdown)}{t_local.secondsRemaining}
               </span>
             </div>
             
@@ -215,16 +265,17 @@ export const VideoAdModal = ({
             {canClose && (
               <button
                 onClick={handleClose}
-                className="pointer-events-auto bg-black/70 backdrop-blur-sm rounded-full p-2 hover:bg-black/90 transition-colors"
+                className="bg-black/70 backdrop-blur-sm rounded-full p-3 hover:bg-black/90 active:scale-95 transition-all touch-manipulation"
+                style={{ minWidth: '48px', minHeight: '48px' }}
               >
-                <X className="w-5 h-5 text-white" />
+                <X className="w-6 h-6 text-white" />
               </button>
             )}
           </div>
 
           {/* Video indicator (for multi-video sequences) */}
-          {videos.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+          {videos.length > 1 && hasVideos && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-50">
               {videos.map((_, idx) => (
                 <div
                   key={idx}

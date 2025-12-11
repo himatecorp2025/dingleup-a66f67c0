@@ -347,14 +347,20 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
               {/* Close X button - Only when no data */}
               {topPlayers.length === 0 && (
                 <button
-                  onClick={onClose}
-                  className={`absolute text-white/70 hover:text-white font-bold z-30 flex items-center justify-center bg-black/30 hover:bg-black/50 rounded-full transition-all focus:outline-none focus-visible:ring-0 ${contentVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onClose();
+                  }}
+                  className={`absolute text-white/70 hover:text-white font-bold z-[100] flex items-center justify-center bg-black/50 hover:bg-black/70 active:bg-black/80 rounded-full transition-all touch-manipulation ${contentVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
                   style={{ 
                     top: '60px',
                     right: '16px',
-                    width: '50px',
-                    height: '50px',
-                    fontSize: '2.5rem'
+                    width: '56px',
+                    height: '56px',
+                    fontSize: '2.5rem',
+                    minWidth: '56px',
+                    minHeight: '56px',
                   }}
                   aria-label="Close"
                 >
