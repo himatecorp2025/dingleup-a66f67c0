@@ -29,6 +29,7 @@ import { useGameErrorHandling } from "@/hooks/useGameErrorHandling";
 import { useGameAnimation } from "@/hooks/useGameAnimation";
 import { GameErrorBanner } from "./game/GameErrorBanner";
 import { GameQuestionContainer } from "./game/GameQuestionContainer";
+import { GameEndRewardDouble } from "./GameEndRewardDouble";
 
 type GameState = 'playing' | 'finished' | 'out-of-lives';
 
@@ -70,6 +71,7 @@ const GamePreview = memo(() => {
     resetGameState: resetGameStateHook
   } = useGameState();
   const [gameCompleted, setGameCompleted] = useState(false);
+  const [showGameEndReward, setShowGameEndReward] = useState(false);
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
   const [gameInstanceId] = useState(() => crypto.randomUUID());
 
@@ -486,6 +488,17 @@ const GamePreview = memo(() => {
     };
   }, [userId, gameState, refreshProfile, handleNextQuestion]);
 
+  // Show game end reward dialog when game is completed with coins earned
+  useEffect(() => {
+    if (gameCompleted && coinsEarned > 0 && !showGameEndReward) {
+      // Show game end reward dialog after a short delay
+      const timer = setTimeout(() => {
+        setShowGameEndReward(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [gameCompleted, coinsEarned, showGameEndReward]);
+
   const handleRejectContinue = () => {
     finishGame();
   };
@@ -640,6 +653,21 @@ const GamePreview = memo(() => {
             // Lezárja a játékot sikertelen vásárlás esetén
             setShowRescuePopup(false);
             resetGameState();
+          }}
+        />
+
+        {/* Game End Reward Double Dialog */}
+        <GameEndRewardDouble
+          isOpen={showGameEndReward}
+          onClose={() => {
+            setShowGameEndReward(false);
+          }}
+          coinsEarned={coinsEarned}
+          userId={userId}
+          onRewardDoubled={async (additionalCoins) => {
+            // Refresh wallet after doubling
+            await refetchWallet();
+            await refreshProfile();
           }}
         />
       </GameSwipeHandler>
