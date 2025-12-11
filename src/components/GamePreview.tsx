@@ -665,9 +665,10 @@ const GamePreview = memo(() => {
             <ExitGameDialog
               open={showExitDialog}
               onOpenChange={setShowExitDialog}
-              onConfirmExit={() => {
+              onConfirmExit={async () => {
                 setShowExitDialog(false);
-                finishGame();
+                await finishGame();
+                navigate('/dashboard');
               }}
               gameCompleted={gameCompleted}
             />
