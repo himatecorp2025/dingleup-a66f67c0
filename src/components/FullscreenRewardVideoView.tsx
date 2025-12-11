@@ -156,11 +156,12 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         clearInterval(interval);
         setCanClose(true);
         
+        // Just show toast to close - reward amount will be shown after completion
         toast.success(
           lang === 'hu' 
             ? 'Zárd be a videót a jutalom jóváírásához!' 
             : 'Close the video to claim your reward!',
-          { position: 'top-center', duration: 5000 }
+          { position: 'top-center', duration: 2000 }
         );
       }
     }, 100); // Update frequently for smooth countdown
@@ -214,6 +215,11 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
       ) : (
         <>
           {/* FULLSCREEN iframe - full width, taller than viewport, shifted DOWN to hide bottom platform UI */}
+          {/* Black background container ensures no white/light gaps */}
+          <div 
+            className="absolute inset-0"
+            style={{ backgroundColor: '#000000', zIndex: 5 }}
+          />
           <iframe
             key={`${currentVideo?.id}-${currentVideoIndex}`}
             src={embedSrc}

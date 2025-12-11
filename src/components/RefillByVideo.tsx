@@ -32,8 +32,9 @@ export const RefillByVideo = ({
       onRefillComplete(coins, lives);
       toast.success(
         lang === 'hu' 
-          ? `Jutalmad jóváírva! +${coins} arany, +${lives} élet` 
-          : `Reward credited! +${coins} gold, +${lives} lives`
+          ? `Gratulálunk! A jutalmad jóváíródott! +${coins} arany, +${lives} élet` 
+          : `Congratulations! Your reward has been credited! +${coins} gold, +${lives} lives`,
+        { position: 'top-center', duration: 2000 }
       );
       onClose();
     },

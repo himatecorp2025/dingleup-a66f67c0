@@ -182,6 +182,26 @@ export const useRewardVideoStore = create<RewardVideoStore>((set, get) => ({
         return null;
       }
 
+      // Auto-refill if queue is empty or below threshold BEFORE starting session
+      const requiredVideos = eventType === 'refill' ? 2 : 1;
+      if (get().videoQueue.length < requiredVideos) {
+        console.log(`[RewardVideoStore] Not enough videos (${get().videoQueue.length}/${requiredVideos}), force refilling...`);
+        
+        // Force reload videos before starting session
+        const { data: refillData } = await supabase.functions.invoke('preload-reward-videos', {
+          body: {},
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        
+        if (refillData?.videos && refillData.videos.length > 0) {
+          set(state => ({ 
+            videoQueue: [...state.videoQueue, ...refillData.videos],
+            lastPreloadAt: Date.now(),
+          }));
+          console.log(`[RewardVideoStore] Force refilled, queue now has ${get().videoQueue.length} videos`);
+        }
+      }
+
       // Call backend to create session
       const { data, error } = await supabase.functions.invoke('reward-start', {
         body: { eventType, originalReward },

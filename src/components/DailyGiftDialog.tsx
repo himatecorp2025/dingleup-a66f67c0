@@ -170,9 +170,9 @@ const DailyGiftDialog = ({
     
     if (result.success) {
       toast.success(lang === 'hu' 
-        ? `+${result.coinsDelta} arany jóváírva!` 
-        : `+${result.coinsDelta} coins credited!`, 
-        { position: 'top-center' }
+        ? `Gratulálunk! A jutalmad jóváíródott! +${result.coinsDelta} arany` 
+        : `Congratulations! Your reward has been credited! +${result.coinsDelta} gold`, 
+        { position: 'top-center', duration: 2000 }
       );
     }
     
