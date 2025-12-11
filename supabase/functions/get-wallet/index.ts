@@ -95,19 +95,20 @@ serve(async (req) => {
 
     // Determine effective max lives and regen rate from profile fields
     let effectiveMaxLives = Number(profile.max_lives ?? 15);
-    let effectiveRegenMinutes = Number(profile.lives_regeneration_rate ?? 12);
+    // lives_regeneration_rate is stored in SECONDS (e.g., 60 = 60 seconds)
+    let effectiveRegenSeconds = Number(profile.lives_regeneration_rate ?? 60);
 
-    // Speed boost: 2x faster regeneration (6 minutes instead of 12)
+    // Speed boost: 2x faster regeneration
     if (hasActiveSpeed) {
-      effectiveRegenMinutes = effectiveRegenMinutes / 2;
-      console.log(`[get-wallet] Active speed boost detected, regen rate: ${effectiveRegenMinutes} min`);
+      effectiveRegenSeconds = effectiveRegenSeconds / 2;
+      console.log(`[get-wallet] Active speed boost detected, regen rate: ${effectiveRegenSeconds} sec`);
     }
 
     if (!Number.isFinite(effectiveMaxLives) || effectiveMaxLives <= 0) {
       effectiveMaxLives = 15;
     }
-    if (!Number.isFinite(effectiveRegenMinutes) || effectiveRegenMinutes <= 0) {
-      effectiveRegenMinutes = 12;
+    if (!Number.isFinite(effectiveRegenSeconds) || effectiveRegenSeconds <= 0) {
+      effectiveRegenSeconds = 60;
     }
 
     // Calculate next life time with proper regeneration tracking + future timestamp guard
@@ -120,7 +121,8 @@ serve(async (req) => {
     if (currentLives < effectiveMaxLives) {
       const nowMs = Date.now();
       const lastRegenMs = new Date(profile.last_life_regeneration).getTime();
-      const regenIntervalMs = effectiveRegenMinutes * 60 * 1000;
+      // Convert seconds to milliseconds directly (no minute conversion)
+      const regenIntervalMs = effectiveRegenSeconds * 1000;
       
       // Guard: if last_life_regeneration is in the future, use now
       const effectiveLastRegenMs = lastRegenMs > nowMs ? nowMs : lastRegenMs;
@@ -172,10 +174,10 @@ serve(async (req) => {
       response.nextLifeAt = nextLifeAt;
     }
     if (!requestedFields || requestedFields.has('regenIntervalSec')) {
-      response.regenIntervalSec = effectiveRegenMinutes * 60;
+      response.regenIntervalSec = effectiveRegenSeconds;
     }
     if (!requestedFields || requestedFields.has('regenMinutes')) {
-      response.regenMinutes = effectiveRegenMinutes;
+      response.regenMinutes = effectiveRegenSeconds / 60;
     }
     if (!requestedFields || requestedFields.has('ledger')) {
       response.ledger = ledger || [];
