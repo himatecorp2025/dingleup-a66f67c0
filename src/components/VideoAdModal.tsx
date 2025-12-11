@@ -31,14 +31,12 @@ const NEEDS_TAP_TO_PLAY = ['instagram'];
 /**
  * VideoAdModal - Platform-independent fullscreen video ad player
  * 
- * IMPORTANT: This component does NOT modify the embedUrl.
- * The backend provides the embed URL with all necessary autoplay/mute params.
- * 
- * Same behavior on ALL platforms:
- * - Full screen (100vw × 100vh) with black background  
- * - Autoplay muted (params set by backend)
- * - Same countdown overlay (15 or 30 seconds)
- * - NO platform-specific feed UI visible
+ * Features:
+ * - True fullscreen (covers entire device screen including safe areas)
+ * - Hides platform UI (TikTok likes, comments, profile) with overlay masks
+ * - Matte black background for non-16:9 videos
+ * - Countdown timer starts immediately (or on tap for Instagram)
+ * - Reward credited ONLY when user clicks X after countdown
  */
 export const VideoAdModal = ({
   isOpen,
@@ -58,7 +56,7 @@ export const VideoAdModal = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const startTimeRef = useRef<number>(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const toastShownRef = useRef(false);
+  const rewardShownRef = useRef(false);
 
   const texts = {
     hu: {
@@ -82,35 +80,6 @@ export const VideoAdModal = ({
   const currentPlatform = currentVideo?.platform?.toLowerCase() || '';
   const needsTapToPlay = NEEDS_TAP_TO_PLAY.includes(currentPlatform);
 
-  // Show reward toast
-  const showRewardToast = useCallback(() => {
-    if (toastShownRef.current) return;
-    toastShownRef.current = true;
-
-    if (context === 'refill') {
-      toast.success(
-        lang === 'hu'
-          ? 'Jutalmad jóváíródott: 500 arany és 5 élet!'
-          : 'Reward credited: 500 gold and 5 lives!',
-        { duration: 4000, position: 'top-center' }
-      );
-    } else if (doubledAmount) {
-      toast.success(
-        lang === 'hu'
-          ? `Duplázott jutalmad: ${doubledAmount} arany!`
-          : `Doubled reward: ${doubledAmount} gold!`,
-        { duration: 4000, position: 'top-center' }
-      );
-    } else {
-      toast.success(
-        lang === 'hu'
-          ? 'Jutalmad duplázódott!'
-          : 'Your reward has been doubled!',
-        { duration: 4000, position: 'top-center' }
-      );
-    }
-  }, [context, lang, doubledAmount]);
-
   // Lock body scroll
   useEffect(() => {
     if (isOpen) {
@@ -130,7 +99,7 @@ export const VideoAdModal = ({
       setCurrentVideoIndex(0);
       setCanClose(false);
       setVideoError(false);
-      toastShownRef.current = false;
+      rewardShownRef.current = false;
       // Auto-start for platforms that support autoplay
       setIsPlaying(!needsTapToPlay);
       
@@ -165,14 +134,13 @@ export const VideoAdModal = ({
 
       if (remaining <= 0) {
         setCanClose(true);
-        showRewardToast();
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
         }
       }
     }, 100);
-  }, [totalDurationSeconds, videos.length, showRewardToast]);
+  }, [totalDurationSeconds, videos.length]);
 
   // Countdown timer - only starts when isPlaying is true
   useEffect(() => {
@@ -194,7 +162,7 @@ export const VideoAdModal = ({
     setIsPlaying(true);
   }, []);
 
-  // Handle close - user must click X button
+  // Handle close - ONLY HERE does the reward get credited
   const handleClose = useCallback(() => {
     if (!canClose) return;
     
@@ -203,8 +171,37 @@ export const VideoAdModal = ({
       intervalRef.current = null;
     }
     
+    // Show reward toast ONLY when closing
+    if (!rewardShownRef.current) {
+      rewardShownRef.current = true;
+      
+      if (context === 'refill') {
+        toast.success(
+          lang === 'hu'
+            ? 'Jutalmad jóváíródott: 500 arany és 5 élet!'
+            : 'Reward credited: 500 gold and 5 lives!',
+          { duration: 4000, position: 'top-center' }
+        );
+      } else if (doubledAmount) {
+        toast.success(
+          lang === 'hu'
+            ? `Duplázott jutalmad: ${doubledAmount} arany!`
+            : `Doubled reward: ${doubledAmount} gold!`,
+          { duration: 4000, position: 'top-center' }
+        );
+      } else {
+        toast.success(
+          lang === 'hu'
+            ? 'Jutalmad duplázódott!'
+            : 'Your reward has been doubled!',
+          { duration: 4000, position: 'top-center' }
+        );
+      }
+    }
+    
+    // Now trigger the completion callback which credits the reward
     onComplete();
-  }, [canClose, onComplete]);
+  }, [canClose, onComplete, context, lang, doubledAmount]);
 
   // Handle force close (error state)
   const handleForceClose = useCallback(() => {
@@ -242,23 +239,61 @@ export const VideoAdModal = ({
         backgroundColor: '#000',
       }}
     >
-      {/* Video iframe - FULLSCREEN, uses backend embed_url directly */}
+      {/* Video iframe - FULLSCREEN with scale to fill */}
       {hasVideo && !videoError ? (
         <>
-          <iframe
-            src={embedUrl}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+          {/* Iframe container with overflow hidden to crop platform UI */}
+          <div 
+            className="absolute inset-0 overflow-hidden"
+            style={{ backgroundColor: '#000' }}
+          >
+            <iframe
+              src={embedUrl}
+              className="absolute"
+              style={{
+                // Scale up to hide platform UI elements at edges
+                width: '140vw',
+                height: '140dvh',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                border: 'none',
+                backgroundColor: '#000',
+              }}
+              allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
+              allowFullScreen
+              onError={() => setVideoError(true)}
+            />
+          </div>
+          
+          {/* TOP MASK - hides TikTok/IG top bar with profile info */}
+          <div 
+            className="absolute left-0 right-0 z-10 pointer-events-none"
             style={{
-              width: '100vw',
-              height: '100dvh',
-              minWidth: '100vw',
-              minHeight: '100dvh',
-              border: 'none',
-              backgroundColor: '#000',
+              top: 0,
+              height: 'calc(env(safe-area-inset-top, 0px) + 80px)',
+              background: 'linear-gradient(to bottom, #000 0%, #000 70%, transparent 100%)',
             }}
-            allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
-            allowFullScreen
-            onError={() => setVideoError(true)}
+          />
+          
+          {/* BOTTOM MASK - hides TikTok/IG bottom bar with "View on TikTok" etc */}
+          <div 
+            className="absolute left-0 right-0 z-10 pointer-events-none"
+            style={{
+              bottom: 0,
+              height: 'calc(env(safe-area-inset-bottom, 0px) + 100px)',
+              background: 'linear-gradient(to top, #000 0%, #000 70%, transparent 100%)',
+            }}
+          />
+          
+          {/* RIGHT MASK - hides TikTok like/comment/share buttons */}
+          <div 
+            className="absolute top-0 bottom-0 z-10 pointer-events-none"
+            style={{
+              right: 0,
+              width: '80px',
+              background: 'linear-gradient(to left, #000 0%, #000 50%, transparent 100%)',
+            }}
           />
           
           {/* Tap to play overlay for platforms without autoplay (Instagram) */}
@@ -290,14 +325,14 @@ export const VideoAdModal = ({
       {/* Countdown timer overlay - top left (only show when playing) */}
       {isPlaying && (
         <div 
-          className="absolute z-10"
+          className="absolute z-20"
           style={{ 
             top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
             left: '16px',
           }}
         >
-          <div className="bg-black/70 backdrop-blur-sm rounded-full px-4 py-2 min-w-[60px] text-center">
-            <span className="text-white font-bold text-xl tabular-nums">
+          <div className="bg-black/80 backdrop-blur-sm rounded-full px-5 py-2.5 min-w-[70px] text-center shadow-lg">
+            <span className="text-white font-bold text-2xl tabular-nums">
               {Math.max(0, countdown)}{t.seconds}
             </span>
           </div>
@@ -307,7 +342,7 @@ export const VideoAdModal = ({
       {/* Video progress indicator (if multiple videos) */}
       {videos.length > 1 && isPlaying && (
         <div 
-          className="absolute z-10 flex gap-1"
+          className="absolute z-20 flex gap-1"
           style={{ 
             top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
             left: '50%',
@@ -329,13 +364,13 @@ export const VideoAdModal = ({
       {canClose && (
         <button
           onClick={handleClose}
-          className="absolute z-10 bg-black/70 backdrop-blur-sm rounded-full p-3 hover:bg-black/90 transition-colors active:scale-95"
+          className="absolute z-20 bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors active:scale-95 shadow-lg"
           style={{ 
             top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
             right: '16px',
           }}
         >
-          <X className="w-6 h-6 text-white" />
+          <X className="w-7 h-7 text-white" />
         </button>
       )}
 
@@ -343,9 +378,9 @@ export const VideoAdModal = ({
       {canClose && currentVideo?.video_url && (
         <button
           onClick={handleGoToCreator}
-          className="absolute left-1/2 -translate-x-1/2 z-10 bg-primary hover:bg-primary/90 rounded-full px-6 py-3 flex items-center gap-2 transition-colors active:scale-95"
+          className="absolute left-1/2 -translate-x-1/2 z-20 bg-primary hover:bg-primary/90 rounded-full px-6 py-3 flex items-center gap-2 transition-colors active:scale-95 shadow-lg"
           style={{ 
-            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)',
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 32px)',
           }}
         >
           <span className="text-white font-semibold">{t.goToCreator}</span>

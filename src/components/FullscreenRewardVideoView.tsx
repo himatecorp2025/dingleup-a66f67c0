@@ -18,14 +18,12 @@ const NEEDS_TAP_TO_PLAY = ['instagram'];
 /**
  * FullscreenRewardVideoView - Platform-independent fullscreen video player
  * 
- * IMPORTANT: This component does NOT modify the embedUrl.
- * The backend provides the embed URL with all necessary autoplay/mute params.
- * 
- * Same behavior on ALL platforms:
- * - Full screen (100vw × 100vh) with black background
- * - Autoplay muted (params set by backend)
- * - Same countdown overlay (15 or 30 seconds)
- * - NO platform-specific feed UI visible
+ * Features:
+ * - True fullscreen (covers entire device screen including safe areas)
+ * - Hides platform UI (TikTok likes, comments, profile) with overlay masks
+ * - Matte black background for non-16:9 videos
+ * - Countdown timer starts immediately (or on tap for Instagram)
+ * - onCompleted called ONLY when user clicks X after countdown
  */
 export const FullscreenRewardVideoView = ({
   isOpen,
@@ -125,7 +123,7 @@ export const FullscreenRewardVideoView = ({
     setIsPlaying(true);
   }, []);
 
-  // Handle close - calls onCompleted for reward processing
+  // Handle close - calls onCompleted for reward processing ONLY HERE
   const handleClose = useCallback(() => {
     if (!canClose) return;
     
@@ -147,9 +145,6 @@ export const FullscreenRewardVideoView = ({
 
   if (!isOpen || !embedUrl) return null;
 
-  // Use embedUrl DIRECTLY from backend - DO NOT modify it
-  // Backend already includes autoplay=1&mute=1 params for each platform
-
   return (
     <div 
       className="fixed inset-0 z-[9999]"
@@ -163,20 +158,57 @@ export const FullscreenRewardVideoView = ({
         backgroundColor: '#000',
       }}
     >
-      {/* Video iframe - FULLSCREEN, uses backend embedUrl directly */}
-      <iframe
-        src={embedUrl}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+      {/* Iframe container with overflow hidden to crop platform UI */}
+      <div 
+        className="absolute inset-0 overflow-hidden"
+        style={{ backgroundColor: '#000' }}
+      >
+        <iframe
+          src={embedUrl}
+          className="absolute"
+          style={{
+            // Scale up to hide platform UI elements at edges
+            width: '140vw',
+            height: '140dvh',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            border: 'none',
+            backgroundColor: '#000',
+          }}
+          allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
+          allowFullScreen
+        />
+      </div>
+
+      {/* TOP MASK - hides TikTok/IG top bar with profile info */}
+      <div 
+        className="absolute left-0 right-0 z-10 pointer-events-none"
         style={{
-          width: '100vw',
-          height: '100dvh',
-          minWidth: '100vw',
-          minHeight: '100dvh',
-          border: 'none',
-          backgroundColor: '#000',
+          top: 0,
+          height: 'calc(env(safe-area-inset-top, 0px) + 80px)',
+          background: 'linear-gradient(to bottom, #000 0%, #000 70%, transparent 100%)',
         }}
-        allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
-        allowFullScreen
+      />
+      
+      {/* BOTTOM MASK - hides TikTok/IG bottom bar with "View on TikTok" etc */}
+      <div 
+        className="absolute left-0 right-0 z-10 pointer-events-none"
+        style={{
+          bottom: 0,
+          height: 'calc(env(safe-area-inset-bottom, 0px) + 100px)',
+          background: 'linear-gradient(to top, #000 0%, #000 70%, transparent 100%)',
+        }}
+      />
+      
+      {/* RIGHT MASK - hides TikTok like/comment/share buttons */}
+      <div 
+        className="absolute top-0 bottom-0 z-10 pointer-events-none"
+        style={{
+          right: 0,
+          width: '80px',
+          background: 'linear-gradient(to left, #000 0%, #000 50%, transparent 100%)',
+        }}
       />
 
       {/* Tap to play overlay for platforms without autoplay (Instagram) */}
@@ -195,14 +227,14 @@ export const FullscreenRewardVideoView = ({
       {/* Countdown timer overlay - top left (only show when playing) */}
       {isPlaying && (
         <div 
-          className="absolute z-10"
+          className="absolute z-20"
           style={{ 
             top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
             left: '16px',
           }}
         >
-          <div className="bg-black/70 backdrop-blur-sm rounded-full px-4 py-2 min-w-[60px] text-center">
-            <span className="text-white font-bold text-xl tabular-nums">
+          <div className="bg-black/80 backdrop-blur-sm rounded-full px-5 py-2.5 min-w-[70px] text-center shadow-lg">
+            <span className="text-white font-bold text-2xl tabular-nums">
               {countdown}{t.seconds}
             </span>
           </div>
@@ -213,13 +245,13 @@ export const FullscreenRewardVideoView = ({
       {canClose && (
         <button
           onClick={handleClose}
-          className="absolute z-10 bg-black/70 backdrop-blur-sm rounded-full p-3 hover:bg-black/90 transition-colors active:scale-95"
+          className="absolute z-20 bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors active:scale-95 shadow-lg"
           style={{ 
             top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
             right: '16px',
           }}
         >
-          <X className="w-6 h-6 text-white" />
+          <X className="w-7 h-7 text-white" />
         </button>
       )}
 
@@ -227,9 +259,9 @@ export const FullscreenRewardVideoView = ({
       {canClose && videoUrl && (
         <button
           onClick={handleGoToCreator}
-          className="absolute left-1/2 -translate-x-1/2 z-10 bg-primary hover:bg-primary/90 rounded-full px-6 py-3 flex items-center gap-2 transition-colors active:scale-95"
+          className="absolute left-1/2 -translate-x-1/2 z-20 bg-primary hover:bg-primary/90 rounded-full px-6 py-3 flex items-center gap-2 transition-colors active:scale-95 shadow-lg"
           style={{ 
-            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)',
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 32px)',
           }}
         >
           <span className="text-white font-semibold">{t.goToCreator}</span>

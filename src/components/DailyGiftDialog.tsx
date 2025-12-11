@@ -159,20 +159,17 @@ const DailyGiftDialog = ({
     onLater();
   };
 
+  // CRITICAL: Video completion - reward is credited ONLY when user closes the modal (X button)
+  // This callback is called from VideoAdModal.handleClose AFTER user clicks X
   const handleVideoComplete = async () => {
+    // Credit the doubled reward via videoAdFlow
     await videoAdFlow.onVideoComplete();
-    // Auto-claim the daily gift after video completion (doubled reward handled by videoAdFlow)
-    if (!claimed) {
-      const success = await onClaim();
-      if (success) {
-        setClaimed(true);
-      }
-    }
-    // Close dialog after rewards are credited
+    // Close the dialog
     onLater();
   };
 
   const handleVideoClose = () => {
+    // User cancelled before completion - no reward
     videoAdFlow.cancelVideo();
   };
 

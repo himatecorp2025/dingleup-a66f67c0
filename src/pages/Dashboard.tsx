@@ -155,20 +155,20 @@ const Dashboard = () => {
     return sunday.toISOString();
   };
 
-  // Pre-load video ad availability at login (realtime, no waiting in game)
-  const checkVideoAdAvailability = useVideoAdStore(state => state.checkAvailability);
+  // Pre-load video ad availability IMMEDIATELY at login for instant button display
+  const preloadVideoAds = useVideoAdStore(state => state.preloadOnLogin);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUserId(session.user.id);
-        // Immediately check video ad availability in background
-        checkVideoAdAvailability(session.user.id);
+        // IMMEDIATELY preload video ad availability in background (non-blocking)
+        preloadVideoAds(session.user.id);
       } else {
         navigate('/auth/login');
       }
     });
-  }, [navigate, checkVideoAdAvailability]);
+  }, [navigate, preloadVideoAds]);
 
   // PERFORMANCE OPTIMIZATION: Prefetch game assets AFTER critical UI renders
   // Loads /game route chunks + intro video in background for instant navigation
