@@ -323,7 +323,7 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
                 {lang === 'hu' ? 'Aranyért' : 'For Gold'}
               </h4>
 
-              {/* Rewards */}
+              {/* Rewards - Net: spend 500, get 750+5 = net +250 gold +5 lives */}
               <div className="flex items-center justify-center gap-2 mb-2">
                 <div className="flex items-center gap-0.5">
                   <GoldRewardCoin3D size={14} />
@@ -331,7 +331,7 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
                 </div>
                 <div className="flex items-center gap-0.5">
                   <LifeIcon3D size={14} />
-                  <span className="text-green-200 text-[10px] font-bold">+15</span>
+                  <span className="text-green-200 text-[10px] font-bold">+5</span>
                 </div>
               </div>
 
