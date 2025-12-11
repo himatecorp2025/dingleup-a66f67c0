@@ -359,15 +359,26 @@ const VideoLinkModal = ({
             </div>
           )}
 
-          {/* Input */}
-          <input
-            type="url"
-            value={videoUrl}
-            onChange={(e) => setVideoUrl(e.target.value)}
-            placeholder={texts.placeholder[lang]}
-            disabled={!canAddMore || isLoading}
-            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50"
-          />
+          {/* Input with clear button */}
+          <div className="relative">
+            <input
+              type="url"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder={texts.placeholder[lang]}
+              disabled={!canAddMore || isLoading}
+              className="w-full px-4 py-3 pr-10 rounded-xl bg-white/5 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50"
+            />
+            {videoUrl && !isLoading && (
+              <button
+                type="button"
+                onClick={() => setVideoUrl('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              >
+                <X className="w-4 h-4 text-white/70" />
+              </button>
+            )}
+          </div>
 
           {/* Detected Platform Badge */}
           {detectedPlatform && (
