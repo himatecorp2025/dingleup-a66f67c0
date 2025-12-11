@@ -154,7 +154,9 @@ const RegisterNew = () => {
         description: t('auth.register.successMessage'),
         duration: 2000,
       });
-      navigate('/dashboard');
+      // Desktop users go to creators, mobile/tablet users go to dashboard
+      const isDesktop = window.innerWidth > 1024;
+      navigate(isDesktop ? '/creators' : '/dashboard');
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Partial<Record<keyof RegisterForm, string>> = {};
