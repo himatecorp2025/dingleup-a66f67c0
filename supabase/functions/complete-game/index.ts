@@ -119,6 +119,10 @@ Deno.serve(async (req) => {
       );
     }
 
+    // DB constraint requires average_response_time > 0 OR NULL
+    // If 0 (no questions answered), set to NULL
+    const sanitizedAvgResponseTime = body.averageResponseTime === 0 ? null : body.averageResponseTime;
+
     // Calculate total coins (already credited after each correct answer)
     // This is only for statistics in game_results table
     let totalCoinsEarned = 1; // Start jutalom
@@ -183,7 +187,7 @@ Deno.serve(async (req) => {
           correct_answers: body.correctAnswers,
           total_questions: body.totalQuestions,
           coins_earned: coinsEarned,
-          average_response_time: body.averageResponseTime,
+          average_response_time: sanitizedAvgResponseTime,
           completed: true,
           completed_at: new Date().toISOString()
         })
@@ -319,7 +323,7 @@ Deno.serve(async (req) => {
           {
             p_user_id: user.id,
             p_correct_answers: body.correctAnswers,
-            p_average_response_time: body.averageResponseTime,
+            p_average_response_time: sanitizedAvgResponseTime || 0,
           },
         );
 
