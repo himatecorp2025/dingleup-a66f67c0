@@ -189,6 +189,9 @@ verify_jwt = true
 verify_jwt = true
 
 # Admin Functions
+[functions.grant-admin-role]
+verify_jwt = true
+
 [functions.admin-activity]
 verify_jwt = true
 
