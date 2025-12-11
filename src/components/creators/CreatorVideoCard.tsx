@@ -145,8 +145,8 @@ export const CreatorVideoCard = ({
   const thumbnailUrl = getThumbnailUrl();
 
   return (
-    <div className="relative rounded-xl overflow-hidden bg-white/5 border border-white/10 group">
-      {/* Thumbnail - 9:16 aspect ratio */}
+    <div className="relative overflow-hidden bg-black group">
+      {/* Thumbnail - 9:16 aspect ratio, no border radius like TikTok */}
       <div className="relative aspect-[9/16]">
         {thumbnailUrl ? (
           <img
@@ -157,14 +157,14 @@ export const CreatorVideoCard = ({
         ) : (
           // Platform-based gradient placeholder when no thumbnail
           <div className={`w-full h-full flex items-center justify-center ${getPlatformColor(video.platform)}`}>
-            <div className="text-white/80">
+            <div className="text-white/80 scale-150">
               {getPlatformIcon(video.platform)}
             </div>
           </div>
         )}
         
-        {/* Platform Icon Badge */}
-        <div className={`absolute top-2 left-2 p-1.5 rounded-lg ${getPlatformColor(video.platform)} shadow-lg`}>
+        {/* Platform Icon Badge - smaller, no rounded corners */}
+        <div className={`absolute top-1 left-1 p-1 ${getPlatformColor(video.platform)}`}>
           {getPlatformIcon(video.platform)}
         </div>
 
