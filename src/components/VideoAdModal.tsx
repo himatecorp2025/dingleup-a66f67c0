@@ -221,18 +221,14 @@ export const VideoAdModal = ({
             </div>
           )}
 
-          {/* Reward message overlay */}
+          {/* Simple close overlay when done - no reward text */}
           {showRewardMessage && (
-            <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 animate-fade-in">
-              <div className="text-4xl mb-4">🎉</div>
-              <p className="text-white text-xl font-bold text-center mb-6">
-                {t_local.rewardGranted}
-              </p>
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center animate-fade-in">
               <button
                 onClick={handleClose}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 px-8 rounded-full transition-colors"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 px-8 rounded-full transition-colors text-lg"
               >
-                {t_local.close}
+                <X className="w-6 h-6" />
               </button>
             </div>
           )}
