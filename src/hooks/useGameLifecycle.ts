@@ -152,7 +152,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
           
           const canPlay = await spendLife();
           if (!canPlay) {
-            toast.error(t('game.insufficient_lives'));
+            toast.error(t('game.insufficient_lives'), { position: 'top-center' });
             navigate('/dashboard');
             throw new Error('Insufficient lives');
           }
@@ -230,7 +230,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
       
       const canPlay = await spendLife();
       if (!canPlay) {
-        toast.error(t('game.insufficient_lives'));
+        toast.error(t('game.insufficient_lives'), { position: 'top-center' });
         setIsStarting(false);
         navigate('/dashboard');
         throw new Error('Insufficient lives');
