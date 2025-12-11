@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
+import { useWalletStore } from './walletStore';
 
 export interface RewardVideo {
   id: string;
@@ -256,6 +257,11 @@ export const useRewardVideoStore = create<RewardVideoStore>((set, get) => ({
       }
 
       console.log(`[RewardVideoStore] Session completed, reward: ${data.reward?.coinsDelta} coins, ${data.reward?.livesDelta} lives`);
+      
+      // CRITICAL: Force immediate wallet refresh after reward credited
+      // This ensures frontend shows updated coins/lives instantly
+      const walletStore = useWalletStore.getState();
+      walletStore.fetchWallet();
       
       return {
         success: true,

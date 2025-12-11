@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getCoinsForQuestion, START_GAME_REWARD } from '@/types/game';
 import { useI18n } from '@/i18n';
+import { useWalletStore } from '@/stores/walletStore';
 
 interface UseGameRewardsOptions {
   userId: string | undefined;
@@ -38,6 +39,10 @@ export const useGameRewards = ({
       setLocalCoinsEarned(START_GAME_REWARD);
       setCoinRewardAmount(START_GAME_REWARD);
       setCoinRewardTrigger(prev => prev + 1);
+      
+      // CRITICAL: Force immediate wallet refresh
+      useWalletStore.getState().fetchWallet();
+      
       await broadcast('wallet:update', { source: 'game_start', coinsDelta: START_GAME_REWARD });
     } catch (err) {
       console.error('[GameStart] Start reward credit failed:', err);
@@ -71,6 +76,9 @@ export const useGameRewards = ({
         if (error) {
           console.error('[GameRewards] Backend credit failed:', error);
           // Backend failed, but UI already updated optimistically
+        } else {
+          // CRITICAL: Force wallet refresh after backend confirms
+          useWalletStore.getState().fetchWallet();
         }
       });
       
