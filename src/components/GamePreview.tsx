@@ -432,11 +432,16 @@ const GamePreview = memo(() => {
   // Users must restart the game if they want questions in a different language
 
   // Background detection - exit game if app goes to background (only after video ended)
+  // IMPORTANT: Do NOT trigger when video ad modal is open (iframe steals focus)
   useEffect(() => {
     // Do not activate background detection while the intro/loading video is playing
+    // OR when video ad modal is open (iframe causes blur events)
     if (gameState !== 'playing' || !videoEnded) return;
 
     const handleVisibilityChange = () => {
+      // Skip if video ad modal is showing (iframe causes visibility issues)
+      if (videoAdFlow.showVideo || videoAdFlow.showPrompt) return;
+      
       if (document.hidden) {
         toast.error(t('game.interrupted'));
         navigate('/dashboard');
@@ -444,6 +449,9 @@ const GamePreview = memo(() => {
     };
 
     const handleBlur = () => {
+      // Skip if video ad modal is showing (iframe steals focus)
+      if (videoAdFlow.showVideo || videoAdFlow.showPrompt) return;
+      
       toast.error(t('game.interrupted'));
       navigate('/dashboard');
     };
@@ -456,7 +464,7 @@ const GamePreview = memo(() => {
       window.removeEventListener('blur', handleBlur);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState, videoEnded]); // t and navigate are stable refs
+  }, [gameState, videoEnded, videoAdFlow.showVideo, videoAdFlow.showPrompt]); // t and navigate are stable refs
 
   // Check for in-game payment success
   useEffect(() => {
