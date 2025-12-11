@@ -119,6 +119,8 @@ export const GameEndRewardDouble = ({
         durationSecondsPerVideo={15}
         onCompleted={handleVideoComplete}
         onClose={handleVideoClose}
+        context="game_end"
+        rewardAmount={coinsEarned}
       />
     );
   }

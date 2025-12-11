@@ -203,6 +203,7 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
         durationSecondsPerVideo={15}
         onCompleted={handleVideoComplete}
         onClose={handleVideoClose}
+        context="refill"
       />
     );
   }

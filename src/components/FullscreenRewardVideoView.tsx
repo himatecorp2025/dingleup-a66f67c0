@@ -16,6 +16,8 @@ interface FullscreenRewardVideoViewProps {
   durationSecondsPerVideo?: number;
   onCompleted: (watchedVideoIds: string[]) => void;
   onClose: () => void;
+  context?: 'daily_gift' | 'game_end' | 'refill';
+  rewardAmount?: number;
 }
 
 // Build embed URL with autoplay parameters per platform
@@ -64,6 +66,8 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
   durationSecondsPerVideo = 15,
   onCompleted,
   onClose,
+  context,
+  rewardAmount,
 }) => {
   const { lang } = useI18n();
   const startTimeRef = useRef<number>(Date.now());
@@ -76,6 +80,8 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
   const videoQueueRef = useRef<RewardVideo[]>([...videos]);
   const currentVideoStartRef = useRef<number>(Date.now());
   const introVideoRef = useRef<HTMLVideoElement>(null);
+  // Counter to force iframe reload when video needs restart
+  const [videoRestartKey, setVideoRestartKey] = useState(0);
 
   const currentVideo = videoQueueRef.current[currentVideoIndex];
 
@@ -109,19 +115,17 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
       
       setSecondsLeft(remaining);
       
-      // Check if current video has ended early (based on duration_seconds)
+      // Check if current video has ended and we need to restart it
       const currentVid = videoQueueRef.current[currentVideoIndex];
-      if (currentVid && currentVid.durationSeconds) {
+      if (currentVid && currentVid.durationSeconds && currentVid.durationSeconds > 0) {
         const videoElapsed = (Date.now() - currentVideoStartRef.current) / 1000;
         
-        // If this video is shorter than expected and has finished playing
-        if (currentVid.durationSeconds < durationSecondsPerVideo && videoElapsed >= currentVid.durationSeconds) {
-          // Move to next video
-          if (currentVideoIndex < videoQueueRef.current.length - 1) {
-            watchedIdsRef.current.add(currentVid.id);
-            setCurrentVideoIndex(prev => prev + 1);
-            currentVideoStartRef.current = Date.now();
-          }
+        // If video has finished and there's at least 5 seconds remaining on countdown
+        // Restart the SAME video to prevent TikTok showing "related videos"
+        if (videoElapsed >= currentVid.durationSeconds && remaining >= 5) {
+          console.log('[FullscreenRewardVideoView] Video ended with 5+ sec remaining, restarting same video');
+          currentVideoStartRef.current = Date.now();
+          setVideoRestartKey(prev => prev + 1); // Force iframe reload
         }
       }
       
@@ -145,6 +149,7 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
           }
           setCurrentVideoIndex(expectedIndex);
           currentVideoStartRef.current = Date.now();
+          setVideoRestartKey(0); // Reset restart key for new video
         }
       }
       
@@ -156,18 +161,28 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         clearInterval(interval);
         setCanClose(true);
         
-        // Just show toast to close - reward amount will be shown after completion
-        toast.success(
-          lang === 'hu' 
+        // Show toast with reward amount included
+        let toastMessage: string;
+        if (context === 'refill') {
+          toastMessage = lang === 'hu' 
+            ? 'Zárd be a videót a jutalom jóváírásához! +500 arany és 5 élet' 
+            : 'Close the video to claim your reward! +500 gold and 5 lives';
+        } else if (rewardAmount) {
+          toastMessage = lang === 'hu' 
+            ? `Zárd be a videót a jutalom jóváírásához! +${rewardAmount} arany` 
+            : `Close the video to claim your reward! +${rewardAmount} gold`;
+        } else {
+          toastMessage = lang === 'hu' 
             ? 'Zárd be a videót a jutalom jóváírásához!' 
-            : 'Close the video to claim your reward!',
-          { position: 'top-center', duration: 2000 }
-        );
+            : 'Close the video to claim your reward!';
+        }
+        
+        toast.success(toastMessage, { position: 'top-center', duration: 2000 });
       }
     }, 100); // Update frequently for smooth countdown
 
     return () => clearInterval(interval);
-  }, [totalDurationSeconds, durationSecondsPerVideo, lang, currentVideoIndex, showIntroVideo]);
+  }, [totalDurationSeconds, durationSecondsPerVideo, lang, currentVideoIndex, showIntroVideo, context, rewardAmount]);
 
   // Play intro video when it becomes visible
   useEffect(() => {
@@ -221,7 +236,7 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
             style={{ backgroundColor: '#000000', zIndex: 5 }}
           />
           <iframe
-            key={`${currentVideo?.id}-${currentVideoIndex}`}
+            key={`${currentVideo?.id}-${currentVideoIndex}-${videoRestartKey}`}
             src={embedSrc}
             className="absolute top-0 left-1/2 -translate-x-1/2 translate-y-[8vh] border-0 pointer-events-none"
             style={{
