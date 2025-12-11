@@ -18,6 +18,7 @@ import { useFullscreen } from '@/hooks/useFullscreen';
 import { useNativeFullscreen } from '@/hooks/useNativeFullscreen';
 import { useGameQuestions } from '@/hooks/useGameQuestions';
 import { useVideoAdStore } from '@/stores/videoAdStore';
+import { useRewardVideoStore } from '@/stores/rewardVideoStore';
 
 // PERFORMANCE OPTIMIZATION: Prefetch critical game assets
 // This preloads /game route code + intro video in background while user is on Dashboard
@@ -157,6 +158,8 @@ const Dashboard = () => {
 
   // Pre-load video ad availability IMMEDIATELY at login for instant button display
   const preloadVideoAds = useVideoAdStore(state => state.preloadOnLogin);
+  // NEW: Preload reward videos for instant display
+  const preloadRewardVideos = useRewardVideoStore(state => state.preloadVideos);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -164,11 +167,13 @@ const Dashboard = () => {
         setUserId(session.user.id);
         // IMMEDIATELY preload video ad availability in background (non-blocking)
         preloadVideoAds(session.user.id);
+        // NEW: Preload reward videos for instant video playback
+        preloadRewardVideos(session.user.id);
       } else {
         navigate('/auth/login');
       }
     });
-  }, [navigate, preloadVideoAds]);
+  }, [navigate, preloadVideoAds, preloadRewardVideos]);
 
   // PERFORMANCE OPTIMIZATION: Prefetch game assets AFTER critical UI renders
   // Loads /game route chunks + intro video in background for instant navigation

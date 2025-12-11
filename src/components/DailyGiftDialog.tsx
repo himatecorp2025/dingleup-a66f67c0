@@ -1,14 +1,13 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { usePlatformDetection } from '@/hooks/usePlatformDetection';
 import { trackBonusEvent, trackFeatureUsage } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
 import HexShieldFrame from './frames/HexShieldFrame';
 import { useI18n } from '@/i18n';
-import { VideoAdPrompt } from './VideoAdPrompt';
-import { VideoAdModal } from './VideoAdModal';
-import { useVideoAdFlow } from '@/hooks/useVideoAdFlow';
-import { useVideoAdStore } from '@/stores/videoAdStore';
+import { FullscreenRewardVideoView } from './FullscreenRewardVideoView';
+import { useRewardVideoStore, RewardVideo } from '@/stores/rewardVideoStore';
+import { toast } from 'sonner';
 
 interface DailyGiftDialogProps {
   open: boolean;
@@ -33,7 +32,7 @@ const DailyGiftDialog = ({
   claiming,
   isPremium = false 
 }: DailyGiftDialogProps) => {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [userId, setUserId] = useState<string | null>(null);
   const isHandheld = usePlatformDetection();
   const [contentVisible, setContentVisible] = useState(false);
@@ -44,10 +43,13 @@ const DailyGiftDialog = ({
   const [burstKey, setBurstKey] = useState(0);
   const [claimed, setClaimed] = useState(false);
   
-  // Video ad flow state - use global store for pre-loaded availability
-  const [showVideoPrompt, setShowVideoPrompt] = useState(false);
-  const videoAdAvailable = useVideoAdStore(state => state.isAvailable);
-  const videoAdFlow = useVideoAdFlow({ userId: userId || undefined });
+  // NEW: Video reward system using Zustand store
+  const [showVideoView, setShowVideoView] = useState(false);
+  const [activeVideos, setActiveVideos] = useState<RewardVideo[]>([]);
+  const rewardStore = useRewardVideoStore();
+  
+  // Check if videos are available (preloaded at login)
+  const videoAdAvailable = rewardStore.isPreloaded && rewardStore.videoQueue.length > 0;
 
   useEffect(() => {
     if (open) {
@@ -148,43 +150,53 @@ const DailyGiftDialog = ({
     }
   };
 
+  // NEW: Start video reward session
   const handleVideoAccept = async () => {
-    setShowVideoPrompt(false);
-    // Use skipPrompt=true to go directly to video
-    await videoAdFlow.startDailyGiftDouble(nextReward, true);
-  };
-
-  const handleVideoDecline = () => {
-    setShowVideoPrompt(false);
-    onLater();
+    if (!userId) return;
+    
+    // Start reward session through new system
+    const session = await rewardStore.startRewardSession(userId, 'daily_gift', nextReward);
+    
+    if (session && session.videos.length > 0) {
+      setActiveVideos(session.videos);
+      setShowVideoView(true);
+    }
   };
 
   // CRITICAL: Video completion - reward is credited ONLY when user closes the modal (X button)
-  // This callback is called from VideoAdModal.handleClose AFTER user clicks X
-  const handleVideoComplete = async () => {
-    // Credit the doubled reward via videoAdFlow
-    await videoAdFlow.onVideoComplete();
-    // Close the dialog
+  const handleVideoComplete = async (watchedVideoIds: string[]) => {
+    // Credit the doubled reward via new store
+    const result = await rewardStore.completeRewardSession(watchedVideoIds);
+    
+    if (result.success) {
+      toast.success(lang === 'hu' 
+        ? `+${result.coinsDelta} arany jóváírva!` 
+        : `+${result.coinsDelta} coins credited!`, 
+        { position: 'top-center' }
+      );
+    }
+    
+    // Close everything
+    setShowVideoView(false);
+    setActiveVideos([]);
     onLater();
   };
 
   const handleVideoClose = () => {
     // User cancelled before completion - no reward
-    videoAdFlow.cancelVideo();
+    rewardStore.cancelSession();
+    setShowVideoView(false);
+    setActiveVideos([]);
   };
 
-  // If video is showing, only render the video modal (not the gift dialog)
-  if (videoAdFlow.showVideo) {
+  // If video is showing, only render the fullscreen video view (not the gift dialog)
+  if (showVideoView && activeVideos.length > 0) {
     return (
-      <VideoAdModal
-        isOpen={videoAdFlow.showVideo}
-        videos={videoAdFlow.videos}
-        totalDurationSeconds={videoAdFlow.totalDuration}
-        onComplete={handleVideoComplete}
+      <FullscreenRewardVideoView
+        videos={activeVideos}
+        durationSecondsPerVideo={15}
+        onCompleted={(watchedIds) => { handleVideoComplete(watchedIds); }}
         onClose={handleVideoClose}
-        onCancel={handleVideoClose}
-        context="daily_gift"
-        doubledAmount={nextReward * 2}
       />
     );
   }
@@ -696,16 +708,6 @@ const DailyGiftDialog = ({
           </div>
         </div>
       </DialogContent>
-
-      {/* Video Ad Prompt - inside dialog */}
-      <VideoAdPrompt
-        isOpen={showVideoPrompt}
-        onClose={handleVideoDecline}
-        onAccept={handleVideoAccept}
-        onDecline={handleVideoDecline}
-        context="daily_gift"
-        rewardText={`+${nextReward} ${t('common.coins')}`}
-      />
     </Dialog>
     </>
   );
