@@ -12,6 +12,7 @@ import VideoLinkModal from '@/components/creators/VideoLinkModal';
 import VideoEditModal from '@/components/creators/VideoEditModal';
 import { useCreatorSubscription } from '@/hooks/useCreatorSubscription';
 import { useCreatorVideos, CreatorVideo } from '@/hooks/useCreatorVideos';
+import { useCreatorStats } from '@/hooks/useCreatorStats';
 import { CreatorVideoCard } from '@/components/creators/CreatorVideoCard';
 
 // Platform Icons
@@ -114,6 +115,9 @@ const Creators = () => {
     platformFilter, 
     isExpiryFilter
   );
+
+  // Use creator stats hook for views and reach
+  const { data: creatorStats } = useCreatorStats(profile?.id);
 
   const hasVideos = videos.length > 0;
 
@@ -309,12 +313,12 @@ const Creators = () => {
             </div>
             <div className="flex-1 flex flex-col items-center">
               <Trophy className="w-4 h-4 text-yellow-400 mb-0.5" />
-              <span className="text-base font-bold text-white">0</span>
+              <span className="text-base font-bold text-white">{creatorStats?.relevantReach ?? 0}</span>
               <span className="text-[10px] text-white/60">{lang === 'hu' ? 'Eléréseim' : 'Reach'}</span>
             </div>
             <div className="flex-1 flex flex-col items-center">
               <Eye className="w-4 h-4 text-purple-400 mb-0.5" />
-              <span className="text-base font-bold text-white">0</span>
+              <span className="text-base font-bold text-white">{creatorStats?.totalViews ?? 0}</span>
               <span className="text-[10px] text-white/60">{lang === 'hu' ? 'Megtekintéseim' : 'Views'}</span>
             </div>
           </div>
