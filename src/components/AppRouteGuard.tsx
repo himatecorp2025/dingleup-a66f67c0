@@ -100,8 +100,8 @@ export const AppRouteGuard = ({ children }: AppRouteGuardProps) => {
     return <>{children}</>;
   }
 
-  // Creators pages accessible on all devices (desktop, tablet, mobile)
-  if (location.pathname.startsWith('/creators') || location.pathname.startsWith('/creator')) {
+  // Creators pages and auth pages accessible on all devices (desktop, tablet, mobile)
+  if (location.pathname.startsWith('/creators') || location.pathname.startsWith('/creator') || location.pathname.startsWith('/auth')) {
     return <>{children}</>;
   }
 
