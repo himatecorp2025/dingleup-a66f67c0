@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useAdminGameProfilesQuery } from '@/hooks/queries/useAdminGameProfilesQuery';
 import { Brain, Search, Info, RefreshCw } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useI18n } from '@/i18n';
@@ -16,6 +16,49 @@ export default function AdminGameProfiles() {
   const { profiles, loading, isRefreshing, error, refetch } = useAdminGameProfilesQuery();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'answered' | 'correctness'>('answered');
+  
+  // Refs for synced scrollbars
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const bottomScrollRef = useRef<HTMLDivElement>(null);
+  const [tableWidth, setTableWidth] = useState(0);
+
+  // Sync scrollbars
+  useEffect(() => {
+    const topEl = topScrollRef.current;
+    const bottomEl = bottomScrollRef.current;
+    
+    if (!topEl || !bottomEl) return;
+
+    const handleTopScroll = () => {
+      if (bottomEl) bottomEl.scrollLeft = topEl.scrollLeft;
+    };
+    
+    const handleBottomScroll = () => {
+      if (topEl) topEl.scrollLeft = bottomEl.scrollLeft;
+    };
+
+    topEl.addEventListener('scroll', handleTopScroll);
+    bottomEl.addEventListener('scroll', handleBottomScroll);
+
+    return () => {
+      topEl.removeEventListener('scroll', handleTopScroll);
+      bottomEl.removeEventListener('scroll', handleBottomScroll);
+    };
+  }, []);
+
+  // Update table width for top scrollbar
+  useEffect(() => {
+    const updateWidth = () => {
+      const table = bottomScrollRef.current?.querySelector('table');
+      if (table) {
+        setTableWidth(table.scrollWidth);
+      }
+    };
+    
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, [profiles]);
 
   const filteredAndSorted = useMemo(() => {
     let result = [...profiles];
@@ -136,7 +179,19 @@ export default function AdminGameProfiles() {
             <CardDescription>{t('admin.game_profiles.table_desc')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            {/* Top scrollbar - synced with bottom */}
+            <div 
+              ref={topScrollRef}
+              className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-white/10 mb-1"
+              style={{ height: '12px' }}
+            >
+              <div style={{ width: tableWidth > 0 ? tableWidth : '100%', height: '1px' }} />
+            </div>
+            {/* Table with bottom scrollbar */}
+            <div 
+              ref={bottomScrollRef}
+              className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-white/10"
+            >
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
