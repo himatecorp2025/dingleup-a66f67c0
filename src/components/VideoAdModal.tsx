@@ -129,14 +129,14 @@ export const VideoAdModal = ({
         lang === 'hu'
           ? 'Jutalmad: 500 arany és 5 élet! Gratulálok!'
           : 'Your reward: 500 gold and 5 lives! Congratulations!',
-        { duration: 4000 }
+        { duration: 4000, position: 'top-center' }
       );
     } else {
       toast.success(
         lang === 'hu'
           ? 'Jutalmad Duplázódott! Gratulálok!'
           : 'Your reward has been doubled! Congratulations!',
-        { duration: 4000 }
+        { duration: 4000, position: 'top-center' }
       );
     }
   }, [context, lang]);
