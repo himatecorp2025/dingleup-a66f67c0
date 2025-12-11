@@ -172,9 +172,9 @@ const Creators = () => {
   const filters: { id: PlatformFilter; icon: React.ReactNode; disabled?: boolean }[] = [
     { id: 'all', icon: <AllFilterIcon className="w-5 h-5" /> },
     { id: 'tiktok', icon: <TikTokIcon className="w-5 h-5" /> },
-    { id: 'youtube', icon: <YouTubeIcon className="w-5 h-5" />, disabled: true },
-    { id: 'instagram', icon: <InstagramIcon className="w-5 h-5" />, disabled: true },
-    { id: 'facebook', icon: <FacebookIcon className="w-5 h-5" />, disabled: true },
+    { id: 'youtube', icon: <YouTubeIcon className="w-5 h-5" /> },
+    { id: 'instagram', icon: <InstagramIcon className="w-5 h-5" /> },
+    { id: 'facebook', icon: <FacebookIcon className="w-5 h-5" /> },
     { id: 'expiry', icon: <Clock className="w-5 h-5" /> },
   ];
 
