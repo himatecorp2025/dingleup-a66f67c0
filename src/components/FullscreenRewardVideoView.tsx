@@ -115,28 +115,30 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
       
       setSecondsLeft(remaining);
       
-      // If 3 seconds or less remaining, show intro video (regardless of video state)
+      // SAFETY: Force intro video when ≤3 seconds remaining (regardless of video state)
+      // This handles cases where the creator video is longer than our session time
       if (remaining <= 3 && remaining > 0 && !showIntroVideo) {
-        console.log('[FullscreenRewardVideoView] 3 seconds or less remaining, showing intro video');
+        console.log('[FullscreenRewardVideoView] ≤3 sec remaining (safety switch) → intro video');
         setShowIntroVideo(true);
-        // Mark current video as watched
         const currentVid = videoQueueRef.current[currentVideoIndex];
         if (currentVid) {
           watchedIdsRef.current.add(currentVid.id);
         }
       }
       
-      // Check if current video has ended and we need to switch to NEXT video
-      // Only do this if more than 3 seconds remaining
+      // Check if current video has ended (or is about to end) and we need to switch
+      // CRITICAL: Switch 1.5 seconds BEFORE video ends to prevent platform from showing "Related videos" UI
       if (!showIntroVideo && remaining > 3) {
         const currentVid = videoQueueRef.current[currentVideoIndex];
         if (currentVid && currentVid.durationSeconds && currentVid.durationSeconds > 0) {
           const videoElapsed = (Date.now() - currentVideoStartRef.current) / 1000;
           
-          // If video has finished playing
-          if (videoElapsed >= currentVid.durationSeconds) {
-            console.log('[FullscreenRewardVideoView] Video ended with >3 sec remaining, switching to next video');
-            // Mark as watched
+          // Switch 1.5 seconds early to prevent platform "Kapcsolódó videók" UI
+          const switchThreshold = Math.max(0, currentVid.durationSeconds - 1.5);
+          
+          if (videoElapsed >= switchThreshold) {
+            console.log('[FullscreenRewardVideoView] Video ending, >3 sec remaining → next creator video');
+            // Mark current video as watched
             watchedIdsRef.current.add(currentVid.id);
             
             // Move to next video in queue (cycle if at end)
