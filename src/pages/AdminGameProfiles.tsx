@@ -183,9 +183,9 @@ export default function AdminGameProfiles() {
             <div 
               ref={topScrollRef}
               className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-white/10 mb-1"
-              style={{ height: '12px' }}
+              style={{ overflowY: 'hidden' }}
             >
-              <div style={{ width: tableWidth > 0 ? tableWidth : '100%', height: '1px' }} />
+              <div style={{ width: tableWidth > 0 ? tableWidth : '100%', height: '12px' }} />
             </div>
             {/* Table with bottom scrollbar */}
             <div 

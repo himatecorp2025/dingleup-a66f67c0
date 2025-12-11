@@ -65,13 +65,13 @@ export default function AdminGameProfileDetail() {
           <Alert className="mb-6 bg-green-500/10 border-green-500/30">
             <TrendingUp className="h-4 w-4 text-green-600" />
             <AlertDescription>
-              <strong>{t('admin.game_profile_detail.personalization_active')}</strong> {t('admin.game_profile_detail.personalization_active_desc')}
+              <strong>{t('admin.game_profile.personalization_active')}</strong> {t('admin.game_profile.personalization_active_desc')}
             </AlertDescription>
           </Alert>
         ) : profile.personalizationReady ? (
           <Alert className="mb-6 bg-yellow-500/10 border-yellow-500/30">
             <AlertDescription>
-              <strong>{t('admin.game_profile_detail.ai_disabled')}</strong> {t('admin.game_profile_detail.ai_disabled_desc')}
+              <strong>{t('admin.game_profile.ai_disabled')}</strong> {t('admin.game_profile.ai_disabled_desc')}
             </AlertDescription>
           </Alert>
         ) : (
