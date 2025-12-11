@@ -29,7 +29,9 @@ import { useGameErrorHandling } from "@/hooks/useGameErrorHandling";
 import { useGameAnimation } from "@/hooks/useGameAnimation";
 import { GameErrorBanner } from "./game/GameErrorBanner";
 import { GameQuestionContainer } from "./game/GameQuestionContainer";
-import { GameEndRewardDouble } from "./GameEndRewardDouble";
+import { VideoAdModal } from "./VideoAdModal";
+import { VideoAdPrompt } from "./VideoAdPrompt";
+import { useVideoAdFlow } from "@/hooks/useVideoAdFlow";
 
 type GameState = 'playing' | 'finished' | 'out-of-lives';
 
@@ -71,9 +73,24 @@ const GamePreview = memo(() => {
     resetGameState: resetGameStateHook
   } = useGameState();
   const [gameCompleted, setGameCompleted] = useState(false);
-  const [showGameEndReward, setShowGameEndReward] = useState(false);
+  const [showVideoAdModal, setShowVideoAdModal] = useState(false);
+  const [videoAdAvailable, setVideoAdAvailable] = useState(false);
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
   const [gameInstanceId] = useState(() => crypto.randomUUID());
+
+  // Video ad flow for doubling rewards
+  const videoAdFlow = useVideoAdFlow({
+    userId,
+    onRewardClaimed: async (coins) => {
+      toast.success(
+        lang === 'hu' 
+          ? `Gratulálunk! +${coins} arany jóváírva!` 
+          : `Congratulations! +${coins} gold credited!`
+      );
+      await refetchWallet();
+      await refreshProfile();
+    },
+  });
 
   const {
     help5050UsageCount,
@@ -252,6 +269,7 @@ const GamePreview = memo(() => {
     continueType,
     errorBannerVisible,
     gameCompleted,
+    videoAdAvailable,
     setIsAnimating,
     setCanSwipe,
     setErrorBannerVisible,
@@ -272,6 +290,12 @@ const GamePreview = memo(() => {
     setRescueReason,
     setShowRescuePopup,
     triggerHaptic,
+    onDoubleRewardClick: async () => {
+      // Start video ad flow and auto-accept to go directly to video
+      await videoAdFlow.startGameEndDouble(coinsEarned);
+      // Auto-accept to skip the confirmation prompt since user already clicked "Duplázom"
+      videoAdFlow.acceptPrompt();
+    },
   });
 
   const {
@@ -488,16 +512,15 @@ const GamePreview = memo(() => {
     };
   }, [userId, gameState, refreshProfile, handleNextQuestion]);
 
-  // Show game end reward dialog when game is completed with coins earned
+  // Check video ad availability when game completes
   useEffect(() => {
-    if (gameCompleted && coinsEarned > 0 && !showGameEndReward) {
-      // Show game end reward dialog after a short delay
-      const timer = setTimeout(() => {
-        setShowGameEndReward(true);
-      }, 500);
-      return () => clearTimeout(timer);
+    if (gameCompleted && coinsEarned > 0 && userId) {
+      // Check if video ads are available for doubling
+      videoAdFlow.checkGameEndDoubleAvailable().then((available) => {
+        setVideoAdAvailable(available);
+      });
     }
-  }, [gameCompleted, coinsEarned, showGameEndReward]);
+  }, [gameCompleted, coinsEarned, userId]);
 
   const handleRejectContinue = () => {
     finishGame();
@@ -656,20 +679,30 @@ const GamePreview = memo(() => {
           }}
         />
 
-        {/* Game End Reward Double Dialog */}
-        <GameEndRewardDouble
-          isOpen={showGameEndReward}
-          onClose={() => {
-            setShowGameEndReward(false);
-          }}
-          coinsEarned={coinsEarned}
-          userId={userId}
-          onRewardDoubled={async (additionalCoins) => {
-            // Refresh wallet after doubling
-            await refetchWallet();
-            await refreshProfile();
-          }}
-        />
+        {/* Video Ad Prompt (fallback if auto-accept doesn't trigger) */}
+        {videoAdFlow.showPrompt && (
+          <VideoAdPrompt
+            isOpen={true}
+            onClose={videoAdFlow.declinePrompt}
+            onAccept={videoAdFlow.acceptPrompt}
+            onDecline={videoAdFlow.declinePrompt}
+            context="game_end"
+            rewardText={`${coinsEarned} → ${coinsEarned * 2} ${lang === 'hu' ? 'arany' : 'gold'}`}
+          />
+        )}
+
+        {/* Video Ad Modal for doubling reward */}
+        {videoAdFlow.showVideo && videoAdFlow.videos.length > 0 && (
+          <VideoAdModal
+            isOpen={true}
+            onClose={videoAdFlow.onVideoComplete}
+            videos={videoAdFlow.videos}
+            totalDurationSeconds={videoAdFlow.totalDuration}
+            onComplete={videoAdFlow.onVideoComplete}
+            onCancel={videoAdFlow.cancelVideo}
+            context="game_end"
+          />
+        )}
       </GameSwipeHandler>
     );
   }

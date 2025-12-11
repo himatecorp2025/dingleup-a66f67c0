@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Question, CONTINUE_AFTER_WRONG_COST, TIMEOUT_CONTINUE_COST } from '@/types/game';
 import { useI18n } from '@/i18n';
+import { Film } from 'lucide-react';
 
 interface UseGameNavigationOptions {
   profile: any;
@@ -17,6 +18,7 @@ interface UseGameNavigationOptions {
   continueType: 'timeout' | 'wrong' | 'out-of-lives';
   errorBannerVisible: boolean;
   gameCompleted: boolean;
+  videoAdAvailable: boolean;
   setIsAnimating: (isAnimating: boolean) => void;
   setCanSwipe: (canSwipe: boolean) => void;
   setErrorBannerVisible: (visible: boolean) => void;
@@ -37,10 +39,11 @@ interface UseGameNavigationOptions {
   setRescueReason: (reason: 'NO_LIFE' | 'NO_GOLD') => void;
   setShowRescuePopup: (show: boolean) => void;
   triggerHaptic: (type: 'success' | 'warning' | 'error') => void;
+  onDoubleRewardClick: () => void;
 }
 
 export const useGameNavigation = (options: UseGameNavigationOptions) => {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const {
     profile,
     userId,
@@ -54,6 +57,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     continueType,
     errorBannerVisible,
     gameCompleted,
+    videoAdAvailable,
     setIsAnimating,
     setCanSwipe,
     setErrorBannerVisible,
@@ -74,6 +78,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     setRescueReason,
     setShowRescuePopup,
     triggerHaptic,
+    onDoubleRewardClick,
   } = options;
 
   const handleNextQuestion = useCallback(async () => {
@@ -103,7 +108,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
         ? (responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length).toFixed(1)
         : '0.0';
       
-      // Show beautiful results toast with casino aesthetic
+      // Show beautiful results toast with casino aesthetic + video ad double option
       toast.success(
         <div className="flex flex-col gap-2 p-1.5">
           <div className="text-center text-base font-black mb-1 bg-gradient-to-r from-yellow-300 via-yellow-100 to-yellow-300 bg-clip-text text-transparent">
@@ -115,10 +120,25 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
               <div className="font-bold text-green-400">{correctAnswers}/15</div>
               <div className="text-[10px] opacity-70">{t('game_results.correct')}</div>
             </div>
-            <div className="flex flex-col items-center bg-black/30 rounded-lg p-2 border border-yellow-500/20">
+            {/* Coin display with optional double button */}
+            <div className="flex flex-col items-center bg-black/30 rounded-lg p-2 border border-yellow-500/20 relative">
               <div className="text-lg mb-0.5">💰</div>
               <div className="font-bold text-yellow-400">{coinsEarned}</div>
               <div className="text-[10px] opacity-70">{t('game_results.gold')}</div>
+              {/* 2× Double button integrated into coin box */}
+              {videoAdAvailable && coinsEarned > 0 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toast.dismiss();
+                    onDoubleRewardClick();
+                  }}
+                  className="absolute -top-2 -right-2 flex items-center gap-0.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg border border-yellow-300/50 animate-pulse"
+                >
+                  <Film className="w-3 h-3" />
+                  <span>2×</span>
+                </button>
+              )}
             </div>
             <div className="flex flex-col items-center bg-black/30 rounded-lg p-2 border border-yellow-500/20">
               <div className="text-lg mb-0.5">⚡</div>
@@ -126,6 +146,21 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
               <div className="text-[10px] opacity-70">{t('game_results.time')}</div>
             </div>
           </div>
+          {/* Double reward prompt if video available */}
+          {videoAdAvailable && coinsEarned > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toast.dismiss();
+                onDoubleRewardClick();
+              }}
+              className="flex items-center justify-center gap-2 mt-1 bg-gradient-to-r from-amber-500/90 to-orange-500/90 hover:from-amber-400 hover:to-orange-400 text-white text-xs font-bold py-2 px-3 rounded-lg border border-yellow-300/30 transition-all"
+            >
+              <Film className="w-4 h-4" />
+              <span>{lang === 'hu' ? 'Duplázom a jutalmat!' : 'Double my reward!'}</span>
+              <span className="text-yellow-200">({coinsEarned} → {coinsEarned * 2})</span>
+            </button>
+          )}
           <div className="text-center mt-1 text-xs font-bold animate-pulse text-white/90">
             {t('game_results.swipe_for_new')}
           </div>
@@ -138,7 +173,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
             border: '2px solid rgba(234, 179, 8, 0.5)',
             boxShadow: '0 8px 32px rgba(234, 179, 8, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
             maxWidth: '85vw',
-            width: '320px',
+            width: '340px',
             backdropFilter: 'blur(8px)',
           }
         }
