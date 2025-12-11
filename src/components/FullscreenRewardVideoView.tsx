@@ -125,34 +125,24 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         zIndex: 99999,
       }}
     >
-      {/* Iframe container - oversized to hide platform UI */}
-      <div 
-        style={{
+      {/* FULLSCREEN iframe - scaled up to hide platform UI */}
+      <iframe
+        key={currentVideo.id}
+        src={embedSrc}
+        style={{ 
           position: 'absolute',
-          top: '-50%',
-          left: '-50%',
-          width: '200%',
-          height: '200%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
+          top: '50%',
+          left: '50%',
+          width: '100vw',
+          height: '100dvh',
+          border: 'none',
+          pointerEvents: 'none',
+          transform: 'translate(-50%, -50%) scale(2.5)',
+          transformOrigin: 'center center',
         }}
-      >
-        <iframe
-          key={currentVideo.id}
-          src={embedSrc}
-          style={{ 
-            width: '100vw',
-            height: '200dvh',
-            border: 'none',
-            pointerEvents: 'none',
-            transform: 'scale(1.5)',
-          }}
-          allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
-          allowFullScreen
-        />
-      </div>
+        allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
+        allowFullScreen
+      />
 
       {/* SOLID BLACK masks to completely cover platform UI */}
       {/* Top mask - thick solid black */}
