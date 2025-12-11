@@ -242,19 +242,33 @@ serve(async (req) => {
       );
     }
 
-    // Check subscription status
-    const { data: subscription } = await supabaseClient
-      .from('creator_subscriptions')
-      .select('*')
+    // Check if user is admin (admins bypass subscription check)
+    const { data: userRole } = await supabaseClient
+      .from('user_roles')
+      .select('role')
       .eq('user_id', userId)
+      .eq('role', 'admin')
       .maybeSingle();
+    
+    const isAdmin = !!userRole;
+    
+    // Check subscription status (skip for admins)
+    if (!isAdmin) {
+      const { data: subscription } = await supabaseClient
+        .from('creator_subscriptions')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-    if (!subscription || !['active', 'active_trial', 'cancel_at_period_end'].includes(subscription.status)) {
-      console.log("[SUBMIT-VIDEO] No active subscription for user:", userId);
-      return new Response(
-        JSON.stringify({ success: false, error: "NO_ACTIVE_SUBSCRIPTION" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
-      );
+      if (!subscription || !['active', 'active_trial', 'cancel_at_period_end'].includes(subscription.status)) {
+        console.log("[SUBMIT-VIDEO] No active subscription for user:", userId);
+        return new Response(
+          JSON.stringify({ success: false, error: "NO_ACTIVE_SUBSCRIPTION" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+        );
+      }
+    } else {
+      console.log("[SUBMIT-VIDEO] Admin user, bypassing subscription check");
     }
 
     // Detect platform
