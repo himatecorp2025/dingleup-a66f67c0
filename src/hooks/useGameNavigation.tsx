@@ -114,53 +114,59 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
           <div className="text-center text-base font-black mb-1 bg-gradient-to-r from-yellow-300 via-yellow-100 to-yellow-300 bg-clip-text text-transparent">
             {t('game_results.title')}
           </div>
-          <div className="grid grid-cols-3 gap-2 text-xs">
-            <div className="flex flex-col items-center bg-black/30 rounded-lg p-2 border border-yellow-500/20">
-              <div className="text-lg mb-0.5">✅</div>
-              <div className="font-bold text-green-400">{correctAnswers}/15</div>
-              <div className="text-[10px] opacity-70">{t('game_results.correct')}</div>
+          <div className="grid grid-cols-4 gap-1.5 text-xs">
+            {/* Correct answers box */}
+            <div className="flex flex-col items-center bg-black/30 rounded-lg p-1.5 border border-yellow-500/20">
+              <div className="text-base mb-0.5">✅</div>
+              <div className="font-bold text-green-400 text-sm">{correctAnswers}/15</div>
+              <div className="text-[9px] opacity-70">{t('game_results.correct')}</div>
             </div>
-            {/* Coin display with optional double button */}
-            <div className="flex flex-col items-center bg-black/30 rounded-lg p-2 border border-yellow-500/20 relative">
-              <div className="text-lg mb-0.5">💰</div>
-              <div className="font-bold text-yellow-400">{coinsEarned}</div>
-              <div className="text-[10px] opacity-70">{t('game_results.gold')}</div>
-              {/* 2× Double button integrated into coin box */}
-              {videoAdAvailable && coinsEarned > 0 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toast.dismiss();
-                    onDoubleRewardClick();
-                  }}
-                  className="absolute -top-2 -right-2 flex items-center gap-0.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg border border-yellow-300/50 animate-pulse"
-                >
-                  <Film className="w-3 h-3" />
-                  <span>2×</span>
-                </button>
-              )}
+            {/* Coin earned box */}
+            <div className="flex flex-col items-center bg-black/30 rounded-lg p-1.5 border border-yellow-500/20">
+              <div className="text-base mb-0.5">💰</div>
+              <div className="font-bold text-yellow-400 text-sm">{coinsEarned}</div>
+              <div className="text-[9px] opacity-70">{t('game_results.gold')}</div>
             </div>
-            <div className="flex flex-col items-center bg-black/30 rounded-lg p-2 border border-yellow-500/20">
-              <div className="text-lg mb-0.5">⚡</div>
-              <div className="font-bold text-blue-400">{avgResponseTime}s</div>
-              <div className="text-[10px] opacity-70">{t('game_results.time')}</div>
+            {/* Time box */}
+            <div className="flex flex-col items-center bg-black/30 rounded-lg p-1.5 border border-yellow-500/20">
+              <div className="text-base mb-0.5">⚡</div>
+              <div className="font-bold text-blue-400 text-sm">{avgResponseTime}s</div>
+              <div className="text-[9px] opacity-70">{t('game_results.time')}</div>
             </div>
+            {/* Double reward box - clickable to watch ad */}
+            {videoAdAvailable && coinsEarned > 0 ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toast.dismiss();
+                  onDoubleRewardClick();
+                }}
+                className="flex flex-col items-center bg-gradient-to-b from-amber-600/40 to-orange-600/40 rounded-lg p-1.5 border border-amber-400/50 hover:from-amber-500/50 hover:to-orange-500/50 transition-all cursor-pointer animate-pulse"
+              >
+                <div className="flex items-center gap-0.5 mb-0.5">
+                  <Film className="w-3 h-3 text-amber-300" />
+                  <div className="flex">
+                    <span className="text-sm">💰</span>
+                    <span className="text-sm">💰</span>
+                  </div>
+                </div>
+                <div className="font-bold text-amber-300 text-sm">{coinsEarned * 2}</div>
+                <div className="text-[9px] text-amber-200/80">▶ 2×</div>
+              </button>
+            ) : (
+              <div className="flex flex-col items-center bg-black/20 rounded-lg p-1.5 border border-gray-500/20 opacity-50">
+                <div className="flex items-center gap-0.5 mb-0.5">
+                  <Film className="w-3 h-3 text-gray-400" />
+                  <div className="flex">
+                    <span className="text-sm opacity-50">💰</span>
+                    <span className="text-sm opacity-50">💰</span>
+                  </div>
+                </div>
+                <div className="font-bold text-gray-400 text-sm">-</div>
+                <div className="text-[9px] text-gray-500">2×</div>
+              </div>
+            )}
           </div>
-          {/* Double reward prompt if video available */}
-          {videoAdAvailable && coinsEarned > 0 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toast.dismiss();
-                onDoubleRewardClick();
-              }}
-              className="flex items-center justify-center gap-2 mt-1 bg-gradient-to-r from-amber-500/90 to-orange-500/90 hover:from-amber-400 hover:to-orange-400 text-white text-xs font-bold py-2 px-3 rounded-lg border border-yellow-300/30 transition-all"
-            >
-              <Film className="w-4 h-4" />
-              <span>{lang === 'hu' ? 'Duplázom a jutalmat!' : 'Double my reward!'}</span>
-              <span className="text-yellow-200">({coinsEarned} → {coinsEarned * 2})</span>
-            </button>
-          )}
           <div className="text-center mt-1 text-xs font-bold animate-pulse text-white/90">
             {t('game_results.swipe_for_new')}
           </div>
