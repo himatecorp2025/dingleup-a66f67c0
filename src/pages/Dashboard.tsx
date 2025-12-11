@@ -49,6 +49,7 @@ import { PersonalWinnerDialog } from '@/components/PersonalWinnerDialog';
 import { LeaderboardCarousel } from '@/components/LeaderboardCarousel';
 import { DailyRankingsCountdown } from '@/components/DailyRankingsCountdown';
 import { NextLifeTimer } from '@/components/NextLifeTimer';
+import { InGameRescuePopup } from '@/components/InGameRescuePopup';
 
 
 
@@ -97,6 +98,9 @@ const Dashboard = () => {
   // Auto logout on inactivity with warning
   const { showWarning, remainingSeconds, handleStayActive } = useAutoLogout();
   const [currentRank, setCurrentRank] = useState<number | null>(null);
+  
+  // Rescue popup for insufficient lives when clicking Play Now
+  const [showRescuePopup, setShowRescuePopup] = useState(false);
   
   
   // PERFORMANCE OPTIMIZATION: Centralized popup manager
@@ -494,6 +498,14 @@ const Dashboard = () => {
               <PlayNowButton
                 data-tutorial="play-button"
                 onClick={async () => {
+                  // CHECK LIVES FIRST - Show rescue popup if not enough
+                  const currentLives = walletData?.livesCurrent ?? profile?.lives ?? 0;
+                  if (currentLives < 1) {
+                    toast.error(t('game.insufficient_lives'), { position: 'top-center' });
+                    setShowRescuePopup(true);
+                    return;
+                  }
+                  
                   // PERFORMANCE OPTIMIZATION: Prefetch questions BEFORE navigation
                   // This eliminates the loading spinner on /game page (instant question display)
                   const lastPoolOrder = localStorage.getItem('dingleup_global_last_pool');
@@ -583,6 +595,25 @@ const Dashboard = () => {
           isClaiming={popupManager.rankReward.isClaiming}
         />
       )}
+
+      {/* Rescue Popup for Play Now with insufficient lives */}
+      <InGameRescuePopup
+        isOpen={showRescuePopup}
+        onClose={() => setShowRescuePopup(false)}
+        triggerReason="NO_LIFE"
+        currentLives={walletData?.livesCurrent ?? profile?.lives ?? 0}
+        currentGold={walletData?.coinsCurrent ?? profile?.coins ?? 0}
+        onStateRefresh={async () => {
+          await Promise.all([
+            refreshProfile(),
+            refetchWallet()
+          ]);
+          // After successful rescue, navigate to game
+          setShowRescuePopup(false);
+          navigate('/game');
+        }}
+        onGameEnd={() => setShowRescuePopup(false)}
+      />
 
       <div data-tutorial="bottom-nav">
         <BottomNav />
