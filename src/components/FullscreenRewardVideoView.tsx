@@ -162,8 +162,8 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
           left: '50%',
           width: '130vw',
           height: '130vh',
-          // Center video, shift up slightly to hide bottom platform UI (username, hashtags, music)
-          transform: 'translate(-50%, -55%)',
+          // Center video, shift DOWN to hide bottom platform UI (username, hashtags, music)
+          transform: 'translate(-50%, -40%)',
           transformOrigin: 'center center',
         }}
         allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
