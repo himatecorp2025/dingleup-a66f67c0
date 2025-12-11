@@ -34,6 +34,8 @@ import CoinShop from "./pages/CoinShop";
 import Creators from "./pages/Creators";
 
 import CreatorHowItWorks from "./pages/CreatorHowItWorks";
+import CreatorAnalytics from "./pages/CreatorAnalytics";
+import CreatorAnalyticsVideoDetail from "./pages/CreatorAnalyticsVideoDetail";
 import LoginNew from "./pages/LoginNew";
 import RegisterNew from "./pages/RegisterNew";
 import ForgotPin from "./pages/ForgotPin";
@@ -157,6 +159,8 @@ const AppCore = () => {
               <Route path="/creators" element={<ErrorBoundary><Creators /></ErrorBoundary>} />
               
               <Route path="/creators/how-it-works" element={<ErrorBoundary><CreatorHowItWorks /></ErrorBoundary>} />
+              <Route path="/creator/analytics" element={<ErrorBoundary><CreatorAnalytics /></ErrorBoundary>} />
+              <Route path="/creator/analytics/video/:videoId" element={<ErrorBoundary><CreatorAnalyticsVideoDetail /></ErrorBoundary>} />
               <Route path="/coin-shop" element={<ErrorBoundary><CoinShop /></ErrorBoundary>} />
               
               <Route path="/popular-content" element={<ErrorBoundary><PopularContent /></ErrorBoundary>} />

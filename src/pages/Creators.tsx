@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { LogOut, Plus, Menu, X, Video, Info, Eye, Users, MousePointerClick, Hash, Film, Trophy, Clock } from 'lucide-react';
+import { LogOut, Plus, Menu, X, Video, Info, Eye, Users, MousePointerClick, Hash, Film, Trophy, Clock, BarChart3 } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
@@ -220,6 +220,13 @@ const Creators = () => {
                 Dashboard
               </button>
               <button 
+                onClick={() => { setMobileMenuOpen(false); navigate('/creator/analytics'); }}
+                className="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-white/70 flex items-center gap-2"
+              >
+                <BarChart3 className="w-4 h-4" />
+                {lang === 'hu' ? 'Analitika' : 'Analytics'}
+              </button>
+              <button 
                 onClick={() => { setMobileMenuOpen(false); navigate('/creators/how-it-works'); }}
                 className="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-white/70"
               >
@@ -261,6 +268,13 @@ const Creators = () => {
 
           {/* Desktop: How it works + Add video button - ONLY on desktop/laptop */}
           <div className="hidden lg:flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/creator/analytics')}
+              className="flex items-center gap-2 px-4 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <BarChart3 className="w-4 h-4" />
+              {lang === 'hu' ? 'Analitika' : 'Analytics'}
+            </button>
             <button 
               onClick={() => navigate('/creators/how-it-works')}
               className="flex items-center gap-2 px-4 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"

@@ -405,6 +405,56 @@ export type Database = {
           },
         ]
       }
+      creator_analytics_daily: {
+        Row: {
+          clickthroughs: number
+          created_at: string
+          creator_id: string
+          date: string
+          hour_of_day: number | null
+          id: string
+          impressions: number
+          platform: string | null
+          relevant_hits: number
+          video_completions: number
+          video_id: string | null
+        }
+        Insert: {
+          clickthroughs?: number
+          created_at?: string
+          creator_id: string
+          date: string
+          hour_of_day?: number | null
+          id?: string
+          impressions?: number
+          platform?: string | null
+          relevant_hits?: number
+          video_completions?: number
+          video_id?: string | null
+        }
+        Update: {
+          clickthroughs?: number
+          created_at?: string
+          creator_id?: string
+          date?: string
+          hour_of_day?: number | null
+          id?: string
+          impressions?: number
+          platform?: string | null
+          relevant_hits?: number
+          video_completions?: number
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_analytics_daily_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "creator_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_plans: {
         Row: {
           created_at: string | null
@@ -589,6 +639,10 @@ export type Database = {
           status: string
           thumbnail_url: string | null
           title: string | null
+          total_clickthrough: number
+          total_impressions: number
+          total_relevant_hits: number
+          total_video_completions: number
           updated_at: string
           user_id: string
           video_url: string
@@ -606,6 +660,10 @@ export type Database = {
           status?: string
           thumbnail_url?: string | null
           title?: string | null
+          total_clickthrough?: number
+          total_impressions?: number
+          total_relevant_hits?: number
+          total_video_completions?: number
           updated_at?: string
           user_id: string
           video_url: string
@@ -623,6 +681,10 @@ export type Database = {
           status?: string
           thumbnail_url?: string | null
           title?: string | null
+          total_clickthrough?: number
+          total_impressions?: number
+          total_relevant_hits?: number
+          total_video_completions?: number
           updated_at?: string
           user_id?: string
           video_url?: string
@@ -3896,6 +3958,7 @@ export type Database = {
       }
       activate_creator_trial: { Args: { p_plan_id: string }; Returns: Json }
       activate_creator_video: { Args: { p_video_id: string }; Returns: Json }
+      aggregate_creator_video_stats: { Args: never; Returns: undefined }
       archive_old_lives_ledger: { Args: never; Returns: Json }
       archive_old_wallet_ledger: { Args: never; Returns: Json }
       archive_thread_for_user: { Args: { p_thread_id: string }; Returns: Json }
