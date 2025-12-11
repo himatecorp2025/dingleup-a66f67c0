@@ -135,27 +135,27 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
                 }}
                 className="flex flex-col items-center bg-gradient-to-b from-amber-600/40 to-orange-600/40 rounded-lg p-1.5 border border-amber-400/50 hover:from-amber-500/50 hover:to-orange-500/50 transition-all cursor-pointer animate-pulse"
               >
-                <div className="flex items-center gap-0.5 mb-0.5">
-                  <Film className="w-3 h-3 text-amber-300" />
-                  <div className="flex">
-                    <span className="text-sm">💰</span>
-                    <span className="text-sm">💰</span>
-                  </div>
+                <div className="flex mb-0.5">
+                  <span className="text-sm">💰</span>
+                  <span className="text-sm">💰</span>
                 </div>
                 <div className="font-bold text-amber-300 text-sm">{coinsEarned * 2}</div>
-                <div className="text-[9px] text-amber-200/80">▶ 2×</div>
+                <div className="flex items-center gap-0.5 text-[9px] text-amber-200/80">
+                  <Film className="w-3 h-3" />
+                  <span>▶ 2×</span>
+                </div>
               </button>
             ) : (
               <div className="flex flex-col items-center bg-black/20 rounded-lg p-1.5 border border-gray-500/20 opacity-50">
-                <div className="flex items-center gap-0.5 mb-0.5">
-                  <Film className="w-3 h-3 text-gray-400" />
-                  <div className="flex">
-                    <span className="text-sm opacity-50">💰</span>
-                    <span className="text-sm opacity-50">💰</span>
-                  </div>
+                <div className="flex mb-0.5">
+                  <span className="text-sm opacity-50">💰</span>
+                  <span className="text-sm opacity-50">💰</span>
                 </div>
                 <div className="font-bold text-gray-400 text-sm">-</div>
-                <div className="text-[9px] text-gray-500">2×</div>
+                <div className="flex items-center gap-0.5 text-[9px] text-gray-500">
+                  <Film className="w-3 h-3" />
+                  <span>2×</span>
+                </div>
               </div>
             )}
             {/* Box 4: Time */}
