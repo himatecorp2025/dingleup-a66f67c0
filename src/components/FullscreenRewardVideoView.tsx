@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/i18n';
+import introVideo from '@/assets/loading-video.mp4';
 
 export interface RewardVideo {
   id: string;
@@ -74,12 +75,13 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
   const [secondsLeft, setSecondsLeft] = useState(totalDurationSeconds);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [canClose, setCanClose] = useState(false);
-  const [timerFinished, setTimerFinished] = useState(false); // Track if timer has finished
+  const [timerFinished, setTimerFinished] = useState(false);
+  const [showIntroVideo, setShowIntroVideo] = useState(false); // Track if showing intro video
   const watchedIdsRef = useRef<Set<string>>(new Set());
   const videoQueueRef = useRef<RewardVideo[]>([...videos]);
   const currentVideoStartRef = useRef<number>(Date.now());
-  // Counter to force iframe reload when video changes
   const [videoKey, setVideoKey] = useState(0);
+  const introVideoRef = useRef<HTMLVideoElement>(null);
 
   const currentVideo = videoQueueRef.current[currentVideoIndex];
 
@@ -113,40 +115,66 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
       
       setSecondsLeft(remaining);
       
-      // Check if current video has ended (or is about to end) and we need to switch
-      // CRITICAL: Switch 1.5 seconds BEFORE video ends to prevent platform from showing "Related videos" UI
-      // ONLY switch if timer hasn't finished yet (remaining > 0)
-      if (!timerFinished && remaining > 3) {
-        const currentVid = videoQueueRef.current[currentVideoIndex];
-        if (currentVid && currentVid.durationSeconds && currentVid.durationSeconds > 0) {
-          const videoElapsed = (Date.now() - currentVideoStartRef.current) / 1000;
+      // If already showing intro video or timer finished, skip video switching logic
+      if (showIntroVideo || timerFinished) {
+        // Timer finished - show close button
+        if (remaining === 0 && !timerFinished) {
+          videoQueueRef.current.forEach(v => watchedIdsRef.current.add(v.id));
+          setTimerFinished(true);
+          setCanClose(true);
           
-          // Switch 1.5 seconds early to prevent platform "Kapcsolódó videók" UI
-          const switchThreshold = Math.max(0, currentVid.durationSeconds - 1.5);
+          let toastMessage: string;
+          if (context === 'refill') {
+            toastMessage = lang === 'hu' 
+              ? 'Zárd be a videót a jutalom jóváírásához! +500 arany és 5 élet' 
+              : 'Close the video to claim your reward! +500 gold and 5 lives';
+          } else if (rewardAmount) {
+            toastMessage = lang === 'hu' 
+              ? `Zárd be a videót a jutalom jóváírásához! +${rewardAmount} arany` 
+              : `Close the video to claim your reward! +${rewardAmount} gold`;
+          } else {
+            toastMessage = lang === 'hu' 
+              ? 'Zárd be a videót a jutalom jóváírásához!' 
+              : 'Close the video to claim your reward!';
+          }
           
-          if (videoElapsed >= switchThreshold) {
+          toast.success(toastMessage, { position: 'top-center', duration: 2000 });
+        }
+        return;
+      }
+      
+      // Check if current video has ended and we need to switch
+      const currentVid = videoQueueRef.current[currentVideoIndex];
+      if (currentVid && currentVid.durationSeconds && currentVid.durationSeconds > 0) {
+        const videoElapsed = (Date.now() - currentVideoStartRef.current) / 1000;
+        
+        // Switch 1.5 seconds early to prevent platform "Kapcsolódó videók" UI
+        const switchThreshold = Math.max(0, currentVid.durationSeconds - 1.5);
+        
+        if (videoElapsed >= switchThreshold) {
+          // Mark current video as watched
+          watchedIdsRef.current.add(currentVid.id);
+          
+          // Decision: if >3 sec remaining → next creator video, else → intro video
+          if (remaining > 3) {
             console.log('[FullscreenRewardVideoView] Video ending, >3 sec remaining → next creator video');
-            // Mark current video as watched
-            watchedIdsRef.current.add(currentVid.id);
-            
-            // Move to next video in queue (cycle if at end)
             const nextIndex = (currentVideoIndex + 1) % videoQueueRef.current.length;
             setCurrentVideoIndex(nextIndex);
             currentVideoStartRef.current = Date.now();
-            setVideoKey(prev => prev + 1); // Force iframe reload
+            setVideoKey(prev => prev + 1);
+          } else {
+            console.log('[FullscreenRewardVideoView] Video ending, ≤3 sec remaining → intro video');
+            setShowIntroVideo(true);
           }
         }
       }
       
-      // Timer finished - show close button, but KEEP the current creator video playing
+      // Timer finished - show close button
       if (remaining === 0 && !timerFinished) {
-        // Mark all videos as watched
         videoQueueRef.current.forEach(v => watchedIdsRef.current.add(v.id));
-        
         setTimerFinished(true);
         setCanClose(true);
         
-        // Show toast with reward amount included
         let toastMessage: string;
         if (context === 'refill') {
           toastMessage = lang === 'hu' 
@@ -164,10 +192,10 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         
         toast.success(toastMessage, { position: 'top-center', duration: 2000 });
       }
-    }, 100); // Update frequently for smooth countdown
+    }, 100);
 
     return () => clearInterval(interval);
-  }, [totalDurationSeconds, lang, currentVideoIndex, timerFinished, context, rewardAmount]);
+  }, [totalDurationSeconds, lang, currentVideoIndex, timerFinished, showIntroVideo, context, rewardAmount]);
 
   const handleClose = useCallback(() => {
     if (!canClose) return;
@@ -175,9 +203,9 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
     onClose();
   }, [canClose, onCompleted, onClose]);
 
-  if (!currentVideo) return null;
+  if (!currentVideo && !showIntroVideo) return null;
 
-  const embedSrc = buildAutoplayUrl(currentVideo);
+  const embedSrc = currentVideo ? buildAutoplayUrl(currentVideo) : '';
 
   return (
     <div 
@@ -188,71 +216,71 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         backgroundColor: '#000000',
       }}
     >
-      {/* Solid black background layer - covers everything */}
+      {/* Solid black background layer */}
       <div 
         className="absolute inset-0" 
         style={{ backgroundColor: '#000000', zIndex: 0 }}
       />
 
-      {/* Creator video - keeps playing even after timer finishes */}
-      {/* Black background container ensures no white/light gaps */}
-      <div 
-        className="absolute inset-0"
-        style={{ backgroundColor: '#000000', zIndex: 5 }}
-      />
-      
-      {/* FULLSCREEN iframe - full width, taller than viewport, shifted DOWN to hide bottom platform UI */}
-      <iframe
-        key={`${currentVideo.id}-${currentVideoIndex}-${videoKey}`}
-        src={embedSrc}
-        className="absolute top-0 left-1/2 -translate-x-1/2 translate-y-[8vh] border-0 pointer-events-none"
-        style={{
-          width: '100vw',
-          height: '120vh',
-          zIndex: 10,
-          backgroundColor: '#000000',
-        }}
-        allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
-        allowFullScreen
-      />
-      
-      {/* Black overlay strips for sides - WIDER to fully cover any white edges */}
-      <div 
-        className="absolute top-0 left-0 h-full"
-        style={{ 
-          width: '15vw', 
-          backgroundColor: '#000000',
-          zIndex: 15,
-        }}
-      />
-      <div 
-        className="absolute top-0 right-0 h-full"
-        style={{ 
-          width: '15vw', 
-          backgroundColor: '#000000',
-          zIndex: 15,
-        }}
-      />
-      
-      {/* Top black overlay to hide platform header */}
-      <div 
-        className="absolute top-0 left-0 right-0"
-        style={{ 
-          height: '15vh', 
-          backgroundColor: '#000000',
-          zIndex: 15,
-        }}
-      />
-      
-      {/* Bottom black overlay to hide platform footer */}
-      <div 
-        className="absolute bottom-0 left-0 right-0"
-        style={{ 
-          height: '15vh', 
-          backgroundColor: '#000000',
-          zIndex: 15,
-        }}
-      />
+      {/* Show intro video OR creator video */}
+      {showIntroVideo ? (
+        /* Intro video - loops until user closes */
+        <video
+          ref={introVideoRef}
+          src={introVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ zIndex: 10 }}
+        />
+      ) : (
+        <>
+          {/* Black background container */}
+          <div 
+            className="absolute inset-0"
+            style={{ backgroundColor: '#000000', zIndex: 5 }}
+          />
+          
+          {/* Creator video iframe */}
+          <iframe
+            key={`${currentVideo?.id}-${currentVideoIndex}-${videoKey}`}
+            src={embedSrc}
+            className="absolute top-0 left-1/2 -translate-x-1/2 translate-y-[8vh] border-0 pointer-events-none"
+            style={{
+              width: '100vw',
+              height: '120vh',
+              zIndex: 10,
+              backgroundColor: '#000000',
+            }}
+            allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
+            allowFullScreen
+          />
+          
+          {/* Black overlay strips for sides */}
+          <div 
+            className="absolute top-0 left-0 h-full"
+            style={{ width: '15vw', backgroundColor: '#000000', zIndex: 15 }}
+          />
+          <div 
+            className="absolute top-0 right-0 h-full"
+            style={{ width: '15vw', backgroundColor: '#000000', zIndex: 15 }}
+          />
+          
+          {/* Top black overlay */}
+          <div 
+            className="absolute top-0 left-0 right-0"
+            style={{ height: '15vh', backgroundColor: '#000000', zIndex: 15 }}
+          />
+          
+          {/* Bottom black overlay */}
+          <div 
+            className="absolute bottom-0 left-0 right-0"
+            style={{ height: '15vh', backgroundColor: '#000000', zIndex: 15 }}
+          />
+        </>
+      )}
 
       {/* Countdown timer - top left */}
       <div 
@@ -280,8 +308,8 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         </div>
       </div>
 
-      {/* Progress dots for multi-video (only show if more than 1 video) */}
-      {videos.length > 1 && (
+      {/* Progress dots for multi-video */}
+      {videos.length > 1 && !showIntroVideo && (
         <div 
           className="absolute flex gap-2"
           style={{ 
