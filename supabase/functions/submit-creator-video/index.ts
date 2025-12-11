@@ -41,46 +41,78 @@ function detectPlatform(url: string): string | null {
   return null;
 }
 
-// Extract video ID for embed URL generation
-function generateEmbedUrl(url: string, platform: string): string | null {
+// Build embed URL based on platform - platform-specific logic
+function buildEmbedUrl(url: string, platform: string): string {
   try {
-    if (platform === 'tiktok') {
-      // TikTok embed: https://www.tiktok.com/embed/v2/VIDEO_ID
-      const match = url.match(/\/video\/(\d+)/);
-      if (match) {
-        return `https://www.tiktok.com/embed/v2/${match[1]}`;
-      }
-    }
+    // ============ YOUTUBE ============
     if (platform === 'youtube') {
-      // YouTube Shorts embed
-      const shortsMatch = url.match(/shorts\/([a-zA-Z0-9_-]+)/);
+      let videoId: string | null = null;
+      
+      // Format: /shorts/VIDEO_ID
+      const shortsMatch = url.match(/\/shorts\/([a-zA-Z0-9_-]+)/);
       if (shortsMatch) {
-        return `https://www.youtube.com/embed/${shortsMatch[1]}`;
+        videoId = shortsMatch[1];
       }
-      const watchMatch = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
-      if (watchMatch) {
-        return `https://www.youtube.com/embed/${watchMatch[1]}`;
+      
+      // Format: watch?v=VIDEO_ID
+      if (!videoId) {
+        const watchMatch = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+        if (watchMatch) {
+          videoId = watchMatch[1];
+        }
       }
-      const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
-      if (shortMatch) {
-        return `https://www.youtube.com/embed/${shortMatch[1]}`;
+      
+      // Format: youtu.be/VIDEO_ID
+      if (!videoId) {
+        const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+        if (shortMatch) {
+          videoId = shortMatch[1];
+        }
+      }
+      
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1`;
       }
     }
-    if (platform === 'instagram') {
-      // Instagram embed URL
-      const match = url.match(/\/(reel|p)\/([a-zA-Z0-9_-]+)/);
-      if (match) {
-        return `https://www.instagram.com/${match[1]}/${match[2]}/embed`;
+    
+    // ============ TIKTOK ============
+    if (platform === 'tiktok') {
+      // Format: @username/video/VIDEO_ID
+      const videoMatch = url.match(/\/video\/(\d+)/);
+      if (videoMatch) {
+        return `https://www.tiktok.com/embed/v2/${videoMatch[1]}`;
       }
-    }
-    if (platform === 'facebook') {
-      // Facebook uses oEmbed, return original for now
+      
+      // Fallback for short links (vm.tiktok.com) - use original URL
+      // TikTok may still embed it or redirect
+      console.log("[EMBED] TikTok short link, using original URL as fallback");
       return url;
     }
+    
+    // ============ INSTAGRAM ============
+    if (platform === 'instagram') {
+      // Format: /reel/REEL_ID/ or /p/POST_ID/
+      const match = url.match(/\/(reel|p)\/([a-zA-Z0-9_-]+)/);
+      if (match) {
+        const type = match[1]; // 'reel' or 'p'
+        const postId = match[2];
+        return `https://www.instagram.com/${type}/${postId}/embed`;
+      }
+    }
+    
+    // ============ FACEBOOK ============
+    if (platform === 'facebook') {
+      // Use Facebook video plugin - handles all URL formats
+      return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=0&autoplay=1`;
+    }
+    
   } catch (e) {
-    console.error("Error generating embed URL:", e);
+    console.error("[EMBED] Error generating embed URL:", e);
   }
-  return null;
+  
+  // Fallback: return original URL
+  console.log("[EMBED] Using original URL as fallback");
+  return url;
 }
 
 serve(async (req) => {
@@ -154,7 +186,8 @@ serve(async (req) => {
     console.log("[SUBMIT-VIDEO] Detected platform:", platform);
 
     // Generate embed URL
-    const embedUrl = generateEmbedUrl(video_url, platform);
+    const embedUrl = buildEmbedUrl(video_url, platform);
+    console.log("[SUBMIT-VIDEO] Generated embed URL:", embedUrl);
 
     // Check if video already exists for this user
     const { data: existingVideo } = await supabaseClient

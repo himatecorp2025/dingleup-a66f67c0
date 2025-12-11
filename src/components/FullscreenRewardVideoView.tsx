@@ -49,41 +49,58 @@ export const FullscreenRewardVideoView = ({
   };
   const t = texts[lang as 'hu' | 'en'] || texts.en;
 
-  // Get embed URL for platform
+  // Get embed URL - prefer stored embed_url, fallback to generating one
   const getEmbedUrl = useCallback((videoData: RewardVideoData): string => {
-    if (videoData.embed_url) return videoData.embed_url;
+    // Always prefer the backend-generated embed_url
+    if (videoData.embed_url) {
+      return videoData.embed_url;
+    }
     
+    // Fallback: generate embed URL client-side (should rarely happen)
     const url = videoData.video_url;
+    const platform = videoData.platform;
     
     // YouTube
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      const videoId = url.includes('youtu.be') 
-        ? url.split('youtu.be/')[1]?.split('?')[0]
-        : url.split('v=')[1]?.split('&')[0];
+    if (platform === 'youtube' || url.includes('youtube.com') || url.includes('youtu.be')) {
+      let videoId: string | undefined;
+      
+      const shortsMatch = url.match(/\/shorts\/([a-zA-Z0-9_-]+)/);
+      if (shortsMatch) videoId = shortsMatch[1];
+      
+      if (!videoId) {
+        const watchMatch = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+        if (watchMatch) videoId = watchMatch[1];
+      }
+      
+      if (!videoId) {
+        const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+        if (shortMatch) videoId = shortMatch[1];
+      }
+      
       if (videoId) {
-        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&modestbranding=1&playsinline=1`;
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1`;
       }
     }
     
     // TikTok
-    if (url.includes('tiktok.com')) {
-      const videoId = url.match(/video\/(\d+)/)?.[1];
+    if (platform === 'tiktok' || url.includes('tiktok.com')) {
+      const videoId = url.match(/\/video\/(\d+)/)?.[1];
       if (videoId) {
-        return `https://www.tiktok.com/embed/v2/${videoId}?autoplay=1`;
+        return `https://www.tiktok.com/embed/v2/${videoId}`;
       }
     }
     
     // Instagram
-    if (url.includes('instagram.com/reel')) {
-      const reelId = url.match(/reel\/([^/?]+)/)?.[1];
-      if (reelId) {
-        return `https://www.instagram.com/reel/${reelId}/embed/?autoplay=1`;
+    if (platform === 'instagram' || url.includes('instagram.com')) {
+      const match = url.match(/\/(reel|p)\/([a-zA-Z0-9_-]+)/);
+      if (match) {
+        return `https://www.instagram.com/${match[1]}/${match[2]}/embed`;
       }
     }
     
     // Facebook
-    if (url.includes('facebook.com')) {
-      return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&autoplay=1`;
+    if (platform === 'facebook' || url.includes('facebook.com')) {
+      return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=0&autoplay=1`;
     }
     
     return url;
@@ -186,7 +203,7 @@ export const FullscreenRewardVideoView = ({
 
   return (
     <div 
-      className="fixed inset-0 z-[9999] bg-black flex items-center justify-center"
+      className="fixed inset-0 z-[9999] bg-black"
       style={{
         // Extend beyond safe areas to cover everything
         top: 'calc(-1 * env(safe-area-inset-top, 0px))',
@@ -195,21 +212,35 @@ export const FullscreenRewardVideoView = ({
         bottom: 'calc(-1 * env(safe-area-inset-bottom, 0px))',
         width: 'calc(100% + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))',
         height: 'calc(100% + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))',
+        overflow: 'hidden',
       }}
     >
-      {/* Video container - fill entire screen */}
-      <div className="relative w-full h-full">
-        {/* Video iframe - fill entire viewport */}
+      {/* Video container - full screen with cover behavior */}
+      <div 
+        className="relative"
+        style={{
+          width: '100vw',
+          height: '100vh',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Video iframe - cover mode (fills viewport, may crop edges) */}
         <iframe
           ref={iframeRef}
           src={embedUrl}
-          className="absolute inset-0 w-full h-full"
           style={{
-            objectFit: 'cover',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            minWidth: '100vw',
+            minHeight: '100vh',
+            width: 'auto',
+            height: 'auto',
+            border: 'none',
           }}
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
           allowFullScreen
-          frameBorder="0"
         />
 
         {/* Autoplay blocked overlay */}
