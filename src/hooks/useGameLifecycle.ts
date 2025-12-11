@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Question } from '@/types/game';
@@ -85,12 +85,16 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
   } = options;
 
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showLoadingVideo, setShowLoadingVideo] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
   const [isGameReady, setIsGameReady] = useState(false);
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const gameInitPromiseRef = useRef<Promise<void> | null>(null);
+  
+  // Check if coming from rescue popup (just credited lives)
+  const fromRescue = searchParams.get('fromRescue') === 'true';
 
   const shuffleAnswers = (questionSet: any[]): Question[] => {
     let lastCorrectIndex = -1;
@@ -148,6 +152,13 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
             await supabase.rpc('reset_game_helps');
           } catch (error) {
             console.error('Error resetting helps:', error);
+          }
+          
+          // If coming from rescue, refresh wallet first to ensure DB is synced
+          if (fromRescue) {
+            await refetchWallet();
+            await refreshProfile();
+            setSearchParams({}, { replace: true }); // Clear the flag
           }
           
           const canPlay = await spendLife();
@@ -227,6 +238,13 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
         await supabase.rpc('reset_game_helps');
       } catch (error) {
         console.error('Error resetting helps:', error);
+      }
+      
+      // If coming from rescue, refresh wallet first to ensure DB is synced
+      if (fromRescue) {
+        await refetchWallet();
+        await refreshProfile();
+        setSearchParams({}, { replace: true }); // Clear the flag
       }
       
       const canPlay = await spendLife();

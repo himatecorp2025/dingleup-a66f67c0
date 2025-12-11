@@ -611,13 +611,17 @@ const Dashboard = () => {
         currentLives={walletData?.livesCurrent ?? profile?.lives ?? 0}
         currentGold={walletData?.coinsCurrent ?? profile?.coins ?? 0}
         onStateRefresh={async () => {
+          // Refresh data and wait for it to complete
           await Promise.all([
             refreshProfile(),
             refetchWallet()
           ]);
-          // After successful rescue, navigate to game
+          
+          // Close popup first
           setShowRescuePopup(false);
-          navigate('/game');
+          
+          // Navigate to game with flag to skip life check (we just credited lives)
+          navigate('/game?fromRescue=true');
         }}
         onGameEnd={() => setShowRescuePopup(false)}
       />
