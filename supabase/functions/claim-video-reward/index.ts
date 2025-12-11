@@ -83,8 +83,8 @@ serve(async (req) => {
         livesToCredit = 5;
       }
     } else if (reward_type === 'daily_gift_double' || reward_type === 'game_end_double') {
-      // Double the original reward
-      coinsToCredit = original_reward;
+      // DOUBLING: Credit the DOUBLED amount (original × 2)
+      coinsToCredit = original_reward * 2;
     }
 
     console.log(`[claim-video-reward] Crediting ${coinsToCredit} coins, ${livesToCredit} lives`);

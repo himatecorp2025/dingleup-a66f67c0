@@ -87,8 +87,9 @@ serve(async (req) => {
       coinsToCredit = 500;
       livesToCredit = 5;
     } else if (eventType === 'daily_gift' || eventType === 'end_game') {
-      // Doubling: credit the original reward amount
-      coinsToCredit = originalReward;
+      // DOUBLING: Credit the DOUBLED amount (original × 2)
+      // User watches video to DOUBLE their reward
+      coinsToCredit = originalReward * 2;
       livesToCredit = 0;
     }
 
