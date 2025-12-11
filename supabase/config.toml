@@ -296,3 +296,13 @@ verify_jwt = true
 
 [functions.creator-webhook]
 verify_jwt = false
+
+# Video Ad Functions
+[functions.get-ad-video]
+verify_jwt = true
+
+[functions.log-video-impression]
+verify_jwt = true
+
+[functions.claim-video-reward]
+verify_jwt = true

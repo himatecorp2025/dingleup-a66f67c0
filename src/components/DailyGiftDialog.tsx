@@ -6,6 +6,9 @@ import { supabase } from '@/integrations/supabase/client';
 import HexShieldFrame from './frames/HexShieldFrame';
 import HexAcceptButton from './ui/HexAcceptButton';
 import { useI18n } from '@/i18n';
+import { VideoAdPrompt } from './VideoAdPrompt';
+import { VideoAdModal } from './VideoAdModal';
+import { useVideoAdFlow } from '@/hooks/useVideoAdFlow';
 
 interface DailyGiftDialogProps {
   open: boolean;
@@ -41,6 +44,11 @@ const DailyGiftDialog = ({
   const [burstActive, setBurstActive] = useState(false);
   const [burstKey, setBurstKey] = useState(0);
   const [claimed, setClaimed] = useState(false);
+  
+  // Video ad flow state
+  const [showVideoPrompt, setShowVideoPrompt] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const videoAdFlow = useVideoAdFlow({ userId: userId || undefined });
 
   // Sync badge width to button (account for inner hexagon vs. outer frame ratio)
   useEffect(() => {
@@ -159,11 +167,43 @@ const DailyGiftDialog = ({
       // CRITICAL: Show success state on button
       setClaimed(true);
       
-      // CRITICAL: Auto-close after 1.5 seconds
-      setTimeout(() => {
-        onLater();
-      }, 1500);
+      // Check if video doubling is available
+      const videoAvailable = await videoAdFlow.checkDailyGiftDoubleAvailable();
+      
+      if (videoAvailable) {
+        // Show video prompt instead of auto-closing
+        setTimeout(() => {
+          setShowVideoPrompt(true);
+        }, 1000);
+      } else {
+        // Auto-close after 1.5 seconds if no video available
+        setTimeout(() => {
+          onLater();
+        }, 1500);
+      }
     }
+  };
+
+  const handleVideoAccept = async () => {
+    setShowVideoPrompt(false);
+    await videoAdFlow.startDailyGiftDouble(nextReward);
+    setShowVideoModal(true);
+  };
+
+  const handleVideoDecline = () => {
+    setShowVideoPrompt(false);
+    onLater();
+  };
+
+  const handleVideoComplete = async () => {
+    await videoAdFlow.onVideoComplete();
+    setShowVideoModal(false);
+    onLater();
+  };
+
+  const handleVideoClose = () => {
+    setShowVideoModal(false);
+    onLater();
   };
 
   if (!open) return null;
@@ -571,6 +611,27 @@ const DailyGiftDialog = ({
           </div>
         </div>
       </DialogContent>
+
+      {/* Video Ad Prompt */}
+      <VideoAdPrompt
+        isOpen={showVideoPrompt}
+        onClose={handleVideoDecline}
+        onAccept={handleVideoAccept}
+        onDecline={handleVideoDecline}
+        context="daily_gift"
+        rewardText={`+${nextReward} ${t('common.coins')}`}
+      />
+
+      {/* Video Ad Modal */}
+      <VideoAdModal
+        isOpen={showVideoModal}
+        videos={videoAdFlow.videos}
+        totalDurationSeconds={videoAdFlow.totalDuration}
+        onComplete={handleVideoComplete}
+        onClose={handleVideoClose}
+        onCancel={handleVideoClose}
+        context="daily_gift"
+      />
     </Dialog>
   );
 };
