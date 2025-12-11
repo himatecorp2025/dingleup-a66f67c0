@@ -421,21 +421,20 @@ const GamePreview = memo(() => {
     trackMilestone();
   }, [currentQuestionIndex, userId, isGameReady, correctAnswers, lang]);
 
-  // Pre-check video ad availability when nearing game end (question 13+)
+  // Pre-check video ad availability at game start (realtime, no waiting)
   useEffect(() => {
     const checkVideoAvailability = async () => {
-      if (!userId || currentQuestionIndex < 12) {
-        setVideoAdAvailable(false);
+      if (!userId || !isGameReady) {
         return;
       }
       
-      // Check if video ads are available for game end
+      // Check immediately when game starts - backend handles 100+ correct answer logic
       const available = await videoAdFlow.checkGameEndDoubleAvailable();
       setVideoAdAvailable(available);
     };
     
     checkVideoAvailability();
-  }, [currentQuestionIndex, userId, videoAdFlow]);
+  }, [userId, isGameReady]);
 
   // REMOVED: Language change detection during active game
   // Language is now locked when game starts - questions are loaded in the user's selected language at game start
