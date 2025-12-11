@@ -100,7 +100,12 @@ export const AppRouteGuard = ({ children }: AppRouteGuardProps) => {
     return <>{children}</>;
   }
 
-  // Desktop: only landing and admin pages accessible
+  // Creators pages accessible on all devices (desktop, tablet, mobile)
+  if (location.pathname.startsWith('/creators') || location.pathname.startsWith('/creator')) {
+    return <>{children}</>;
+  }
+
+  // Desktop: only landing, admin, and creators pages accessible
   // CRITICAL: This message must ONLY appear on desktop, never on mobile/tablet
   if (!isMobileOrTablet && location.pathname !== '/' && location.pathname !== '/desktop' && !location.pathname.startsWith('/admin')) {
     // Extra safety check: verify screen width to ensure we're on desktop

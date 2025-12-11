@@ -132,7 +132,7 @@ const Hero = () => {
             </Button>
             
             <Button
-              onClick={scrollToFeatures}
+              onClick={() => navigate('/auth/login')}
               variant="outline"
               size="lg"
               className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white font-bold text-sm xs:text-base sm:text-lg md:text-xl px-5 xs:px-6 sm:px-10 py-4 xs:py-5 sm:py-6 rounded-full border-2 border-white/30 hover:border-white/60 backdrop-blur-sm shadow-lg transform hover:scale-105 transition-all duration-300 truncate"
