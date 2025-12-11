@@ -17,6 +17,7 @@ import { useDashboardPopupManager } from '@/hooks/useDashboardPopupManager';
 import { useFullscreen } from '@/hooks/useFullscreen';
 import { useNativeFullscreen } from '@/hooks/useNativeFullscreen';
 import { useGameQuestions } from '@/hooks/useGameQuestions';
+import { useVideoAdStore } from '@/stores/videoAdStore';
 
 // PERFORMANCE OPTIMIZATION: Prefetch critical game assets
 // This preloads /game route code + intro video in background while user is on Dashboard
@@ -154,15 +155,20 @@ const Dashboard = () => {
     return sunday.toISOString();
   };
 
+  // Pre-load video ad availability at login (realtime, no waiting in game)
+  const checkVideoAdAvailability = useVideoAdStore(state => state.checkAvailability);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUserId(session.user.id);
+        // Immediately check video ad availability in background
+        checkVideoAdAvailability(session.user.id);
       } else {
         navigate('/auth/login');
       }
     });
-  }, [navigate]);
+  }, [navigate, checkVideoAdAvailability]);
 
   // PERFORMANCE OPTIMIZATION: Prefetch game assets AFTER critical UI renders
   // Loads /game route chunks + intro video in background for instant navigation

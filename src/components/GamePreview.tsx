@@ -32,6 +32,7 @@ import { GameQuestionContainer } from "./game/GameQuestionContainer";
 import { VideoAdModal } from "./VideoAdModal";
 import { VideoAdPrompt } from "./VideoAdPrompt";
 import { useVideoAdFlow } from "@/hooks/useVideoAdFlow";
+import { useVideoAdStore } from "@/stores/videoAdStore";
 
 type GameState = 'playing' | 'finished' | 'out-of-lives';
 
@@ -74,7 +75,8 @@ const GamePreview = memo(() => {
   } = useGameState();
   const [gameCompleted, setGameCompleted] = useState(false);
   const [showVideoAdModal, setShowVideoAdModal] = useState(false);
-  const [videoAdAvailable, setVideoAdAvailable] = useState(false);
+  // Read video ad availability from global store (pre-loaded at login)
+  const videoAdAvailable = useVideoAdStore(state => state.isAvailable);
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
   const [gameInstanceId] = useState(() => crypto.randomUUID());
 
@@ -421,20 +423,8 @@ const GamePreview = memo(() => {
     trackMilestone();
   }, [currentQuestionIndex, userId, isGameReady, correctAnswers, lang]);
 
-  // Pre-check video ad availability at game start (realtime, no waiting)
-  useEffect(() => {
-    const checkVideoAvailability = async () => {
-      if (!userId || !isGameReady) {
-        return;
-      }
-      
-      // Check immediately when game starts - backend handles 100+ correct answer logic
-      const available = await videoAdFlow.checkGameEndDoubleAvailable();
-      setVideoAdAvailable(available);
-    };
-    
-    checkVideoAvailability();
-  }, [userId, isGameReady]);
+  // Video ad availability is pre-loaded at login via videoAdStore
+  // No need to check here - already available from global state
 
   // REMOVED: Language change detection during active game
   // Language is now locked when game starts - questions are loaded in the user's selected language at game start
@@ -525,15 +515,7 @@ const GamePreview = memo(() => {
     };
   }, [userId, gameState, refreshProfile, handleNextQuestion]);
 
-  // Check video ad availability when game completes
-  useEffect(() => {
-    if (gameCompleted && coinsEarned > 0 && userId) {
-      // Check if video ads are available for doubling
-      videoAdFlow.checkGameEndDoubleAvailable().then((available) => {
-        setVideoAdAvailable(available);
-      });
-    }
-  }, [gameCompleted, coinsEarned, userId]);
+  // Video ad availability is pre-loaded at login - no need to check here
 
   const handleRejectContinue = () => {
     finishGame();
