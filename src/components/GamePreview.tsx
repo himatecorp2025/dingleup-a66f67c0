@@ -84,11 +84,7 @@ const GamePreview = memo(() => {
   const videoAdFlow = useVideoAdFlow({
     userId,
     onRewardClaimed: async (coins) => {
-      toast.success(
-        lang === 'hu' 
-          ? `Gratulálunk! +${coins} arany jóváírva!` 
-          : `Congratulations! +${coins} gold credited!`
-      );
+      // No toast - user just wants close button, next scroll starts new game
       await refetchWallet();
       await refreshProfile();
     },
@@ -682,35 +678,45 @@ const GamePreview = memo(() => {
           }}
         />
 
-        {/* Video Ad Prompt (fallback if auto-accept doesn't trigger) */}
-        {videoAdFlow.showPrompt && (
-          <VideoAdPrompt
-            isOpen={true}
-            onClose={videoAdFlow.declinePrompt}
-            onAccept={videoAdFlow.acceptPrompt}
-            onDecline={videoAdFlow.declinePrompt}
-            context="game_end"
-            rewardText={`${coinsEarned} → ${coinsEarned * 2} ${lang === 'hu' ? 'arany' : 'gold'}`}
-          />
-        )}
-
-        {/* Video Ad Modal for doubling reward */}
-        {videoAdFlow.showVideo && videoAdFlow.videos.length > 0 && (
-          <VideoAdModal
-            isOpen={true}
-            onClose={videoAdFlow.onVideoComplete}
-            videos={videoAdFlow.videos}
-            totalDurationSeconds={videoAdFlow.totalDuration}
-            onComplete={videoAdFlow.onVideoComplete}
-            onCancel={videoAdFlow.cancelVideo}
-            context="game_end"
-          />
-        )}
       </GameSwipeHandler>
     );
   }
 
-  return null;
+  // Video Ad Modal - rendered outside gameState check so it works after game ends
+  // This is a global overlay that should be visible regardless of game state
+  return (
+    <>
+      {/* Video Ad Prompt (fallback if auto-accept doesn't trigger) */}
+      {videoAdFlow.showPrompt && (
+        <VideoAdPrompt
+          isOpen={true}
+          onClose={videoAdFlow.declinePrompt}
+          onAccept={videoAdFlow.acceptPrompt}
+          onDecline={videoAdFlow.declinePrompt}
+          context="game_end"
+          rewardText={`${coinsEarned} → ${coinsEarned * 2} ${lang === 'hu' ? 'arany' : 'gold'}`}
+        />
+      )}
+
+      {/* Video Ad Modal for doubling reward */}
+      {videoAdFlow.showVideo && videoAdFlow.videos.length > 0 && (
+        <VideoAdModal
+          isOpen={true}
+          onClose={() => {
+            videoAdFlow.onVideoComplete();
+            // After video completes, allow swipe to restart game
+          }}
+          videos={videoAdFlow.videos}
+          totalDurationSeconds={videoAdFlow.totalDuration}
+          onComplete={() => {
+            videoAdFlow.onVideoComplete();
+          }}
+          onCancel={videoAdFlow.cancelVideo}
+          context="game_end"
+        />
+      )}
+    </>
+  );
 });
 
 GamePreview.displayName = 'GamePreview';
