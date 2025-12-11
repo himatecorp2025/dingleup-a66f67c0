@@ -35,8 +35,10 @@ export const useVideoAdStore = create<VideoAdStore>((set, get) => ({
         return false;
       }
 
+      // Check without specific context - just check if ANY video is available
+      // This works for all contexts (game_end, daily_gift, refill)
       const { data, error } = await supabase.functions.invoke('get-ad-video', {
-        body: { context: 'game_end' },
+        body: { context: 'game_end' }, // Context doesn't affect availability, just tracking
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
 

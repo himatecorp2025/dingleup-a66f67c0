@@ -9,6 +9,7 @@ import { useI18n } from '@/i18n';
 import { VideoAdPrompt } from './VideoAdPrompt';
 import { VideoAdModal } from './VideoAdModal';
 import { useVideoAdFlow } from '@/hooks/useVideoAdFlow';
+import { useVideoAdStore } from '@/stores/videoAdStore';
 
 interface DailyGiftDialogProps {
   open: boolean;
@@ -45,9 +46,10 @@ const DailyGiftDialog = ({
   const [burstKey, setBurstKey] = useState(0);
   const [claimed, setClaimed] = useState(false);
   
-  // Video ad flow state
+  // Video ad flow state - use global store for pre-loaded availability
   const [showVideoPrompt, setShowVideoPrompt] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const videoAdAvailable = useVideoAdStore(state => state.isAvailable);
   const videoAdFlow = useVideoAdFlow({ userId: userId || undefined });
 
   // Sync badge width to button (account for inner hexagon vs. outer frame ratio)
@@ -167,10 +169,8 @@ const DailyGiftDialog = ({
       // CRITICAL: Show success state on button
       setClaimed(true);
       
-      // Check if video doubling is available
-      const videoAvailable = await videoAdFlow.checkDailyGiftDoubleAvailable();
-      
-      if (videoAvailable) {
+      // Use pre-loaded video availability from store (no API call needed)
+      if (videoAdAvailable) {
         // Show video prompt instead of auto-closing
         setTimeout(() => {
           setShowVideoPrompt(true);
