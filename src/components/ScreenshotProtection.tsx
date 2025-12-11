@@ -19,9 +19,12 @@ export const ScreenshotProtection = ({
   enabled = true 
 }: ScreenshotProtectionProps) => {
   const { t } = useI18n();
-  const isProtected = useScreenshotProtection(enabled);
+  
+  // TESTING MODE: Screenshot protection disabled for testing
+  const isTestingMode = true;
+  const isProtected = useScreenshotProtection(enabled && !isTestingMode);
 
-  if (!enabled) {
+  if (!enabled || isTestingMode) {
     return <>{children}</>;
   }
 
