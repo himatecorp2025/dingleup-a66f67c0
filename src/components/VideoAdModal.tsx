@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { X, Film } from 'lucide-react';
 import { useI18n } from '@/i18n';
 
@@ -164,10 +164,14 @@ export const VideoAdModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent 
-        className="sm:max-w-[90vw] md:max-w-[600px] p-0 bg-black border-none overflow-hidden"
+        className="sm:max-w-[90vw] md:max-w-[600px] p-0 bg-black border-none overflow-hidden !z-[999999]"
+        overlayClassName="!z-[999998]"
+        style={{ zIndex: 999999 }}
         onPointerDownOutside={handleBackdropClick}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
+        <DialogTitle className="sr-only">Video Ad</DialogTitle>
+        <DialogDescription className="sr-only">Watch video to earn rewards</DialogDescription>
         <div className="relative w-full aspect-[9/16] md:aspect-video bg-black">
           {/* Video iframe */}
           <iframe

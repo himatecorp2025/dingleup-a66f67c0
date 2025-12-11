@@ -51,8 +51,8 @@ export const useVideoAdFlow = ({ userId, onRewardClaimed }: UseVideoAdFlowOption
   }, [userId, videoAd]);
 
   // Start daily gift double flow
-  const startDailyGiftDouble = useCallback(async (originalCoins: number) => {
-    if (!userId) return;
+  const startDailyGiftDouble = useCallback(async (originalCoins: number, skipPrompt: boolean = false): Promise<boolean> => {
+    if (!userId) return false;
     
     setState(prev => ({ ...prev, isLoading: true }));
     
@@ -60,18 +60,20 @@ export const useVideoAdFlow = ({ userId, onRewardClaimed }: UseVideoAdFlowOption
     
     if (!result.available || !result.video) {
       setState(prev => ({ ...prev, isLoading: false }));
-      return;
+      return false;
     }
 
     setState({
-      showPrompt: true,
-      showVideo: false,
+      showPrompt: !skipPrompt,
+      showVideo: skipPrompt, // Go directly to video if skipping prompt
       videos: [result.video],
       totalDuration: 15,
       isLoading: false,
       context: 'daily_gift',
       originalReward: originalCoins,
     });
+    
+    return true;
   }, [userId, videoAd]);
 
   // Start game end double flow

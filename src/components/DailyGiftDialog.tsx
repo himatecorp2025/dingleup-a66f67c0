@@ -46,7 +46,6 @@ const DailyGiftDialog = ({
   
   // Video ad flow state - use global store for pre-loaded availability
   const [showVideoPrompt, setShowVideoPrompt] = useState(false);
-  const [showVideoModal, setShowVideoModal] = useState(false);
   const videoAdAvailable = useVideoAdStore(state => state.isAvailable);
   const videoAdFlow = useVideoAdFlow({ userId: userId || undefined });
 
@@ -151,8 +150,8 @@ const DailyGiftDialog = ({
 
   const handleVideoAccept = async () => {
     setShowVideoPrompt(false);
-    await videoAdFlow.startDailyGiftDouble(nextReward);
-    setShowVideoModal(true);
+    // Use skipPrompt=true to go directly to video
+    await videoAdFlow.startDailyGiftDouble(nextReward, true);
   };
 
   const handleVideoDecline = () => {
@@ -162,7 +161,6 @@ const DailyGiftDialog = ({
 
   const handleVideoComplete = async () => {
     await videoAdFlow.onVideoComplete();
-    setShowVideoModal(false);
     // Auto-claim the daily gift after video completion (doubled reward handled by videoAdFlow)
     if (!claimed) {
       const success = await onClaim();
@@ -177,7 +175,7 @@ const DailyGiftDialog = ({
   };
 
   const handleVideoClose = () => {
-    setShowVideoModal(false);
+    videoAdFlow.cancelVideo();
     // Don't close the dialog - user can still claim normal reward
   };
 
@@ -700,7 +698,7 @@ const DailyGiftDialog = ({
 
       {/* Video Ad Modal */}
       <VideoAdModal
-        isOpen={showVideoModal}
+        isOpen={videoAdFlow.showVideo}
         videos={videoAdFlow.videos}
         totalDurationSeconds={videoAdFlow.totalDuration}
         onComplete={handleVideoComplete}
