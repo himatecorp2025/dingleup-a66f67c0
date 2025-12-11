@@ -16,34 +16,6 @@ interface FullscreenRewardVideoViewProps {
   onClose: () => void;
 }
 
-// Transform embed URL to force autoplay and hide UI elements
-const getAutoplayEmbedUrl = (embedUrl: string, platform: string): string => {
-  const url = new URL(embedUrl);
-  
-  if (platform === 'tiktok') {
-    // TikTok embed params for autoplay
-    url.searchParams.set('autoplay', '1');
-    url.searchParams.set('muted', '0');
-    url.searchParams.set('controls', '0');
-  } else if (platform === 'youtube') {
-    // YouTube embed params
-    url.searchParams.set('autoplay', '1');
-    url.searchParams.set('mute', '0');
-    url.searchParams.set('controls', '0');
-    url.searchParams.set('modestbranding', '1');
-    url.searchParams.set('rel', '0');
-    url.searchParams.set('showinfo', '0');
-    url.searchParams.set('iv_load_policy', '3');
-    url.searchParams.set('disablekb', '1');
-    url.searchParams.set('fs', '0');
-  } else if (platform === 'instagram' || platform === 'facebook') {
-    url.searchParams.set('autoplay', '1');
-    url.searchParams.set('muted', '0');
-  }
-  
-  return url.toString();
-};
-
 export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps> = ({
   videos,
   durationSecondsPerVideo = 15,
@@ -54,7 +26,6 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [countdown, setCountdown] = useState(durationSecondsPerVideo);
   const [canClose, setCanClose] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const watchedIdsRef = useRef<string[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -63,16 +34,23 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
 
   // Lock body scroll
   useEffect(() => {
-    const originalOverflow = document.body.style.overflow;
-    const originalPosition = document.body.style.position;
+    const originalStyles = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      width: document.body.style.width,
+      height: document.body.style.height,
+    };
+    
     document.body.style.overflow = 'hidden';
     document.body.style.position = 'fixed';
     document.body.style.width = '100%';
+    document.body.style.height = '100%';
     
     return () => {
-      document.body.style.overflow = originalOverflow;
-      document.body.style.position = originalPosition;
-      document.body.style.width = '';
+      document.body.style.overflow = originalStyles.overflow;
+      document.body.style.position = originalStyles.position;
+      document.body.style.width = originalStyles.width;
+      document.body.style.height = originalStyles.height;
     };
   }, []);
 
@@ -81,35 +59,25 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
     if (!currentVideo) return;
     
     setCountdown(durationSecondsPerVideo);
-    setIsLoading(true);
-    
-    // Small delay before starting timer to allow iframe to load
-    const loadDelay = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
 
     timerRef.current = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
-          // Mark current video as watched
           if (!watchedIdsRef.current.includes(currentVideo.id)) {
             watchedIdsRef.current.push(currentVideo.id);
           }
           
-          // Move to next video or finish
           if (currentVideoIndex < totalVideos - 1) {
             setCurrentVideoIndex(i => i + 1);
             return durationSecondsPerVideo;
           } else {
-            // All videos watched
             clearInterval(timerRef.current!);
             setCanClose(true);
             
-            // Show toast notification
             toast.success(
               lang === 'hu' 
-                ? 'Most zárd be a videót a jutalom jóváírásához!' 
-                : 'Now close the video to claim your reward!',
+                ? 'Zárd be a videót a jutalom jóváírásához!' 
+                : 'Close the video to claim your reward!',
               { position: 'top-center', duration: 5000 }
             );
             
@@ -121,12 +89,10 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
     }, 1000);
 
     return () => {
-      clearTimeout(loadDelay);
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [currentVideoIndex, currentVideo?.id, totalVideos, durationSecondsPerVideo, lang]);
 
-  // Handle close - ONLY allowed after all videos watched
   const handleClose = useCallback(() => {
     if (!canClose) return;
     onCompleted(watchedIdsRef.current);
@@ -135,144 +101,201 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
 
   if (!currentVideo) return null;
 
-  const autoplayUrl = getAutoplayEmbedUrl(currentVideo.embedUrl, currentVideo.platform);
+  // Build embed URL with autoplay parameter
+  let embedSrc = currentVideo.embedUrl;
+  try {
+    const url = new URL(embedSrc);
+    url.searchParams.set('autoplay', '1');
+    embedSrc = url.toString();
+  } catch (e) {
+    // Keep original URL
+  }
 
   return (
     <div 
-      className="fixed inset-0 z-[99999] bg-black"
       style={{ 
-        width: '100vw', 
-        height: '100dvh',
+        position: 'fixed',
         top: 0,
         left: 0,
-        position: 'fixed'
+        right: 0,
+        bottom: 0,
+        width: '100vw', 
+        height: '100dvh',
+        backgroundColor: '#000',
+        zIndex: 99999,
       }}
     >
-      {/* Video container - MASSIVELY scaled to hide all platform UI */}
-      <div className="absolute inset-0 overflow-hidden">
+      {/* Iframe container - oversized to hide platform UI */}
+      <div 
+        style={{
+          position: 'absolute',
+          top: '-50%',
+          left: '-50%',
+          width: '200%',
+          height: '200%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+        }}
+      >
         <iframe
           key={currentVideo.id}
-          src={autoplayUrl}
-          className="absolute border-0"
+          src={embedSrc}
           style={{ 
-            top: '50%', 
-            left: '50%', 
-            transform: 'translate(-50%, -50%)', 
-            // Scale to 350% to push all TikTok/Instagram UI completely off screen
-            width: '350vw', 
-            height: '350dvh',
-            pointerEvents: 'none'
+            width: '100vw',
+            height: '200dvh',
+            border: 'none',
+            pointerEvents: 'none',
+            transform: 'scale(1.5)',
           }}
           allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
           allowFullScreen
         />
       </div>
-      
-      {/* BLACK MASKS - Large opaque masks to cover any remaining platform UI */}
-      {/* Top mask - covers top bar, username, search */}
+
+      {/* SOLID BLACK masks to completely cover platform UI */}
+      {/* Top mask - thick solid black */}
       <div 
-        className="absolute left-0 right-0 bg-black pointer-events-none" 
         style={{ 
+          position: 'absolute',
           top: 0,
-          height: '22dvh',
-          zIndex: 10
+          left: 0,
+          right: 0,
+          height: '20dvh',
+          backgroundColor: '#000',
+          zIndex: 10,
         }} 
       />
       
-      {/* Bottom mask - covers hashtags, music info, buttons */}
+      {/* Bottom mask - thick solid black */}
       <div 
-        className="absolute left-0 right-0 bg-black pointer-events-none" 
         style={{ 
+          position: 'absolute',
           bottom: 0,
-          height: '22dvh',
-          zIndex: 10
+          left: 0,
+          right: 0,
+          height: '20dvh',
+          backgroundColor: '#000',
+          zIndex: 10,
         }} 
       />
       
       {/* Left mask */}
       <div 
-        className="absolute top-0 bottom-0 bg-black pointer-events-none" 
         style={{ 
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
           left: 0,
-          width: '15vw',
-          zIndex: 10
+          width: '12vw',
+          backgroundColor: '#000',
+          zIndex: 10,
         }} 
       />
       
-      {/* Right mask - covers like/comment/share buttons */}
+      {/* Right mask - wider to cover TikTok buttons */}
       <div 
-        className="absolute top-0 bottom-0 bg-black pointer-events-none" 
         style={{ 
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
           right: 0,
           width: '18vw',
-          zIndex: 10
+          backgroundColor: '#000',
+          zIndex: 10,
         }} 
       />
 
-      {/* Loading indicator */}
-      {isLoading && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/80">
-          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-        </div>
-      )}
-
-      {/* Countdown timer - top left */}
+      {/* Countdown timer */}
       <div 
-        className="absolute z-30" 
         style={{ 
-          top: 'max(env(safe-area-inset-top), 20px)', 
-          left: '20px' 
+          position: 'absolute',
+          zIndex: 30,
+          top: 'max(env(safe-area-inset-top, 0px), 16px)', 
+          left: '16px',
         }}
       >
         <div 
-          className="bg-black/80 rounded-full w-16 h-16 flex items-center justify-center font-black text-white text-2xl border-2 border-white/40 shadow-lg"
           style={{
-            boxShadow: '0 4px 20px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.1)'
+            width: '56px',
+            height: '56px',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            border: '2px solid rgba(255,255,255,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 900,
+            fontSize: '24px',
+            color: '#fff',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.8)',
           }}
         >
           {countdown}
         </div>
       </div>
 
-      {/* Progress dots for multi-video sessions */}
+      {/* Progress dots for multi-video */}
       {totalVideos > 1 && (
         <div 
-          className="absolute z-30 flex gap-2" 
           style={{ 
-            top: 'max(env(safe-area-inset-top), 20px)', 
+            position: 'absolute',
+            zIndex: 30,
+            top: 'max(env(safe-area-inset-top, 0px), 16px)', 
             left: '50%', 
-            transform: 'translateX(-50%)' 
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            gap: '8px',
           }}
         >
           {videos.map((_, idx) => (
             <div 
               key={idx} 
-              className={`rounded-full transition-all duration-300 ${
-                idx <= currentVideoIndex ? 'bg-white' : 'bg-white/30'
-              }`}
               style={{ 
-                width: idx === currentVideoIndex ? '28px' : '10px', 
-                height: '10px' 
+                width: idx === currentVideoIndex ? '24px' : '8px', 
+                height: '8px',
+                borderRadius: '4px',
+                backgroundColor: idx <= currentVideoIndex ? '#fff' : 'rgba(255,255,255,0.3)',
+                transition: 'all 0.3s ease',
               }} 
             />
           ))}
         </div>
       )}
 
-      {/* Close button - ONLY visible after all videos watched */}
+      {/* Close button - only when countdown finished */}
       {canClose && (
         <button 
-          onClick={handleClose} 
-          className="absolute z-30 bg-white/30 hover:bg-white/50 rounded-full p-4 transition-all duration-200 animate-pulse"
+          onClick={handleClose}
           style={{ 
-            top: 'max(env(safe-area-inset-top), 20px)', 
-            right: '20px',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+            position: 'absolute',
+            zIndex: 30,
+            top: 'max(env(safe-area-inset-top, 0px), 16px)', 
+            right: '16px',
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(255,255,255,0.3)',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+            animation: 'pulse 2s infinite',
           }}
         >
-          <X className="text-white w-8 h-8" strokeWidth={3} />
+          <X color="#fff" size={28} strokeWidth={3} />
         </button>
       )}
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.05); }
+        }
+      `}</style>
     </div>
   );
 };
