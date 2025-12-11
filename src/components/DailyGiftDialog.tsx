@@ -168,6 +168,8 @@ const DailyGiftDialog = ({
         setClaimed(true);
       }
     }
+    // Close dialog after rewards are credited
+    onLater();
   };
 
   const handleVideoClose = () => {
