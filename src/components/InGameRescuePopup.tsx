@@ -12,8 +12,8 @@ import { GoldRewardCoin3D } from '@/components/icons/GoldRewardCoin3D';
 import { LoadingSpinner3D } from '@/components/icons/LoadingSpinner3D';
 import { trackConversionEvent } from '@/lib/analytics';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useVideoAdFlow } from '@/hooks/useVideoAdFlow';
-import { VideoAdModal } from './VideoAdModal';
+import { useRewardVideoStore } from '@/stores/rewardVideoStore';
+import { FullscreenRewardVideoView } from './FullscreenRewardVideoView';
 
 interface InGameRescuePopupProps {
   isOpen: boolean;
@@ -38,9 +38,22 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
   const navigate = useNavigate();
   const [loadingGoldSaver, setLoadingGoldSaver] = useState(false);
   const [hasTrackedView, setHasTrackedView] = useState(false);
-  const [videoAdAvailable, setVideoAdAvailable] = useState(false);
-  const [checkingVideoAd, setCheckingVideoAd] = useState(true);
   const [userId, setUserId] = useState<string | undefined>();
+  const [showVideo, setShowVideo] = useState(false);
+
+  // New reward video store
+  const { 
+    isPreloaded, 
+    hasEnoughVideos, 
+    activeSession, 
+    isStartingSession,
+    startRewardSession,
+    completeRewardSession,
+    cancelSession,
+  } = useRewardVideoStore();
+
+  // Video availability based on preloaded queue
+  const videoAdAvailable = isPreloaded && hasEnoughVideos(2); // Refill needs 2 videos
 
   // Get userId on mount
   useEffect(() => {
@@ -50,26 +63,6 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
       }
     });
   }, []);
-
-  // Video ad flow for refill
-  const videoAdFlow = useVideoAdFlow({
-    userId,
-    onRewardClaimed: async (coins, lives) => {
-      await onStateRefresh();
-      onClose();
-    },
-  });
-
-  // Check video ad availability when popup opens
-  useEffect(() => {
-    if (isOpen && userId) {
-      setCheckingVideoAd(true);
-      videoAdFlow.checkRefillAvailable().then((available) => {
-        setVideoAdAvailable(available);
-        setCheckingVideoAd(false);
-      });
-    }
-  }, [isOpen, userId]);
 
   // Track product_view when popup opens
   useEffect(() => {
@@ -95,12 +88,50 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
   useEffect(() => {
     if (!isOpen) {
       setHasTrackedView(false);
+      setShowVideo(false);
     }
   }, [isOpen]);
 
-  // Handle video refill click
+  // Handle video refill click - starts 2×15s session
   const handleVideoRefill = async () => {
-    await videoAdFlow.startRefillFlow();
+    if (!userId) return;
+    
+    // Start reward session for refill (2 videos required)
+    const session = await startRewardSession(userId, 'refill', 0);
+    
+    if (session && session.videos.length >= 2) {
+      // Close popup immediately and show fullscreen video
+      setShowVideo(true);
+    } else {
+      toast.error(lang === 'hu' ? 'Nincs elérhető videó' : 'No video available');
+    }
+  };
+
+  // Handle video completion (called when user clicks X after watching)
+  const handleVideoComplete = async (watchedVideoIds: string[]) => {
+    // Complete the session and get reward
+    const result = await completeRewardSession(watchedVideoIds);
+    
+    setShowVideo(false);
+    
+    if (result.success) {
+      toast.success(
+        lang === 'hu' 
+          ? `Plusz ${result.livesDelta} élet és ${result.coinsDelta} arany jóváírva!` 
+          : `Plus ${result.livesDelta} lives and ${result.coinsDelta} gold credited!`,
+        { position: 'top-center' }
+      );
+      await onStateRefresh();
+      onClose();
+    } else {
+      toast.error(lang === 'hu' ? 'Hiba történt' : 'An error occurred');
+    }
+  };
+
+  // Handle video close without completion
+  const handleVideoClose = () => {
+    cancelSession();
+    setShowVideo(false);
   };
 
   const handleGoldSaverPurchaseRaw = async () => {
@@ -164,23 +195,14 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
 
   const hasEnoughGold = currentGold >= 500;
 
-  // If video is showing, only render the video modal
-  if (videoAdFlow.showVideo && videoAdFlow.videos.length > 0) {
+  // If video is showing, render fullscreen video view
+  if (showVideo && activeSession && activeSession.videos.length > 0) {
     return (
-      <VideoAdModal
-        isOpen={true}
-        videos={videoAdFlow.videos}
-        totalDurationSeconds={videoAdFlow.totalDuration}
-        onComplete={async () => {
-          await videoAdFlow.onVideoComplete();
-        }}
-        onClose={async () => {
-          await videoAdFlow.onVideoComplete();
-        }}
-        onCancel={() => {
-          videoAdFlow.cancelVideo();
-        }}
-        context="refill"
+      <FullscreenRewardVideoView
+        videos={activeSession.videos}
+        durationSecondsPerVideo={15}
+        onCompleted={handleVideoComplete}
+        onClose={handleVideoClose}
       />
     );
   }
@@ -293,11 +315,11 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
 
               <Button
                 onClick={handleVideoRefill}
-                disabled={!videoAdAvailable || checkingVideoAd || videoAdFlow.isLoading}
+                disabled={!videoAdAvailable || isStartingSession}
                 className="w-full bg-gradient-to-b from-purple-400 via-purple-500 to-purple-700 hover:from-purple-300 hover:via-purple-400 hover:to-purple-600 text-white font-bold text-xs py-2 rounded-[10px] disabled:opacity-50 border-[2px] border-purple-300 shadow-xl transition-all"
                 style={{ textShadow: '0 2px 6px rgba(0, 0, 0, 0.8)' }}
               >
-                {checkingVideoAd || videoAdFlow.isLoading ? (
+                {isStartingSession ? (
                   <LoadingSpinner3D size={14} />
                 ) : videoAdAvailable ? (
                   <span className="flex items-center gap-1">
@@ -354,7 +376,7 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
         </div>
 
         {/* Warning if neither option available */}
-        {!hasEnoughGold && !videoAdAvailable && !checkingVideoAd && (
+        {!hasEnoughGold && !videoAdAvailable && (
           <p className="text-yellow-200 text-[10px] text-center mt-2 font-bold" style={{ textShadow: '0 1px 4px rgba(0, 0, 0, 0.8)' }}>
             {lang === 'hu' 
               ? 'Nincs elég aranyad és jelenleg nincs elérhető videó.' 

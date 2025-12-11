@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
-import { Film, Coins, Heart } from 'lucide-react';
+import { Film, Coins } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import { Button } from '@/components/ui/button';
-import { VideoAdModal } from './VideoAdModal';
-import { VideoAdPrompt } from './VideoAdPrompt';
-import { useVideoAdFlow } from '@/hooks/useVideoAdFlow';
 import { toast } from 'sonner';
+import { useRewardVideoStore } from '@/stores/rewardVideoStore';
+import { FullscreenRewardVideoView } from './FullscreenRewardVideoView';
 
 interface GameEndRewardDoubleProps {
   isOpen: boolean;
@@ -24,31 +23,21 @@ export const GameEndRewardDouble = ({
   onRewardDoubled,
 }: GameEndRewardDoubleProps) => {
   const { lang } = useI18n();
-  const [videoAdAvailable, setVideoAdAvailable] = useState(false);
-  const [checkingAvailability, setCheckingAvailability] = useState(true);
+  const [showVideo, setShowVideo] = useState(false);
 
-  const videoAdFlow = useVideoAdFlow({
-    userId,
-    onRewardClaimed: (coins) => {
-      onRewardDoubled(coins);
-      toast.success(
-        lang === 'hu' 
-          ? `Gratulálunk! +${coins} arany jóváírva!` 
-          : `Congratulations! +${coins} gold credited!`
-      );
-    },
-  });
+  // New reward video store
+  const { 
+    isPreloaded, 
+    hasEnoughVideos, 
+    activeSession, 
+    isStartingSession,
+    startRewardSession,
+    completeRewardSession,
+    cancelSession,
+  } = useRewardVideoStore();
 
-  // Check availability when opened
-  useEffect(() => {
-    if (isOpen && userId) {
-      setCheckingAvailability(true);
-      videoAdFlow.checkGameEndDoubleAvailable().then((available) => {
-        setVideoAdAvailable(available);
-        setCheckingAvailability(false);
-      });
-    }
-  }, [isOpen, userId]);
+  // Video availability based on preloaded queue (game end needs 1 video)
+  const videoAdAvailable = isPreloaded && hasEnoughVideos(1);
 
   const texts = {
     hu: {
@@ -71,35 +60,65 @@ export const GameEndRewardDouble = ({
 
   const t = texts[lang as 'hu' | 'en'] || texts.en;
 
-  const handleAcceptDouble = () => {
-    videoAdFlow.startGameEndDouble(coinsEarned);
+  // Handle accept double - start 1×15s session
+  const handleAcceptDouble = async () => {
+    if (!userId) return;
+    
+    // Start reward session for game end (1 video required)
+    const session = await startRewardSession(userId, 'end_game', coinsEarned);
+    
+    if (session && session.videos.length >= 1) {
+      // Show fullscreen video immediately
+      setShowVideo(true);
+    } else {
+      toast.error(lang === 'hu' ? 'Nincs elérhető videó' : 'No video available');
+    }
   };
 
-  // Show video prompt
-  if (videoAdFlow.showPrompt) {
-    return (
-      <VideoAdPrompt
-        isOpen={true}
-        onClose={videoAdFlow.declinePrompt}
-        onAccept={videoAdFlow.acceptPrompt}
-        onDecline={videoAdFlow.declinePrompt}
-        context="game_end"
-        rewardText={`${coinsEarned} → ${coinsEarned * 2} ${lang === 'hu' ? 'arany' : 'gold'}`}
-      />
-    );
-  }
+  // Handle video completion (called when user clicks X after watching)
+  const handleVideoComplete = async (watchedVideoIds: string[]) => {
+    // Complete the session and get reward
+    const result = await completeRewardSession(watchedVideoIds);
+    
+    setShowVideo(false);
+    
+    if (result.success) {
+      onRewardDoubled(result.coinsDelta);
+      toast.success(
+        lang === 'hu' 
+          ? `Az aranyad megdupláztuk! +${result.coinsDelta} arany!` 
+          : `Your gold has been doubled! +${result.coinsDelta} gold!`,
+        { position: 'top-center' }
+      );
+      onClose();
+    } else {
+      toast.error(lang === 'hu' ? 'Hiba történt' : 'An error occurred');
+      onClose();
+    }
+  };
 
-  // Show video modal
-  if (videoAdFlow.showVideo && videoAdFlow.videos.length > 0) {
+  // Handle video close without completion
+  const handleVideoClose = () => {
+    cancelSession();
+    setShowVideo(false);
+    onClose();
+  };
+
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!isOpen) {
+      setShowVideo(false);
+    }
+  }, [isOpen]);
+
+  // Show fullscreen video view
+  if (showVideo && activeSession && activeSession.videos.length > 0) {
     return (
-      <VideoAdModal
-        isOpen={true}
-        onClose={videoAdFlow.onVideoComplete}
-        videos={videoAdFlow.videos}
-        totalDurationSeconds={videoAdFlow.totalDuration}
-        onComplete={videoAdFlow.onVideoComplete}
-        onCancel={videoAdFlow.cancelVideo}
-        context="game_end"
+      <FullscreenRewardVideoView
+        videos={activeSession.videos}
+        durationSecondsPerVideo={15}
+        onCompleted={handleVideoComplete}
+        onClose={handleVideoClose}
       />
     );
   }
@@ -124,9 +143,7 @@ export const GameEndRewardDouble = ({
           </div>
 
           {/* Double offer or close */}
-          {checkingAvailability ? (
-            <div className="text-gray-400 mb-4">...</div>
-          ) : videoAdAvailable ? (
+          {videoAdAvailable ? (
             <>
               {/* Film icon */}
               <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mb-3">
@@ -138,10 +155,10 @@ export const GameEndRewardDouble = ({
               <div className="flex flex-col w-full gap-3">
                 <Button
                   onClick={handleAcceptDouble}
-                  disabled={videoAdFlow.isLoading}
+                  disabled={isStartingSession}
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3"
                 >
-                  {videoAdFlow.isLoading ? '...' : t.watchVideo}
+                  {isStartingSession ? '...' : t.watchVideo}
                 </Button>
                 <Button
                   onClick={onClose}

@@ -300,7 +300,7 @@ verify_jwt = true
 [functions.creator-webhook]
 verify_jwt = false
 
-# Video Ad Functions
+# Video Ad Functions (Legacy)
 [functions.get-ad-video]
 verify_jwt = true
 
@@ -308,4 +308,14 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.claim-video-reward]
+verify_jwt = true
+
+# Reward Video System (New)
+[functions.preload-reward-videos]
+verify_jwt = true
+
+[functions.reward-start]
+verify_jwt = true
+
+[functions.reward-complete]
 verify_jwt = true
