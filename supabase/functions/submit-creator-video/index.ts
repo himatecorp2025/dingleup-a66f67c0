@@ -41,8 +41,38 @@ function detectPlatform(url: string): string | null {
   return null;
 }
 
+// Resolve shortlinks to full URL (TikTok vm.tiktok.com, vt.tiktok.com)
+async function resolveShortlink(url: string): Promise<string> {
+  // Check if it's a TikTok shortlink
+  if (url.includes('vm.tiktok.com') || url.includes('vt.tiktok.com')) {
+    console.log("[RESOLVE] Resolving TikTok shortlink:", url);
+    try {
+      // Follow redirects to get the full URL
+      const response = await fetch(url, { 
+        method: 'HEAD',
+        redirect: 'follow'
+      });
+      
+      if (response.url && response.url !== url) {
+        console.log("[RESOLVE] Resolved to:", response.url);
+        return response.url;
+      }
+      
+      // Alternative: Try GET request which may redirect
+      const getResponse = await fetch(url, { redirect: 'follow' });
+      if (getResponse.url && getResponse.url !== url) {
+        console.log("[RESOLVE] Resolved via GET to:", getResponse.url);
+        return getResponse.url;
+      }
+    } catch (e) {
+      console.error("[RESOLVE] Failed to resolve shortlink:", e);
+    }
+  }
+  return url;
+}
+
 // Build embed URL based on platform - platform-specific logic
-function buildEmbedUrl(url: string, platform: string): string {
+async function buildEmbedUrl(url: string, platform: string): Promise<string> {
   try {
     // ============ YOUTUBE ============
     if (platform === 'youtube') {
@@ -77,16 +107,45 @@ function buildEmbedUrl(url: string, platform: string): string {
     
     // ============ TIKTOK ============
     if (platform === 'tiktok') {
-      // Format: @username/video/VIDEO_ID
-      const videoMatch = url.match(/\/video\/(\d+)/);
-      if (videoMatch) {
-        return `https://www.tiktok.com/embed/v2/${videoMatch[1]}`;
+      // First resolve shortlinks to get full URL with video ID
+      let resolvedUrl = url;
+      if (url.includes('vm.tiktok.com') || url.includes('vt.tiktok.com')) {
+        resolvedUrl = await resolveShortlink(url);
       }
       
-      // Fallback for short links (vm.tiktok.com) - use original URL
-      // TikTok may still embed it or redirect
-      console.log("[EMBED] TikTok short link, using original URL as fallback");
-      return url;
+      // Extract video ID from resolved URL
+      // Format: @username/video/VIDEO_ID or /video/VIDEO_ID
+      const videoMatch = resolvedUrl.match(/\/video\/(\d+)/);
+      if (videoMatch) {
+        const embedUrl = `https://www.tiktok.com/embed/v2/${videoMatch[1]}`;
+        console.log("[EMBED] Generated TikTok embed URL:", embedUrl);
+        return embedUrl;
+      }
+      
+      // If still no video ID found, try oEmbed API as last resort
+      console.log("[EMBED] No video ID in URL, trying oEmbed API");
+      try {
+        const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(resolvedUrl)}`;
+        const response = await fetch(oembedUrl, { headers: { 'Accept': 'application/json' } });
+        if (response.ok) {
+          const data = await response.json();
+          // oEmbed returns HTML with iframe, extract video ID from it
+          if (data.html) {
+            const iframeMatch = data.html.match(/embed\/v2\/(\d+)/);
+            if (iframeMatch) {
+              const embedUrl = `https://www.tiktok.com/embed/v2/${iframeMatch[1]}`;
+              console.log("[EMBED] Generated TikTok embed from oEmbed:", embedUrl);
+              return embedUrl;
+            }
+          }
+        }
+      } catch (e) {
+        console.error("[EMBED] oEmbed API error:", e);
+      }
+      
+      console.error("[EMBED] FAILED to generate TikTok embed URL for:", url);
+      // Return a placeholder that will show error in frontend
+      return '';
     }
     
     // ============ INSTAGRAM ============
@@ -110,9 +169,9 @@ function buildEmbedUrl(url: string, platform: string): string {
     console.error("[EMBED] Error generating embed URL:", e);
   }
   
-  // Fallback: return original URL
-  console.log("[EMBED] Using original URL as fallback");
-  return url;
+  // Fallback: return empty string to indicate error
+  console.log("[EMBED] Failed to generate embed URL, returning empty");
+  return '';
 }
 
 // Extract thumbnail URL based on platform
@@ -282,8 +341,8 @@ serve(async (req) => {
     }
     console.log("[SUBMIT-VIDEO] Detected platform:", platform);
 
-    // Generate embed URL
-    const embedUrl = buildEmbedUrl(video_url, platform);
+    // Generate embed URL (async - resolves shortlinks)
+    const embedUrl = await buildEmbedUrl(video_url, platform);
     console.log("[SUBMIT-VIDEO] Generated embed URL:", embedUrl);
 
     // Extract thumbnail URL - use custom if provided, otherwise try to extract
