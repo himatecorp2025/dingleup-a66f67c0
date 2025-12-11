@@ -88,11 +88,11 @@ export const VideoAdModal = ({
       }
     }
     
-    // TikTok
+    // TikTok - add autoplay parameter
     if (url.includes('tiktok.com')) {
       const videoIdMatch = url.match(/video\/(\d+)/);
       if (videoIdMatch) {
-        const embedUrl = `https://www.tiktok.com/embed/v2/${videoIdMatch[1]}`;
+        const embedUrl = `https://www.tiktok.com/embed/v2/${videoIdMatch[1]}?autoplay=1`;
         console.log('[VideoAdModal] Generated TikTok embed:', embedUrl);
         return embedUrl;
       }
@@ -302,16 +302,17 @@ export const VideoAdModal = ({
         overflow: 'hidden',
       }}
     >
-      {/* Video container - fills entire screen */}
+      {/* Video container - fills entire screen with overflow hidden to crop TikTok UI */}
       <div 
         className="relative w-full h-full"
         style={{
           width: '100vw',
           height: '100dvh',
           overflow: 'hidden',
+          backgroundColor: '#000',
         }}
       >
-        {/* Video iframe - true fullscreen cover */}
+        {/* Video iframe - scaled up to hide TikTok bottom UI */}
         {hasVideos && !videoError ? (
           <iframe
             src={embedUrl}
@@ -319,12 +320,11 @@ export const VideoAdModal = ({
               position: 'absolute',
               top: '50%',
               left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '177.78vh', // 16:9 aspect ratio width based on height
-              height: '100vh',
-              minWidth: '100vw',
-              minHeight: '56.25vw', // 16:9 aspect ratio height based on width
+              transform: 'translate(-50%, -50%) scale(1.3)', // Scale up to crop TikTok UI
+              width: '100vw',
+              height: '100dvh',
               border: 'none',
+              pointerEvents: 'none', // Prevent user interaction with video controls
             }}
             allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
             allowFullScreen
