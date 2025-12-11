@@ -671,6 +671,7 @@ const GamePreview = memo(() => {
               open={showExitDialog}
               onOpenChange={setShowExitDialog}
               onConfirmExit={async () => {
+                toast.dismiss(); // Dismiss game results toast before leaving
                 setShowExitDialog(false);
                 await finishGame();
                 navigate('/dashboard');
