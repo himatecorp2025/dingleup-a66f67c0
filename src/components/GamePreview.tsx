@@ -600,6 +600,8 @@ const GamePreview = memo(() => {
               durationSecondsPerVideo={15}
               onCompleted={(watchedIds) => videoAdFlow.onVideoComplete()}
               onClose={videoAdFlow.cancelVideo}
+              context="game_end"
+              rewardAmount={coinsEarned}
             />
           )}
         </>
@@ -731,6 +733,8 @@ const GamePreview = memo(() => {
             durationSecondsPerVideo={15}
             onCompleted={(watchedIds) => videoAdFlow.onVideoComplete()}
             onClose={videoAdFlow.cancelVideo}
+            context="game_end"
+            rewardAmount={coinsEarned}
           />
         )}
       </>
@@ -765,6 +769,8 @@ const GamePreview = memo(() => {
           durationSecondsPerVideo={15}
           onCompleted={(watchedIds) => videoAdFlow.onVideoComplete()}
           onClose={videoAdFlow.cancelVideo}
+          context="game_end"
+          rewardAmount={coinsEarned}
         />
       )}
     </>

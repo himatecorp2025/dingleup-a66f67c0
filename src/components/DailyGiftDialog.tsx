@@ -197,6 +197,8 @@ const DailyGiftDialog = ({
         durationSecondsPerVideo={15}
         onCompleted={(watchedIds) => { handleVideoComplete(watchedIds); }}
         onClose={handleVideoClose}
+        context="daily_gift"
+        rewardAmount={nextReward}
       />
     );
   }
