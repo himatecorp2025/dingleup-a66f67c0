@@ -49,16 +49,23 @@ export const FullscreenRewardVideoView = ({
   };
   const t = texts[lang as 'hu' | 'en'] || texts.en;
 
+  // Check if URL is a proper embed URL (not just a shortlink)
+  const isValidEmbedUrl = (url: string | null): boolean => {
+    if (!url) return false;
+    return url.includes('/embed/') || url.includes('/embed') || url.includes('plugins/video');
+  };
+
   // Get embed URL - prefer stored embed_url, fallback to generating one
   const getEmbedUrl = useCallback((videoData: RewardVideoData): string => {
-    // Always prefer the backend-generated embed_url
-    if (videoData.embed_url) {
+    // Only use stored embed_url if it's a proper embed URL
+    if (videoData.embed_url && isValidEmbedUrl(videoData.embed_url)) {
+      console.log('[FullscreenRewardVideoView] Using stored embed_url:', videoData.embed_url);
       return videoData.embed_url;
     }
     
-    // Fallback: generate embed URL client-side (should rarely happen)
     const url = videoData.video_url;
     const platform = videoData.platform;
+    console.log('[FullscreenRewardVideoView] Generating embed URL from:', { url, platform });
     
     // YouTube
     if (platform === 'youtube' || url.includes('youtube.com') || url.includes('youtu.be')) {
@@ -78,31 +85,42 @@ export const FullscreenRewardVideoView = ({
       }
       
       if (videoId) {
-        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1`;
+        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1`;
+        console.log('[FullscreenRewardVideoView] Generated YouTube embed:', embedUrl);
+        return embedUrl;
       }
     }
     
-    // TikTok
+    // TikTok - shortlinks cannot be embedded
     if (platform === 'tiktok' || url.includes('tiktok.com')) {
-      const videoId = url.match(/\/video\/(\d+)/)?.[1];
-      if (videoId) {
-        return `https://www.tiktok.com/embed/v2/${videoId}`;
+      const videoIdMatch = url.match(/\/video\/(\d+)/);
+      if (videoIdMatch) {
+        const embedUrl = `https://www.tiktok.com/embed/v2/${videoIdMatch[1]}`;
+        console.log('[FullscreenRewardVideoView] Generated TikTok embed:', embedUrl);
+        return embedUrl;
       }
+      console.warn('[FullscreenRewardVideoView] TikTok shortlink cannot be embedded:', url);
+      return ''; // Cannot embed shortlinks
     }
     
     // Instagram
     if (platform === 'instagram' || url.includes('instagram.com')) {
       const match = url.match(/\/(reel|p)\/([a-zA-Z0-9_-]+)/);
       if (match) {
-        return `https://www.instagram.com/${match[1]}/${match[2]}/embed`;
+        const embedUrl = `https://www.instagram.com/${match[1]}/${match[2]}/embed`;
+        console.log('[FullscreenRewardVideoView] Generated Instagram embed:', embedUrl);
+        return embedUrl;
       }
     }
     
     // Facebook
     if (platform === 'facebook' || url.includes('facebook.com')) {
-      return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=0&autoplay=1`;
+      const embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=0&autoplay=1`;
+      console.log('[FullscreenRewardVideoView] Generated Facebook embed:', embedUrl);
+      return embedUrl;
     }
     
+    console.warn('[FullscreenRewardVideoView] Unknown platform:', url);
     return url;
   }, []);
 
