@@ -134,10 +134,20 @@ serve(async (req) => {
 
     const activeCreatorIds = new Set(subscriptions?.map(s => s.user_id) || []);
     
-    const eligibleVideos = videos.filter(v => activeCreatorIds.has(v.user_id));
+    // Filter by active creators AND valid embed_url (must contain /embed/ to be playable)
+    const eligibleVideos = videos.filter(v => {
+      if (!activeCreatorIds.has(v.user_id)) return false;
+      if (!v.embed_url) return false;
+      // Valid embed URLs must contain /embed/ or plugins/video for Facebook
+      const hasValidEmbed = v.embed_url.includes('/embed/') || v.embed_url.includes('plugins/video');
+      if (!hasValidEmbed) {
+        console.log(`[get-ad-video] Skipping video ${v.id} with invalid embed_url: ${v.embed_url}`);
+      }
+      return hasValidEmbed;
+    });
 
     if (eligibleVideos.length === 0) {
-      console.log('[get-ad-video] No videos from active creators');
+      console.log('[get-ad-video] No videos with valid embed URLs from active creators');
       return new Response(
         JSON.stringify({ available: false, video: null }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
