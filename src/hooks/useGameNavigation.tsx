@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Question, CONTINUE_AFTER_WRONG_COST, TIMEOUT_CONTINUE_COST } from '@/types/game';
@@ -81,20 +81,58 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     onDoubleRewardClick,
   } = options;
 
+  // Track timeouts for proper cleanup
+  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const visibilityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const safetyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Track if navigation is in progress to prevent race conditions
+  const isNavigatingRef = useRef(false);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
+      if (visibilityTimeoutRef.current) clearTimeout(visibilityTimeoutRef.current);
+      if (safetyTimeoutRef.current) clearTimeout(safetyTimeoutRef.current);
+    };
+  }, []);
+
   const handleNextQuestion = useCallback(async () => {
-    if (isAnimating) return;
+    // Guard against multiple rapid calls
+    if (isAnimating || isNavigatingRef.current) {
+      console.log('[useGameNavigation] Blocked: already animating or navigating');
+      return;
+    }
     
+    // Clear any existing timeouts
+    if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
+    if (visibilityTimeoutRef.current) clearTimeout(visibilityTimeoutRef.current);
+    if (safetyTimeoutRef.current) clearTimeout(safetyTimeoutRef.current);
+    
+    isNavigatingRef.current = true;
     setIsAnimating(true);
     setCanSwipe(false);
     setErrorBannerVisible(false);
     setQuestionVisible(false);
     resetRewardAnimation();
     
-    if (currentQuestionIndex >= questions.length - 1) {
-      // Game completed - show results toast and wait for swipe up to restart
+    // Safety timeout: Reset animation state after 2 seconds max (prevents stuck state)
+    safetyTimeoutRef.current = setTimeout(() => {
+      console.log('[useGameNavigation] Safety timeout triggered - resetting animation state');
       setIsAnimating(false);
       setCanSwipe(true);
       setQuestionVisible(true);
+      isNavigatingRef.current = false;
+    }, 2000);
+    
+    if (currentQuestionIndex >= questions.length - 1) {
+      // Game completed - show results toast and wait for swipe up to restart
+      if (safetyTimeoutRef.current) clearTimeout(safetyTimeoutRef.current);
+      setIsAnimating(false);
+      setCanSwipe(true);
+      setQuestionVisible(true);
+      isNavigatingRef.current = false;
       
       // Haptic feedback based on performance
       if (correctAnswers >= 10) {
@@ -185,8 +223,8 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
       return;
     }
     
-    // CRITICAL: Store timeout IDs for proper cleanup
-    const firstTimeoutId = setTimeout(() => {
+    // Transition to next question with smooth animation
+    transitionTimeoutRef.current = setTimeout(() => {
       nextQuestion();
       resetTimer(10);
       setSelectedAnswer(null);
@@ -195,18 +233,18 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
       resetQuestionHelpers();
       setQuestionStartTime(Date.now());
       
-      const secondTimeoutId = setTimeout(() => {
+      visibilityTimeoutRef.current = setTimeout(() => {
+        // Clear safety timeout since we completed successfully
+        if (safetyTimeoutRef.current) clearTimeout(safetyTimeoutRef.current);
+        
         setQuestionVisible(true);
         setIsAnimating(false);
         setCanSwipe(true);
+        isNavigatingRef.current = false;
+        
+        console.log(`[useGameNavigation] Transition complete to question ${currentQuestionIndex + 2}`);
       }, 100);
-
-      // Return cleanup for nested timeout
-      return () => clearTimeout(secondTimeoutId);
     }, 400);
-
-    // Return cleanup for outer timeout
-    return () => clearTimeout(firstTimeoutId);
   }, [
     isAnimating,
     currentQuestionIndex,
@@ -229,6 +267,9 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     setSecondAttempt,
     resetQuestionHelpers,
     setQuestionStartTime,
+    t,
+    lang,
+    onDoubleRewardClick,
   ]);
 
   const handleSkipQuestion = useCallback(async () => {
@@ -249,7 +290,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
       await logHelpUsage('skip');
       await handleNextQuestion();
     }
-  }, [profile, currentQuestionIndex, refreshProfile, logHelpUsage, handleNextQuestion]);
+  }, [profile, currentQuestionIndex, refreshProfile, logHelpUsage, handleNextQuestion, t]);
 
   const handleContinueAfterMistake = useCallback(async () => {
     if (!profile) return;
@@ -292,9 +333,9 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     }
 
     // If question answered correctly, go to next
-    if (selectedAnswer && !isAnimating) {
+    if (selectedAnswer && !isAnimating && !isNavigatingRef.current) {
       const currentQuestion = questions[currentQuestionIndex];
-      const selectedAnswerObj = currentQuestion.answers.find(a => a.key === selectedAnswer);
+      const selectedAnswerObj = currentQuestion?.answers?.find(a => a.key === selectedAnswer);
       if (selectedAnswerObj?.correct) {
         await handleNextQuestion();
       }
