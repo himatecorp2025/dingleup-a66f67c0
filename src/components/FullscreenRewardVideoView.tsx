@@ -1,0 +1,268 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { X, Play, ExternalLink } from 'lucide-react';
+import { useI18n } from '@/i18n';
+
+export interface RewardVideoData {
+  id: string;
+  video_url: string;
+  embed_url: string | null;
+  platform: string;
+  creator_name?: string;
+}
+
+interface FullscreenRewardVideoViewProps {
+  isOpen: boolean;
+  video: RewardVideoData;
+  requiredSeconds: number;
+  onTimerCompleted: () => void;
+  onClosed: () => void;
+  onGoToCreator?: () => void;
+}
+
+export const FullscreenRewardVideoView = ({
+  isOpen,
+  video,
+  requiredSeconds,
+  onTimerCompleted,
+  onClosed,
+  onGoToCreator,
+}: FullscreenRewardVideoViewProps) => {
+  const { lang } = useI18n();
+  const [countdown, setCountdown] = useState(requiredSeconds);
+  const [timerCompleted, setTimerCompleted] = useState(false);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+  const [videoStarted, setVideoStarted] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const timerCompletedCalledRef = useRef(false);
+
+  // Texts
+  const texts = {
+    hu: {
+      goToCreator: 'Tovább',
+      tapToPlay: 'Érintsd meg a lejátszáshoz',
+    },
+    en: {
+      goToCreator: 'Go to',
+      tapToPlay: 'Tap to play',
+    },
+  };
+  const t = texts[lang as 'hu' | 'en'] || texts.en;
+
+  // Get embed URL for platform
+  const getEmbedUrl = useCallback((videoData: RewardVideoData): string => {
+    if (videoData.embed_url) return videoData.embed_url;
+    
+    const url = videoData.video_url;
+    
+    // YouTube
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      const videoId = url.includes('youtu.be') 
+        ? url.split('youtu.be/')[1]?.split('?')[0]
+        : url.split('v=')[1]?.split('&')[0];
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&modestbranding=1&playsinline=1`;
+      }
+    }
+    
+    // TikTok
+    if (url.includes('tiktok.com')) {
+      const videoId = url.match(/video\/(\d+)/)?.[1];
+      if (videoId) {
+        return `https://www.tiktok.com/embed/v2/${videoId}?autoplay=1`;
+      }
+    }
+    
+    // Instagram
+    if (url.includes('instagram.com/reel')) {
+      const reelId = url.match(/reel\/([^/?]+)/)?.[1];
+      if (reelId) {
+        return `https://www.instagram.com/reel/${reelId}/embed/?autoplay=1`;
+      }
+    }
+    
+    // Facebook
+    if (url.includes('facebook.com')) {
+      return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&autoplay=1`;
+    }
+    
+    return url;
+  }, []);
+
+  // Reset state when opening
+  useEffect(() => {
+    if (isOpen) {
+      setCountdown(requiredSeconds);
+      setTimerCompleted(false);
+      setAutoplayBlocked(false);
+      setVideoStarted(false);
+      timerCompletedCalledRef.current = false;
+    }
+  }, [isOpen, requiredSeconds]);
+
+  // Start countdown timer
+  useEffect(() => {
+    if (!isOpen || !videoStarted) return;
+
+    intervalRef.current = setInterval(() => {
+      setCountdown(prev => {
+        const newValue = prev - 1;
+        
+        if (newValue <= 0) {
+          if (!timerCompletedCalledRef.current) {
+            timerCompletedCalledRef.current = true;
+            setTimerCompleted(true);
+            onTimerCompleted();
+          }
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+          }
+          return 0;
+        }
+        
+        return newValue;
+      });
+    }, 1000);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isOpen, videoStarted, onTimerCompleted]);
+
+  // Try to auto-start video
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Give iframe a moment to load, then check if autoplay worked
+    const checkAutoplay = setTimeout(() => {
+      // For now, assume autoplay works and start timer
+      // If autoplay is blocked, user will see play button
+      setVideoStarted(true);
+    }, 500);
+
+    return () => clearTimeout(checkAutoplay);
+  }, [isOpen]);
+
+  // Handle manual play start (if autoplay blocked)
+  const handleManualPlay = useCallback(() => {
+    setAutoplayBlocked(false);
+    setVideoStarted(true);
+  }, []);
+
+  // Handle close
+  const handleClose = useCallback(() => {
+    if (timerCompleted) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      onClosed();
+    }
+  }, [timerCompleted, onClosed]);
+
+  // Handle go to creator
+  const handleGoToCreator = useCallback(() => {
+    // Open original video URL
+    window.open(video.video_url, '_blank', 'noopener,noreferrer');
+    onGoToCreator?.();
+  }, [video.video_url, onGoToCreator]);
+
+  // Prevent body scroll when open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const embedUrl = getEmbedUrl(video);
+
+  return (
+    <div 
+      className="fixed inset-0 z-[9999] bg-black flex items-center justify-center"
+      style={{
+        // Extend beyond safe areas to cover everything
+        top: 'calc(-1 * env(safe-area-inset-top, 0px))',
+        left: 'calc(-1 * env(safe-area-inset-left, 0px))',
+        right: 'calc(-1 * env(safe-area-inset-right, 0px))',
+        bottom: 'calc(-1 * env(safe-area-inset-bottom, 0px))',
+        width: 'calc(100% + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))',
+        height: 'calc(100% + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))',
+      }}
+    >
+      {/* Video container - maximize while maintaining aspect ratio */}
+      <div className="relative w-full h-full flex items-center justify-center bg-black">
+        {/* Video iframe */}
+        <iframe
+          ref={iframeRef}
+          src={embedUrl}
+          className="max-w-full max-h-full w-full h-full object-contain"
+          style={{
+            aspectRatio: '9/16',
+            maxHeight: '100vh',
+            maxWidth: 'calc(100vh * 9 / 16)',
+          }}
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowFullScreen
+          frameBorder="0"
+        />
+
+        {/* Autoplay blocked overlay */}
+        {autoplayBlocked && !videoStarted && (
+          <div 
+            className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 cursor-pointer"
+            onClick={handleManualPlay}
+          >
+            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-4 animate-pulse">
+              <Play className="w-10 h-10 text-primary fill-primary" />
+            </div>
+            <p className="text-white text-lg font-medium">{t.tapToPlay}</p>
+          </div>
+        )}
+
+        {/* Countdown timer overlay - top left */}
+        <div className="absolute top-4 left-4 z-10" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
+          <div className="bg-black/70 backdrop-blur-sm rounded-full px-4 py-2 min-w-[60px] text-center">
+            <span className="text-white font-bold text-xl tabular-nums">
+              {countdown}
+            </span>
+          </div>
+        </div>
+
+        {/* Close button - top right, only visible after timer completed */}
+        {timerCompleted && (
+          <button
+            onClick={handleClose}
+            className="absolute top-4 right-4 z-10 bg-black/70 backdrop-blur-sm rounded-full p-3 hover:bg-black/90 transition-colors active:scale-95"
+            style={{ top: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+        )}
+
+        {/* Go to creator CTA - bottom left, only visible after timer completed */}
+        {timerCompleted && (
+          <button
+            onClick={handleGoToCreator}
+            className="absolute bottom-4 left-4 z-10 bg-black/70 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2 hover:bg-black/90 transition-colors active:scale-95"
+            style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
+          >
+            <span className="text-white font-medium">{t.goToCreator}</span>
+            <ExternalLink className="w-4 h-4 text-white" />
+          </button>
+        )}
+
+        {/* Video progress indicator for multi-video sequences (optional, handled by parent) */}
+      </div>
+    </div>
+  );
+};
+
+export default FullscreenRewardVideoView;
