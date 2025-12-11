@@ -170,78 +170,40 @@ const AdminProfile = () => {
 
     setIsGranting(true);
     try {
-      // Find user by username
-      const { data: targetUser, error: userError } = await supabase
-        .from('profiles')
-        .select('id, username')
-        .ilike('username', targetUsername.trim())
-        .maybeSingle();
-
-      if (userError || !targetUser) {
-        toast.error(t('admin.error_user_not_found'));
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error(t('admin.error_not_logged_in'));
         return;
       }
 
-      // Check if already admin
-      const { data: existingRole } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', targetUser.id)
-        .eq('role', 'admin')
-        .maybeSingle();
+      const { data, error } = await supabase.functions.invoke('grant-admin-role', {
+        body: { targetUsername: targetUsername.trim() },
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
 
-      if (existingRole) {
-        toast.error(t('admin.already_admin').replace('{username}', targetUser.username));
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.error) {
+        if (data.error === 'User is already admin') {
+          toast.error(t('admin.already_admin').replace('{username}', data.username || targetUsername));
+        } else if (data.error === 'User not found') {
+          toast.error(t('admin.error_user_not_found'));
+        } else {
+          toast.error(data.error);
+        }
         return;
       }
 
-      // Grant admin role
-      const { error: insertError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: targetUser.id,
-          role: 'admin'
-        });
-
-      if (insertError) {
-        throw insertError;
-      }
-
-      // Also set as creator with permanent free access
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          is_creator: true,
-          creator_subscription_status: 'active_paid'
-        })
-        .eq('id', targetUser.id);
-
-      if (profileError) {
-        console.error('Error updating profile:', profileError);
-      }
-
-      // Create or update creator subscription
-      const { error: subError } = await supabase
-        .from('creator_subscriptions')
-        .upsert({
-          user_id: targetUser.id,
-          package_type: 'creator_max',
-          status: 'active',
-          max_videos: 999,
-          current_period_ends_at: '2099-12-31'
-        }, { onConflict: 'user_id' });
-
-      if (subError) {
-        console.error('Error creating subscription:', subError);
-      }
-
-      toast.success(t('admin.grant_success').replace('{username}', targetUser.username));
+      toast.success(t('admin.grant_success').replace('{username}', data.username));
       setTargetUsername('');
       
       // Refresh admin list
       fetchAdminUsers();
-    } catch (error: any) {
-      toast.error(error.message || t('admin.grant_error'));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : t('admin.grant_error');
+      toast.error(message);
     } finally {
       setIsGranting(false);
     }
