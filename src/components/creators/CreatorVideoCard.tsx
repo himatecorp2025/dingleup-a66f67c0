@@ -110,13 +110,38 @@ export const CreatorVideoCard = ({
   const isNearExpiry = video.days_remaining > 0 && video.days_remaining <= 7;
   const shouldShowReactivate = showReactivateButton || isExpired || isNearExpiry;
 
-  // Generate placeholder thumbnail if none exists
-  const thumbnailUrl = video.thumbnail_url || `https://picsum.photos/seed/${video.id}/320/180`;
+  // Generate thumbnail URL based on platform if none exists
+  const getThumbnailUrl = () => {
+    if (video.thumbnail_url) return video.thumbnail_url;
+    
+    const videoUrl = video.video_url;
+    
+    // YouTube thumbnail extraction
+    if (video.platform === 'youtube') {
+      // Extract video ID from various YouTube URL formats
+      let videoId = null;
+      if (videoUrl.includes('/shorts/')) {
+        videoId = videoUrl.split('/shorts/')[1]?.split('?')[0];
+      } else if (videoUrl.includes('watch?v=')) {
+        videoId = new URL(videoUrl).searchParams.get('v');
+      } else if (videoUrl.includes('youtu.be/')) {
+        videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0];
+      }
+      if (videoId) {
+        return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+      }
+    }
+    
+    // For other platforms, use placeholder with 9:16 aspect
+    return `https://picsum.photos/seed/${video.id}/270/480`;
+  };
+
+  const thumbnailUrl = getThumbnailUrl();
 
   return (
     <div className="relative rounded-xl overflow-hidden bg-white/5 border border-white/10 group">
-      {/* Thumbnail */}
-      <div className="relative aspect-video">
+      {/* Thumbnail - 9:16 aspect ratio */}
+      <div className="relative aspect-[9/16]">
         <img
           src={thumbnailUrl}
           alt={video.title || 'Video thumbnail'}
@@ -124,14 +149,14 @@ export const CreatorVideoCard = ({
         />
         
         {/* Platform Icon Badge */}
-        <div className={`absolute top-2 left-2 p-1.5 rounded-lg ${getPlatformColor(video.platform)} shadow-lg`}>
+        <div className={`absolute top-2 left-2 p-1 rounded-lg ${getPlatformColor(video.platform)} shadow-lg`}>
           {getPlatformIcon(video.platform)}
         </div>
 
         {/* Expired overlay */}
         {isExpired && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-            <span className="text-white/80 font-semibold text-sm">
+            <span className="text-white/80 font-semibold text-xs">
               {lang === 'hu' ? 'Lejárt' : 'Expired'}
             </span>
           </div>

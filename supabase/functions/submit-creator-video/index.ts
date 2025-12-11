@@ -115,6 +115,51 @@ function buildEmbedUrl(url: string, platform: string): string {
   return url;
 }
 
+// Extract thumbnail URL based on platform
+function extractThumbnailUrl(url: string, platform: string): string | null {
+  try {
+    // ============ YOUTUBE ============
+    if (platform === 'youtube') {
+      let videoId: string | null = null;
+      
+      // Format: /shorts/VIDEO_ID
+      const shortsMatch = url.match(/\/shorts\/([a-zA-Z0-9_-]+)/);
+      if (shortsMatch) {
+        videoId = shortsMatch[1];
+      }
+      
+      // Format: watch?v=VIDEO_ID
+      if (!videoId) {
+        const watchMatch = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+        if (watchMatch) {
+          videoId = watchMatch[1];
+        }
+      }
+      
+      // Format: youtu.be/VIDEO_ID
+      if (!videoId) {
+        const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+        if (shortMatch) {
+          videoId = shortMatch[1];
+        }
+      }
+      
+      if (videoId) {
+        // Use hqdefault for higher quality thumbnail
+        return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      }
+    }
+    
+    // For TikTok, Instagram, Facebook - can't extract without API calls
+    // Frontend will handle fallback
+    
+  } catch (e) {
+    console.error("[THUMBNAIL] Error extracting thumbnail:", e);
+  }
+  
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -189,6 +234,10 @@ serve(async (req) => {
     const embedUrl = buildEmbedUrl(video_url, platform);
     console.log("[SUBMIT-VIDEO] Generated embed URL:", embedUrl);
 
+    // Extract thumbnail URL
+    const thumbnailUrl = extractThumbnailUrl(video_url, platform);
+    console.log("[SUBMIT-VIDEO] Extracted thumbnail URL:", thumbnailUrl);
+
     // Check if video already exists for this user
     const { data: existingVideo } = await supabaseClient
       .from('creator_videos')
@@ -231,6 +280,7 @@ serve(async (req) => {
       platform,
       video_url,
       embed_url: embedUrl,
+      thumbnail_url: thumbnailUrl,
       status: activate_now ? 'active' : 'pending',
       is_active: activate_now,
     };
