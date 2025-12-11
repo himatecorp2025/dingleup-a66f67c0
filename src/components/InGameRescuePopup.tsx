@@ -5,13 +5,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useI18n } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { X, Film } from 'lucide-react';
 import { LifeIcon3D } from '@/components/icons/LifeIcon3D';
 import { CoinIcon3D } from '@/components/icons/CoinIcon3D';
 import { GoldRewardCoin3D } from '@/components/icons/GoldRewardCoin3D';
 import { LoadingSpinner3D } from '@/components/icons/LoadingSpinner3D';
 import { trackConversionEvent } from '@/lib/analytics';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useVideoAdFlow } from '@/hooks/useVideoAdFlow';
+import { VideoAdModal } from './VideoAdModal';
 
 interface InGameRescuePopupProps {
   isOpen: boolean;
@@ -32,10 +34,42 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
   onStateRefresh,
   onGameEnd,
 }) => {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const [loadingGoldSaver, setLoadingGoldSaver] = useState(false);
   const [hasTrackedView, setHasTrackedView] = useState(false);
+  const [videoAdAvailable, setVideoAdAvailable] = useState(false);
+  const [checkingVideoAd, setCheckingVideoAd] = useState(true);
+  const [userId, setUserId] = useState<string | undefined>();
+
+  // Get userId on mount
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUserId(session.user.id);
+      }
+    });
+  }, []);
+
+  // Video ad flow for refill
+  const videoAdFlow = useVideoAdFlow({
+    userId,
+    onRewardClaimed: async (coins, lives) => {
+      await onStateRefresh();
+      onClose();
+    },
+  });
+
+  // Check video ad availability when popup opens
+  useEffect(() => {
+    if (isOpen && userId) {
+      setCheckingVideoAd(true);
+      videoAdFlow.checkRefillAvailable().then((available) => {
+        setVideoAdAvailable(available);
+        setCheckingVideoAd(false);
+      });
+    }
+  }, [isOpen, userId]);
 
   // Track product_view when popup opens
   useEffect(() => {
@@ -63,6 +97,11 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
       setHasTrackedView(false);
     }
   }, [isOpen]);
+
+  // Handle video refill click
+  const handleVideoRefill = async () => {
+    await videoAdFlow.startRefillFlow();
+  };
 
   const handleGoldSaverPurchaseRaw = async () => {
     if (currentGold < 500) {
@@ -125,9 +164,30 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
 
   const hasEnoughGold = currentGold >= 500;
 
+  // If video is showing, only render the video modal
+  if (videoAdFlow.showVideo && videoAdFlow.videos.length > 0) {
+    return (
+      <VideoAdModal
+        isOpen={true}
+        videos={videoAdFlow.videos}
+        totalDurationSeconds={videoAdFlow.totalDuration}
+        onComplete={async () => {
+          await videoAdFlow.onVideoComplete();
+        }}
+        onClose={async () => {
+          await videoAdFlow.onVideoComplete();
+        }}
+        onCancel={() => {
+          videoAdFlow.cancelVideo();
+        }}
+        context="refill"
+      />
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-gradient-to-br from-red-900/50 via-purple-900/70 to-red-900/50 border-yellow-400 p-3 sm:p-4 md:p-5 shadow-2xl !fixed !top-1/2 !left-1/2 !-translate-x-1/2 !-translate-y-1/2 !m-0" style={{ maxWidth: 'clamp(320px, 95vw, 450px)', width: 'clamp(320px, 95vw, 450px)', height: 'clamp(400px, 70vh, 550px)', borderWidth: 'clamp(3px, 1vw, 6px)', borderRadius: 'clamp(16px, 4vw, 20px)', padding: 'clamp(0.75rem, 2.5vw, 1.25rem)', boxShadow: '0 0 50px rgba(250, 204, 21, 0.7), 0 25px 80px rgba(0, 0, 0, 0.8), inset 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 -4px 20px rgba(250, 204, 21, 0.2)' }}>
+      <DialogContent className="bg-gradient-to-br from-red-900/50 via-purple-900/70 to-red-900/50 border-yellow-400 p-3 sm:p-4 md:p-5 shadow-2xl !fixed !top-1/2 !left-1/2 !-translate-x-1/2 !-translate-y-1/2 !m-0" style={{ maxWidth: 'clamp(320px, 95vw, 450px)', width: 'clamp(320px, 95vw, 450px)', height: 'auto', minHeight: 'clamp(450px, 75vh, 600px)', borderWidth: 'clamp(3px, 1vw, 6px)', borderRadius: 'clamp(16px, 4vw, 20px)', padding: 'clamp(0.75rem, 2.5vw, 1.25rem)', boxShadow: '0 0 50px rgba(250, 204, 21, 0.7), 0 25px 80px rgba(0, 0, 0, 0.8), inset 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 -4px 20px rgba(250, 204, 21, 0.2)' }}>
         {/* Close button - top right */}
         <button
           onClick={onClose}
@@ -204,65 +264,103 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
           </div>
         </div>
 
-        {/* Gold Saver Booster - Single option now */}
-        <div className="relative flex flex-col" style={{ marginTop: 'clamp(0.75rem, 2.5vh, 1rem)' }}>
-          <div className="relative bg-gradient-to-br from-blue-800 via-blue-700 to-purple-800 border-[4px] sm:border-[5px] md:border-[6px] border-yellow-300 rounded-[20px] p-3 sm:p-4 shadow-2xl" style={{ boxShadow: 'inset 0 6px 25px rgba(0, 0, 0, 0.6), inset 0 -6px 25px rgba(234, 179, 8, 0.4)' }}>
-            <div className="absolute inset-[5px] sm:inset-[6px] rounded-[20px] bg-gradient-to-br from-blue-600/20 via-transparent to-purple-700/20 pointer-events-none"></div>
-            <div className="absolute inset-0 rounded-[20px] bg-gradient-to-t from-transparent via-yellow-400/5 to-yellow-300/10 pointer-events-none"></div>
-            
-            {/* Large coin icon */}
-            <div className="flex justify-center mb-3">
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-700 flex items-center justify-center" style={{ boxShadow: 'inset 0 -14px 40px rgba(0, 0, 0, 0.75), inset 0 14px 40px rgba(255, 255, 255, 0.9), inset 0 0 30px rgba(255, 255, 255, 0.7)' }}>
-                <GoldRewardCoin3D size={44} className="drop-shadow-2xl relative z-10 sm:w-14 sm:h-14" />
+        {/* Two options side by side */}
+        <div className="grid grid-cols-2 gap-2" style={{ marginTop: 'clamp(0.5rem, 2vh, 0.75rem)' }}>
+          
+          {/* Option 1: Video Refill */}
+          <div className="relative bg-gradient-to-br from-purple-800 via-purple-700 to-indigo-800 border-[3px] border-purple-300 rounded-[16px] p-2 sm:p-3 shadow-2xl" style={{ boxShadow: 'inset 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 -4px 20px rgba(168, 85, 247, 0.3)' }}>
+            <div className="flex flex-col items-center">
+              {/* Film icon */}
+              <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-purple-400 via-purple-500 to-purple-700 flex items-center justify-center mb-2" style={{ boxShadow: 'inset 0 -10px 30px rgba(0, 0, 0, 0.6), inset 0 10px 30px rgba(255, 255, 255, 0.5)' }}>
+                <Film className="w-6 h-6 sm:w-7 sm:h-7 text-white drop-shadow-lg" />
               </div>
-            </div>
 
-            <h3 className="text-xl sm:text-2xl font-black text-center bg-gradient-to-r from-yellow-100 via-yellow-50 to-yellow-100 bg-clip-text text-transparent mb-1 leading-tight tracking-wider">
-              {t('rescue.gold_saver_title_line1')} {t('rescue.gold_saver_title_line2')}
-            </h3>
+              <h4 className="text-sm sm:text-base font-black text-center text-purple-100 mb-1" style={{ textShadow: '0 2px 6px rgba(0, 0, 0, 0.8)' }}>
+                {lang === 'hu' ? 'Videó' : 'Video'}
+              </h4>
 
-            <p className="text-blue-50 text-[10px] sm:text-xs text-center mb-3 font-semibold leading-snug" style={{ textShadow: '0 1px 4px rgba(0, 0, 0, 0.6)' }}>
-              {t('rescue.gold_saver_description')}
-            </p>
-
-            {/* Rewards bar */}
-            <div className="relative bg-gradient-to-r from-red-800 via-orange-600 to-red-800 border-[2px] sm:border-[3px] border-red-300/80 rounded-[12px] p-2 mb-3 shadow-xl" style={{ boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 -2px 8px rgba(255, 165, 0, 0.3), 0 6px 20px rgba(239, 68, 68, 0.7)' }}>
-              <div className="flex items-center justify-center gap-3">
-                <div className="flex items-center gap-1">
-                  <GoldRewardCoin3D size={20} className="drop-shadow-2xl" />
-                  <span className="text-yellow-50 text-xs font-black" style={{ textShadow: '0 3px 8px rgba(0, 0, 0, 0.9)' }}>+250</span>
+              {/* Rewards */}
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="flex items-center gap-0.5">
+                  <GoldRewardCoin3D size={14} />
+                  <span className="text-yellow-200 text-[10px] font-bold">+500</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <LifeIcon3D size={20} className="drop-shadow-2xl" />
-                  <span className="text-green-50 text-xs font-black" style={{ textShadow: '0 3px 8px rgba(0, 0, 0, 0.9)' }}>+15</span>
+                <div className="flex items-center gap-0.5">
+                  <LifeIcon3D size={14} />
+                  <span className="text-green-200 text-[10px] font-bold">+5</span>
                 </div>
               </div>
+
+              <Button
+                onClick={handleVideoRefill}
+                disabled={!videoAdAvailable || checkingVideoAd || videoAdFlow.isLoading}
+                className="w-full bg-gradient-to-b from-purple-400 via-purple-500 to-purple-700 hover:from-purple-300 hover:via-purple-400 hover:to-purple-600 text-white font-bold text-xs py-2 rounded-[10px] disabled:opacity-50 border-[2px] border-purple-300 shadow-xl transition-all"
+                style={{ textShadow: '0 2px 6px rgba(0, 0, 0, 0.8)' }}
+              >
+                {checkingVideoAd || videoAdFlow.isLoading ? (
+                  <LoadingSpinner3D size={14} />
+                ) : videoAdAvailable ? (
+                  <span className="flex items-center gap-1">
+                    <Film className="w-3 h-3" />
+                    2×15s
+                  </span>
+                ) : (
+                  <span className="text-[10px]">{lang === 'hu' ? 'Nincs videó' : 'No video'}</span>
+                )}
+              </Button>
             </div>
+          </div>
 
-            <Button
-              onClick={handleGoldSaverPurchase}
-              disabled={!hasEnoughGold || loadingGoldSaver}
-              className="w-full bg-gradient-to-b from-green-400 via-green-500 to-green-700 hover:from-green-300 hover:via-green-400 hover:to-green-600 text-white font-black text-sm py-3 rounded-[12px] disabled:opacity-50 border-[2px] sm:border-[3px] border-green-300 shadow-2xl transition-all" style={{ textShadow: '0 3px 8px rgba(0, 0, 0, 0.8)', boxShadow: 'inset 0 4px 10px rgba(255, 255, 255, 0.5), 0 8px 25px rgba(34, 197, 94, 0.8)' }}
-            >
-              {loadingGoldSaver ? (
-                <div className="flex items-center justify-center gap-2">
-                  <LoadingSpinner3D size={16} />
-                  <span>{t('rescue.processing')}</span>
+          {/* Option 2: Gold Purchase */}
+          <div className="relative bg-gradient-to-br from-blue-800 via-blue-700 to-purple-800 border-[3px] border-yellow-300 rounded-[16px] p-2 sm:p-3 shadow-2xl" style={{ boxShadow: 'inset 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 -4px 20px rgba(234, 179, 8, 0.3)' }}>
+            <div className="flex flex-col items-center">
+              {/* Coin icon */}
+              <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-700 flex items-center justify-center mb-2" style={{ boxShadow: 'inset 0 -10px 30px rgba(0, 0, 0, 0.6), inset 0 10px 30px rgba(255, 255, 255, 0.7)' }}>
+                <GoldRewardCoin3D size={28} className="drop-shadow-lg" />
+              </div>
+
+              <h4 className="text-sm sm:text-base font-black text-center text-yellow-100 mb-1" style={{ textShadow: '0 2px 6px rgba(0, 0, 0, 0.8)' }}>
+                {lang === 'hu' ? 'Aranyért' : 'For Gold'}
+              </h4>
+
+              {/* Rewards */}
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="flex items-center gap-0.5">
+                  <GoldRewardCoin3D size={14} />
+                  <span className="text-yellow-200 text-[10px] font-bold">+250</span>
                 </div>
-              ) : hasEnoughGold ? (
-                <span className="text-base tracking-wider">500 {t('rescue.currency_gold')}</span>
-              ) : (
-                <span>{t('rescue.not_enough_short')}</span>
-              )}
-            </Button>
+                <div className="flex items-center gap-0.5">
+                  <LifeIcon3D size={14} />
+                  <span className="text-green-200 text-[10px] font-bold">+15</span>
+                </div>
+              </div>
 
-            {!hasEnoughGold && (
-              <p className="text-yellow-200 text-[9px] text-center mt-2 font-bold" style={{ textShadow: '0 1px 4px rgba(0, 0, 0, 0.8)' }}>
-                {t('rescue.not_enough_warning')}
-              </p>
-            )}
+              <Button
+                onClick={handleGoldSaverPurchase}
+                disabled={!hasEnoughGold || loadingGoldSaver}
+                className="w-full bg-gradient-to-b from-green-400 via-green-500 to-green-700 hover:from-green-300 hover:via-green-400 hover:to-green-600 text-white font-bold text-xs py-2 rounded-[10px] disabled:opacity-50 border-[2px] border-green-300 shadow-xl transition-all"
+                style={{ textShadow: '0 2px 6px rgba(0, 0, 0, 0.8)' }}
+              >
+                {loadingGoldSaver ? (
+                  <LoadingSpinner3D size={14} />
+                ) : hasEnoughGold ? (
+                  <span>500 {lang === 'hu' ? 'arany' : 'gold'}</span>
+                ) : (
+                  <span className="text-[10px]">{t('rescue.not_enough_short')}</span>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
+
+        {/* Warning if neither option available */}
+        {!hasEnoughGold && !videoAdAvailable && !checkingVideoAd && (
+          <p className="text-yellow-200 text-[10px] text-center mt-2 font-bold" style={{ textShadow: '0 1px 4px rgba(0, 0, 0, 0.8)' }}>
+            {lang === 'hu' 
+              ? 'Nincs elég aranyad és jelenleg nincs elérhető videó.' 
+              : 'Not enough gold and no video available at the moment.'}
+          </p>
+        )}
       </DialogContent>
     </Dialog>
   );
