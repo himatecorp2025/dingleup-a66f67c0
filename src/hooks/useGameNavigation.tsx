@@ -109,6 +109,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
         : '0.0';
       
       // Show beautiful results toast with casino aesthetic + video ad double option
+      // CENTERED VERTICALLY + HORIZONTALLY
       toast.success(
         <div className="flex flex-col gap-2 p-1.5">
           <div className="text-center text-base font-black mb-1 bg-gradient-to-r from-yellow-300 via-yellow-100 to-yellow-300 bg-clip-text text-transparent">
@@ -161,6 +162,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
         </div>,
         {
           duration: Infinity,
+          position: 'top-center',
           style: {
             background: 'linear-gradient(135deg, rgb(88, 28, 135) 0%, rgb(124, 58, 237) 50%, rgb(88, 28, 135) 100%)',
             color: 'white',
@@ -169,6 +171,10 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
             maxWidth: '85vw',
             width: '340px',
             backdropFilter: 'blur(8px)',
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
           }
         }
       );

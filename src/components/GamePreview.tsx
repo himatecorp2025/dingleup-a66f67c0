@@ -81,13 +81,23 @@ const GamePreview = memo(() => {
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
   const [gameInstanceId] = useState(() => crypto.randomUUID());
 
+  // Track if user just came back from watching video ad
+  const [justFinishedVideoAd, setJustFinishedVideoAd] = useState(false);
+
   // Video ad flow for doubling rewards
   const videoAdFlow = useVideoAdFlow({
     userId,
     onRewardClaimed: async (coins) => {
-      // No toast - user just wants close button, next scroll starts new game
       await refetchWallet();
       await refreshProfile();
+      // Show toast telling user to swipe for new game
+      setJustFinishedVideoAd(true);
+      toast.success(
+        lang === 'hu' 
+          ? 'Új játék indításához görgess tovább!' 
+          : 'Swipe to start a new game!',
+        { position: 'top-center', duration: 3000 }
+      );
     },
   });
 
