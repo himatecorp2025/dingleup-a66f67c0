@@ -9,21 +9,23 @@ export interface FullscreenRewardVideoViewProps {
   onCompleted: () => void;
   onClose: () => void;
   videoUrl?: string;
-  platform?: string;
+  platform?: 'tiktok' | 'youtube' | 'instagram' | 'facebook' | string;
 }
 
-// Platforms that reliably support autoplay when muted
-const AUTOPLAY_PLATFORMS = ['youtube', 'tiktok', 'facebook'];
+// Instagram doesn't reliably support autoplay - needs tap to play
+const NEEDS_TAP_TO_PLAY = ['instagram'];
 
 /**
- * Fullscreen video player for reward videos.
+ * FullscreenRewardVideoView - Platform-independent fullscreen video player
  * 
- * Requirements:
- * - FULLSCREEN: 100vw × 100vh, covers entire screen including nav bars
- * - AUTOPLAY: Video starts automatically for supported platforms (muted)
- * - For Instagram: Show tap-to-play overlay, countdown starts only after tap
- * - NO PLATFORM UI: Just the video, no cards/borders/margins
- * - MATTE BLACK background for non-9:16 videos
+ * IMPORTANT: This component does NOT modify the embedUrl.
+ * The backend provides the embed URL with all necessary autoplay/mute params.
+ * 
+ * Same behavior on ALL platforms:
+ * - Full screen (100vw × 100vh) with black background
+ * - Autoplay muted (params set by backend)
+ * - Same countdown overlay (15 or 30 seconds)
+ * - NO platform-specific feed UI visible
  */
 export const FullscreenRewardVideoView = ({
   isOpen,
@@ -42,7 +44,6 @@ export const FullscreenRewardVideoView = ({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const completedRef = useRef(false);
 
-  // Texts
   const texts = {
     hu: { goToCreator: 'Tovább az alkotóhoz', seconds: 'mp', tapToPlay: 'Koppints a lejátszáshoz' },
     en: { goToCreator: 'Go to creator', seconds: 's', tapToPlay: 'Tap to play' },
@@ -50,52 +51,23 @@ export const FullscreenRewardVideoView = ({
   const t = texts[lang as 'hu' | 'en'] || texts.en;
 
   const normalizedPlatform = platform?.toLowerCase() || '';
-  const supportsAutoplay = AUTOPLAY_PLATFORMS.includes(normalizedPlatform);
-
-  // Add autoplay params to URL if not present
-  const getAutoplayUrl = useCallback((url: string): string => {
-    if (!url) return '';
-    
-    try {
-      const urlObj = new URL(url);
-      
-      if (url.includes('youtube.com') || url.includes('youtu.be')) {
-        if (!urlObj.searchParams.has('autoplay')) urlObj.searchParams.set('autoplay', '1');
-        if (!urlObj.searchParams.has('mute')) urlObj.searchParams.set('mute', '1');
-        if (!urlObj.searchParams.has('playsinline')) urlObj.searchParams.set('playsinline', '1');
-        if (!urlObj.searchParams.has('controls')) urlObj.searchParams.set('controls', '0');
-        return urlObj.toString();
-      }
-      
-      if (url.includes('tiktok.com')) {
-        if (!urlObj.searchParams.has('auto_play')) urlObj.searchParams.set('auto_play', '1');
-        if (!urlObj.searchParams.has('mute')) urlObj.searchParams.set('mute', '1');
-        return urlObj.toString();
-      }
-      
-      if (url.includes('facebook.com')) {
-        if (!urlObj.searchParams.has('autoplay')) urlObj.searchParams.set('autoplay', '1');
-        if (!urlObj.searchParams.has('mute')) urlObj.searchParams.set('mute', '1');
-        return urlObj.toString();
-      }
-      
-      return url;
-    } catch {
-      return url;
-    }
-  }, []);
+  const needsTapToPlay = NEEDS_TAP_TO_PLAY.includes(normalizedPlatform);
 
   // Lock body scroll
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       document.documentElement.style.overflow = 'hidden';
+      
+      // Log embedUrl for debugging
+      console.log('[FullscreenRewardVideoView] Platform:', platform);
+      console.log('[FullscreenRewardVideoView] Using embedUrl:', embedUrl);
     }
     return () => {
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
     };
-  }, [isOpen]);
+  }, [isOpen, embedUrl, platform]);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -104,9 +76,9 @@ export const FullscreenRewardVideoView = ({
       setCanClose(false);
       completedRef.current = false;
       // Auto-start for platforms that support autoplay
-      setIsPlaying(supportsAutoplay);
+      setIsPlaying(!needsTapToPlay);
     }
-  }, [isOpen, durationSeconds, supportsAutoplay]);
+  }, [isOpen, durationSeconds, needsTapToPlay]);
 
   // Start countdown function
   const startCountdown = useCallback(() => {
@@ -147,8 +119,9 @@ export const FullscreenRewardVideoView = ({
     };
   }, [isOpen, isPlaying, startCountdown]);
 
-  // Handle tap to play (for Instagram and other non-autoplay platforms)
+  // Handle tap to play (for Instagram)
   const handleTapToPlay = useCallback(() => {
+    console.log('[FullscreenRewardVideoView] Tap to play triggered');
     setIsPlaying(true);
   }, []);
 
@@ -174,7 +147,8 @@ export const FullscreenRewardVideoView = ({
 
   if (!isOpen || !embedUrl) return null;
 
-  const finalEmbedUrl = getAutoplayUrl(embedUrl);
+  // Use embedUrl DIRECTLY from backend - DO NOT modify it
+  // Backend already includes autoplay=1&mute=1 params for each platform
 
   return (
     <div 
@@ -189,9 +163,9 @@ export const FullscreenRewardVideoView = ({
         backgroundColor: '#000',
       }}
     >
-      {/* Video iframe - TRUE FULLSCREEN */}
+      {/* Video iframe - FULLSCREEN, uses backend embedUrl directly */}
       <iframe
-        src={finalEmbedUrl}
+        src={embedUrl}
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
         style={{
           width: '100vw',
@@ -205,8 +179,8 @@ export const FullscreenRewardVideoView = ({
         allowFullScreen
       />
 
-      {/* Tap to play overlay for non-autoplay platforms (Instagram) */}
-      {!isPlaying && !supportsAutoplay && (
+      {/* Tap to play overlay for platforms without autoplay (Instagram) */}
+      {!isPlaying && needsTapToPlay && (
         <div 
           className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 cursor-pointer"
           onClick={handleTapToPlay}

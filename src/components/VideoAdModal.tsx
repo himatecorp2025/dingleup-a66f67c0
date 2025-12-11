@@ -25,19 +25,20 @@ interface VideoData {
 
 const SEGMENT_DURATION = 15;
 
-// Platforms that reliably support autoplay when muted
-const AUTOPLAY_PLATFORMS = ['youtube', 'tiktok', 'facebook'];
+// Instagram doesn't reliably support autoplay - needs tap to play
+const NEEDS_TAP_TO_PLAY = ['instagram'];
 
 /**
- * VideoAdModal - Fullscreen video ad player
+ * VideoAdModal - Platform-independent fullscreen video ad player
  * 
- * Requirements:
- * - FULLSCREEN: 100vw × 100vh like TikTok app
- * - AUTOPLAY: Video starts automatically (muted for browser compatibility)
- * - For Instagram: Show tap-to-play overlay, countdown starts only after tap
- * - USE BACKEND embedUrl: Don't generate URLs client-side
- * - NO PLATFORM UI: Just the video with countdown overlay
- * - MATTE BLACK background for non-9:16 videos
+ * IMPORTANT: This component does NOT modify the embedUrl.
+ * The backend provides the embed URL with all necessary autoplay/mute params.
+ * 
+ * Same behavior on ALL platforms:
+ * - Full screen (100vw × 100vh) with black background  
+ * - Autoplay muted (params set by backend)
+ * - Same countdown overlay (15 or 30 seconds)
+ * - NO platform-specific feed UI visible
  */
 export const VideoAdModal = ({
   isOpen,
@@ -54,12 +55,11 @@ export const VideoAdModal = ({
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [canClose, setCanClose] = useState(false);
   const [videoError, setVideoError] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false); // Track if video has started
+  const [isPlaying, setIsPlaying] = useState(false);
   const startTimeRef = useRef<number>(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const toastShownRef = useRef(false);
 
-  // Text translations
   const texts = {
     hu: {
       seconds: 'mp',
@@ -80,50 +80,7 @@ export const VideoAdModal = ({
 
   const currentVideo = videos[currentVideoIndex];
   const currentPlatform = currentVideo?.platform?.toLowerCase() || '';
-  const supportsAutoplay = AUTOPLAY_PLATFORMS.includes(currentPlatform);
-
-  // Get embed URL with autoplay params - USE BACKEND URL DIRECTLY
-  const getEmbedUrl = useCallback((video: VideoData): string => {
-    let url = video.embed_url || '';
-    
-    if (!url) {
-      console.warn('[VideoAdModal] No embed_url from backend for video:', video.id);
-      return '';
-    }
-
-    console.log('[VideoAdModal] Using backend embed_url:', url);
-
-    try {
-      const urlObj = new URL(url);
-      
-      // YouTube
-      if (url.includes('youtube.com')) {
-        if (!urlObj.searchParams.has('autoplay')) urlObj.searchParams.set('autoplay', '1');
-        if (!urlObj.searchParams.has('mute')) urlObj.searchParams.set('mute', '1');
-        if (!urlObj.searchParams.has('playsinline')) urlObj.searchParams.set('playsinline', '1');
-        if (!urlObj.searchParams.has('controls')) urlObj.searchParams.set('controls', '0');
-        return urlObj.toString();
-      }
-      
-      // TikTok
-      if (url.includes('tiktok.com')) {
-        if (!urlObj.searchParams.has('auto_play')) urlObj.searchParams.set('auto_play', '1');
-        if (!urlObj.searchParams.has('mute')) urlObj.searchParams.set('mute', '1');
-        return urlObj.toString();
-      }
-      
-      // Facebook
-      if (url.includes('facebook.com')) {
-        if (!urlObj.searchParams.has('autoplay')) urlObj.searchParams.set('autoplay', '1');
-        if (!urlObj.searchParams.has('mute')) urlObj.searchParams.set('mute', '1');
-        return urlObj.toString();
-      }
-      
-      return url;
-    } catch {
-      return url;
-    }
-  }, []);
+  const needsTapToPlay = NEEDS_TAP_TO_PLAY.includes(currentPlatform);
 
   // Show reward toast
   const showRewardToast = useCallback(() => {
@@ -175,9 +132,15 @@ export const VideoAdModal = ({
       setVideoError(false);
       toastShownRef.current = false;
       // Auto-start for platforms that support autoplay
-      setIsPlaying(supportsAutoplay);
+      setIsPlaying(!needsTapToPlay);
+      
+      // Log for debugging
+      if (currentVideo) {
+        console.log('[VideoAdModal] Platform:', currentVideo.platform);
+        console.log('[VideoAdModal] Using embed_url:', currentVideo.embed_url);
+      }
     }
-  }, [isOpen, totalDurationSeconds, supportsAutoplay]);
+  }, [isOpen, totalDurationSeconds, needsTapToPlay, currentVideo]);
 
   // Start countdown function
   const startCountdown = useCallback(() => {
@@ -225,8 +188,9 @@ export const VideoAdModal = ({
     };
   }, [isOpen, isPlaying, startCountdown]);
 
-  // Handle tap to play (for Instagram and other non-autoplay platforms)
+  // Handle tap to play (for Instagram)
   const handleTapToPlay = useCallback(() => {
+    console.log('[VideoAdModal] Tap to play triggered');
     setIsPlaying(true);
   }, []);
 
@@ -261,10 +225,10 @@ export const VideoAdModal = ({
 
   if (!isOpen) return null;
 
-  const embedUrl = currentVideo ? getEmbedUrl(currentVideo) : '';
+  // Use embed_url DIRECTLY from backend - DO NOT modify it
+  const embedUrl = currentVideo?.embed_url || '';
   const hasVideo = embedUrl.length > 0;
 
-  // TRUE FULLSCREEN OVERLAY - covers entire device screen
   return (
     <div 
       className="fixed inset-0 z-[9999]"
@@ -278,7 +242,7 @@ export const VideoAdModal = ({
         backgroundColor: '#000',
       }}
     >
-      {/* Video iframe - TRUE FULLSCREEN */}
+      {/* Video iframe - FULLSCREEN, uses backend embed_url directly */}
       {hasVideo && !videoError ? (
         <>
           <iframe
@@ -297,8 +261,8 @@ export const VideoAdModal = ({
             onError={() => setVideoError(true)}
           />
           
-          {/* Tap to play overlay for non-autoplay platforms (Instagram) */}
-          {!isPlaying && !supportsAutoplay && (
+          {/* Tap to play overlay for platforms without autoplay (Instagram) */}
+          {!isPlaying && needsTapToPlay && (
             <div 
               className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 cursor-pointer"
               onClick={handleTapToPlay}

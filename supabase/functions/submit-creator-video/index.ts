@@ -71,10 +71,10 @@ async function resolveShortlink(url: string): Promise<string> {
   return url;
 }
 
-// Build embed URL based on platform - platform-specific logic
+// Build embed URL based on platform - with AUTOPLAY + MUTE params
 async function buildEmbedUrl(url: string, platform: string): Promise<string> {
   try {
-    // ============ YOUTUBE ============
+    // ============ YOUTUBE (including Shorts) ============
     if (platform === 'youtube') {
       let videoId: string | null = null;
       
@@ -101,7 +101,10 @@ async function buildEmbedUrl(url: string, platform: string): Promise<string> {
       }
       
       if (videoId) {
-        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1`;
+        // YouTube embed with autoplay, mute, playsinline, no controls
+        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1&controls=0&rel=0&modestbranding=1`;
+        console.log("[EMBED] YouTube embed URL:", embedUrl);
+        return embedUrl;
       }
     }
     
@@ -117,8 +120,9 @@ async function buildEmbedUrl(url: string, platform: string): Promise<string> {
       // Format: @username/video/VIDEO_ID or /video/VIDEO_ID
       const videoMatch = resolvedUrl.match(/\/video\/(\d+)/);
       if (videoMatch) {
-        const embedUrl = `https://www.tiktok.com/embed/v2/${videoMatch[1]}`;
-        console.log("[EMBED] Generated TikTok embed URL:", embedUrl);
+        // TikTok embed v2 with autoplay and mute
+        const embedUrl = `https://www.tiktok.com/embed/v2/${videoMatch[1]}?autoplay=1&mute=1`;
+        console.log("[EMBED] TikTok embed URL:", embedUrl);
         return embedUrl;
       }
       
@@ -129,12 +133,11 @@ async function buildEmbedUrl(url: string, platform: string): Promise<string> {
         const response = await fetch(oembedUrl, { headers: { 'Accept': 'application/json' } });
         if (response.ok) {
           const data = await response.json();
-          // oEmbed returns HTML with iframe, extract video ID from it
           if (data.html) {
             const iframeMatch = data.html.match(/embed\/v2\/(\d+)/);
             if (iframeMatch) {
-              const embedUrl = `https://www.tiktok.com/embed/v2/${iframeMatch[1]}`;
-              console.log("[EMBED] Generated TikTok embed from oEmbed:", embedUrl);
+              const embedUrl = `https://www.tiktok.com/embed/v2/${iframeMatch[1]}?autoplay=1&mute=1`;
+              console.log("[EMBED] TikTok embed from oEmbed:", embedUrl);
               return embedUrl;
             }
           }
@@ -144,32 +147,35 @@ async function buildEmbedUrl(url: string, platform: string): Promise<string> {
       }
       
       console.error("[EMBED] FAILED to generate TikTok embed URL for:", url);
-      // Return a placeholder that will show error in frontend
       return '';
     }
     
-    // ============ INSTAGRAM ============
+    // ============ INSTAGRAM REELS ============
     if (platform === 'instagram') {
       // Format: /reel/REEL_ID/ or /p/POST_ID/
       const match = url.match(/\/(reel|p)\/([a-zA-Z0-9_-]+)/);
       if (match) {
         const type = match[1]; // 'reel' or 'p'
         const postId = match[2];
-        return `https://www.instagram.com/${type}/${postId}/embed`;
+        // Instagram embed with autoplay and muted params
+        const embedUrl = `https://www.instagram.com/${type}/${postId}/embed?autoplay=1&muted=1`;
+        console.log("[EMBED] Instagram embed URL:", embedUrl);
+        return embedUrl;
       }
     }
     
-    // ============ FACEBOOK ============
+    // ============ FACEBOOK REELS / VIDEOS ============
     if (platform === 'facebook') {
-      // Use Facebook video plugin - handles all URL formats
-      return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=0&autoplay=1`;
+      // Facebook video plugin with autoplay and mute
+      const embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=0&autoplay=1&mute=1`;
+      console.log("[EMBED] Facebook embed URL:", embedUrl);
+      return embedUrl;
     }
     
   } catch (e) {
     console.error("[EMBED] Error generating embed URL:", e);
   }
   
-  // Fallback: return empty string to indicate error
   console.log("[EMBED] Failed to generate embed URL, returning empty");
   return '';
 }
