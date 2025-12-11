@@ -60,10 +60,9 @@ export const NextLifeTimer = ({
   }
 
   const totalSeconds = Math.max(0, Math.floor(remainingMs / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
 
-  const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  // Show just seconds (e.g., "60", "59", "58"...)
+  const formattedTime = totalSeconds.toString();
 
   return (
     <div 
