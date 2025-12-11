@@ -1,7 +1,12 @@
-import { useState } from 'react';
-import { X, Link, AlertCircle, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Link, AlertCircle, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+
+interface Topic {
+  id: number;
+  name: string;
+}
 
 interface VideoLinkModalProps {
   isOpen: boolean;
@@ -72,6 +77,18 @@ const texts = {
     hu: 'Nincs aktív Creator előfizetésed.',
     en: 'You don\'t have an active Creator subscription.',
   },
+  selectTopics: {
+    hu: 'Válassz témákat (max 3)',
+    en: 'Select topics (max 3)',
+  },
+  topicsRequired: {
+    hu: 'Legalább 1 témát válassz ki!',
+    en: 'Select at least 1 topic!',
+  },
+  maxTopicsReached: {
+    hu: 'Maximum 3 témát választhatsz',
+    en: 'You can select up to 3 topics',
+  },
 };
 
 // Validate URL pattern for supported platforms
@@ -98,16 +115,63 @@ const VideoLinkModal = ({
 }: VideoLinkModalProps) => {
   const [videoUrl, setVideoUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [selectedTopicIds, setSelectedTopicIds] = useState<number[]>([]);
+
+  // Fetch topics on mount
+  useEffect(() => {
+    const fetchTopics = async () => {
+      const { data, error } = await supabase
+        .from('topics')
+        .select('id, name')
+        .order('name');
+      
+      if (!error && data) {
+        setTopics(data);
+      }
+    };
+    
+    if (isOpen) {
+      fetchTopics();
+    }
+  }, [isOpen]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setVideoUrl('');
+      setSelectedTopicIds([]);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const canAddMore = remainingActivations > 0;
+
+  const handleTopicToggle = (topicId: number) => {
+    setSelectedTopicIds(prev => {
+      if (prev.includes(topicId)) {
+        return prev.filter(id => id !== topicId);
+      } else {
+        if (prev.length >= 3) {
+          toast.error(texts.maxTopicsReached[lang]);
+          return prev;
+        }
+        return [...prev, topicId];
+      }
+    });
+  };
 
   const handleSubmit = async () => {
     if (!videoUrl.trim()) return;
 
     if (!validateVideoUrl(videoUrl)) {
       toast.error(texts.invalidUrl[lang]);
+      return;
+    }
+
+    if (selectedTopicIds.length === 0) {
+      toast.error(texts.topicsRequired[lang]);
       return;
     }
 
@@ -122,7 +186,8 @@ const VideoLinkModal = ({
       const { data, error } = await supabase.functions.invoke('submit-creator-video', {
         body: {
           video_url: videoUrl.trim(),
-          activate_now: true, // Immediately activate the video
+          activate_now: true,
+          topic_ids: selectedTopicIds,
         },
       });
 
@@ -132,9 +197,9 @@ const VideoLinkModal = ({
         toast.success(texts.success[lang]);
         onSuccess(videoUrl);
         setVideoUrl('');
+        setSelectedTopicIds([]);
         onClose();
       } else {
-        // Handle specific errors
         const errorCode = data?.error;
         if (errorCode === 'VIDEO_ALREADY_EXISTS') {
           toast.error(texts.alreadyExists[lang]);
@@ -165,7 +230,7 @@ const VideoLinkModal = ({
       />
       
       {/* Modal */}
-      <div className="relative w-[90vw] max-w-md bg-gradient-to-b from-[#0a0a2e] via-[#16213e] to-[#0f0f3d] rounded-2xl overflow-hidden border border-white/10">
+      <div className="relative w-[90vw] max-w-md max-h-[85vh] bg-gradient-to-b from-[#0a0a2e] via-[#16213e] to-[#0f0f3d] rounded-2xl overflow-hidden border border-white/10 flex flex-col">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -174,7 +239,7 @@ const VideoLinkModal = ({
           <X className="w-5 h-5 text-white" />
         </button>
 
-        <div className="p-6">
+        <div className="p-6 flex-1 overflow-y-auto">
           {/* Header */}
           <div className="text-center mb-6">
             <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center">
@@ -219,6 +284,33 @@ const VideoLinkModal = ({
             {texts.supportedPlatforms[lang]}
           </p>
 
+          {/* Topic Selector */}
+          <div className="mt-5">
+            <p className="text-white/80 text-sm font-medium mb-3">
+              {texts.selectTopics[lang]} ({selectedTopicIds.length}/3)
+            </p>
+            <div className="flex flex-wrap gap-2 max-h-[140px] overflow-y-auto p-1">
+              {topics.map((topic) => {
+                const isSelected = selectedTopicIds.includes(topic.id);
+                return (
+                  <button
+                    key={topic.id}
+                    onClick={() => handleTopicToggle(topic.id)}
+                    disabled={!canAddMore || isLoading}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
+                        : 'bg-white/10 text-white/70 hover:bg-white/20'
+                    } disabled:opacity-50`}
+                  >
+                    {isSelected && <Check className="w-3 h-3" />}
+                    {topic.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Buttons */}
           <div className="flex gap-3 mt-6">
             <button
@@ -229,7 +321,7 @@ const VideoLinkModal = ({
             </button>
             <button
               onClick={handleSubmit}
-              disabled={!videoUrl.trim() || !canAddMore || isLoading}
+              disabled={!videoUrl.trim() || selectedTopicIds.length === 0 || !canAddMore || isLoading}
               className="flex-1 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isLoading ? (
