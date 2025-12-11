@@ -269,7 +269,6 @@ const GamePreview = memo(() => {
     continueType,
     errorBannerVisible,
     gameCompleted,
-    videoAdAvailable,
     setIsAnimating,
     setCanSwipe,
     setErrorBannerVisible,
@@ -291,10 +290,18 @@ const GamePreview = memo(() => {
     setShowRescuePopup,
     triggerHaptic,
     onDoubleRewardClick: async () => {
-      // Start video ad flow and auto-accept to go directly to video
-      await videoAdFlow.startGameEndDouble(coinsEarned);
-      // Auto-accept to skip the confirmation prompt since user already clicked "Duplázom"
-      videoAdFlow.acceptPrompt();
+      // Check availability first, then start video if available
+      const available = await videoAdFlow.checkGameEndDoubleAvailable();
+      if (available) {
+        await videoAdFlow.startGameEndDouble(coinsEarned);
+        videoAdFlow.acceptPrompt();
+      } else {
+        toast.info(
+          lang === 'hu' 
+            ? 'Jelenleg nincs elérhető reklámvideó. Próbáld újra később!' 
+            : 'No ad video available right now. Try again later!'
+        );
+      }
     },
   });
 
