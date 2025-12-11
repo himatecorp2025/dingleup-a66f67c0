@@ -28,15 +28,15 @@ export const useVideoAd = () => {
     isRelevant: false,
   });
 
-  // Check if video ad is available for a context
-  const checkAvailability = useCallback(async (context: VideoAdContext): Promise<boolean> => {
+  // Check if video ad is available for a context - returns video data directly to avoid stale closure
+  const checkAvailability = useCallback(async (context: VideoAdContext): Promise<{ available: boolean; video?: VideoData; isRelevant?: boolean }> => {
     try {
       setState(prev => ({ ...prev, isLoading: true }));
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         setState(prev => ({ ...prev, isLoading: false, isAvailable: false }));
-        return false;
+        return { available: false };
       }
 
       const { data, error } = await supabase.functions.invoke('get-ad-video', {
@@ -46,22 +46,25 @@ export const useVideoAd = () => {
 
       if (error || !data?.available) {
         setState(prev => ({ ...prev, isLoading: false, isAvailable: false }));
-        return false;
+        return { available: false };
       }
+
+      const video = data.video as VideoData;
+      const isRelevant = data.is_relevant || false;
 
       setState(prev => ({
         ...prev,
         isLoading: false,
         isAvailable: true,
-        videos: [data.video],
-        isRelevant: data.is_relevant || false,
+        videos: [video],
+        isRelevant,
       }));
 
-      return true;
+      return { available: true, video, isRelevant };
     } catch (err) {
       console.error('[useVideoAd] Error checking availability:', err);
       setState(prev => ({ ...prev, isLoading: false, isAvailable: false }));
-      return false;
+      return { available: false };
     }
   }, []);
 

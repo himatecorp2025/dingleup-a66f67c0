@@ -32,13 +32,15 @@ export const useVideoAdFlow = ({ userId, onRewardClaimed }: UseVideoAdFlowOption
   // Check if daily gift doubling is available
   const checkDailyGiftDoubleAvailable = useCallback(async (): Promise<boolean> => {
     if (!userId) return false;
-    return await videoAd.checkAvailability('daily_gift');
+    const result = await videoAd.checkAvailability('daily_gift');
+    return result.available;
   }, [userId, videoAd]);
 
   // Check if game end doubling is available
   const checkGameEndDoubleAvailable = useCallback(async (): Promise<boolean> => {
     if (!userId) return false;
-    return await videoAd.checkAvailability('game_end');
+    const result = await videoAd.checkAvailability('game_end');
+    return result.available;
   }, [userId, videoAd]);
 
   // Check if refill is available (2 videos)
@@ -54,9 +56,9 @@ export const useVideoAdFlow = ({ userId, onRewardClaimed }: UseVideoAdFlowOption
     
     setState(prev => ({ ...prev, isLoading: true }));
     
-    const available = await videoAd.checkAvailability('daily_gift');
+    const result = await videoAd.checkAvailability('daily_gift');
     
-    if (!available || videoAd.videos.length === 0) {
+    if (!result.available || !result.video) {
       setState(prev => ({ ...prev, isLoading: false }));
       return;
     }
@@ -64,7 +66,7 @@ export const useVideoAdFlow = ({ userId, onRewardClaimed }: UseVideoAdFlowOption
     setState({
       showPrompt: true,
       showVideo: false,
-      videos: videoAd.videos,
+      videos: [result.video],
       totalDuration: 15,
       isLoading: false,
       context: 'daily_gift',
@@ -78,20 +80,17 @@ export const useVideoAdFlow = ({ userId, onRewardClaimed }: UseVideoAdFlowOption
     
     setState(prev => ({ ...prev, isLoading: true }));
     
-    const available = await videoAd.checkAvailability('game_end');
+    const result = await videoAd.checkAvailability('game_end');
     
-    if (!available || videoAd.videos.length === 0) {
+    if (!result.available || !result.video) {
       setState(prev => ({ ...prev, isLoading: false }));
       return false;
     }
 
-    // Store videos from videoAd before setting state
-    const loadedVideos = videoAd.videos;
-    
     setState({
       showPrompt: false,
       showVideo: true, // Go directly to video, skip prompt
-      videos: loadedVideos,
+      videos: [result.video],
       totalDuration: 15,
       isLoading: false,
       context: 'game_end',
