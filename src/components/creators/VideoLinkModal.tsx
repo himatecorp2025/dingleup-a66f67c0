@@ -299,28 +299,33 @@ const VideoLinkModal = ({
   // App-first deep linking: try app scheme, only fall back to web if app doesn't open
   const openAppOrWeb = (appScheme: string, webUrl: string) => {
     let appOpened = false;
+    const startTime = Date.now();
     
-    // Listen for visibility change - if page becomes hidden, app opened successfully
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        appOpened = true;
-      }
+    const markAppOpened = () => {
+      appOpened = true;
     };
     
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Multiple event listeners for reliability
+    window.addEventListener('blur', markAppOpened);
+    window.addEventListener('pagehide', markAppOpened);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) markAppOpened();
+    });
     
     // Try to open the app
     window.location.href = appScheme;
     
     // After timeout, check if app opened - if not, open web version
     setTimeout(() => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', markAppOpened);
+      window.removeEventListener('pagehide', markAppOpened);
       
-      // Only open web if app didn't open (page stayed visible)
-      if (!appOpened && !document.hidden) {
+      // Only open web if app didn't open AND enough time passed (user didn't switch away)
+      const elapsed = Date.now() - startTime;
+      if (!appOpened && !document.hidden && document.hasFocus() && elapsed >= 2000) {
         window.open(webUrl, '_blank');
       }
-    }, 1500);
+    }, 2500);
   };
 
   const handleTopicToggle = (topicId: number) => {
