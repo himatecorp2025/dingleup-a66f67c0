@@ -169,18 +169,10 @@ const DailyGiftDialog = ({
       // CRITICAL: Show success state on button
       setClaimed(true);
       
-      // Use pre-loaded video availability from store (no API call needed)
-      if (videoAdAvailable) {
-        // Show video prompt instead of auto-closing
-        setTimeout(() => {
-          setShowVideoPrompt(true);
-        }, 1000);
-      } else {
-        // Auto-close after 1.5 seconds if no video available
-        setTimeout(() => {
-          onLater();
-        }, 1500);
-      }
+      // Auto-close after 1.5 seconds - double option is already visible on shield
+      setTimeout(() => {
+        onLater();
+      }, 1500);
     }
   };
 
@@ -198,12 +190,22 @@ const DailyGiftDialog = ({
   const handleVideoComplete = async () => {
     await videoAdFlow.onVideoComplete();
     setShowVideoModal(false);
-    onLater();
+    // Auto-claim the daily gift after video completion (doubled reward handled by videoAdFlow)
+    if (!claimed) {
+      const success = await onClaim();
+      if (success) {
+        setClaimed(true);
+      }
+    }
+    // Close dialog after short delay to show success
+    setTimeout(() => {
+      onLater();
+    }, 500);
   };
 
   const handleVideoClose = () => {
     setShowVideoModal(false);
-    onLater();
+    // Don't close the dialog - user can still claim normal reward
   };
 
   if (!open) return null;
@@ -491,98 +493,218 @@ const DailyGiftDialog = ({
                 </div>
 
                 {/* Today's Reward - BIG DISPLAY with large 3D coin */}
-                <div className="relative rounded-xl mb-[4%]" style={{ padding: '2.5% 8%' }}>
-                  <div className="absolute inset-0 rounded-xl translate-y-0.5 translate-x-0.5"
-                       style={{
-                         background: 'rgba(0,0,0,0.3)',
-                         filter: 'blur(4px)',
-                         zIndex: -1
-                       }} />
+                {/* Show both options side by side if video available */}
+                <div className={`flex ${videoAdAvailable ? 'gap-[3%]' : ''} justify-center mb-[4%] w-full`}>
                   
-                  <div className="absolute inset-0 rounded-xl"
-                       style={{
-                         background: 'linear-gradient(135deg, hsl(var(--dup-gold-700)), hsl(var(--dup-gold-600)) 50%, hsl(var(--dup-gold-800)))',
-                         boxShadow: 'inset 0 0 0 2px hsl(var(--dup-gold-900)), 0 6px 16px rgba(0,0,0,0.35)'
-                       }} />
-                  
-                  <div className="absolute inset-[3px] rounded-xl"
-                       style={{
-                         background: 'linear-gradient(180deg, hsl(var(--dup-gold-400)), hsl(var(--dup-gold-500)) 40%, hsl(var(--dup-gold-700)))',
-                         boxShadow: 'inset 0 1px 0 hsl(var(--dup-gold-300))'
-                       }} />
-                  
-                  <div className="absolute inset-[6px] rounded-xl"
-                       style={{
-                         background: 'radial-gradient(ellipse 100% 80% at 50% -10%, hsl(var(--dup-purple-500)) 0%, hsl(var(--dup-purple-600)) 40%, hsl(var(--dup-purple-800)) 100%)',
-                         boxShadow: 'inset 0 12px 24px rgba(255,255,255,0.15), inset 0 -12px 24px rgba(0,0,0,0.3)'
-                       }} />
-                  
-                  <div className="absolute inset-[6px] rounded-xl pointer-events-none"
-                       style={{
-                         background: 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.08) 8px, rgba(255,255,255,0.08) 12px, transparent 12px, transparent 20px, rgba(255,255,255,0.05) 20px, rgba(255,255,255,0.05) 24px)',
-                         opacity: 0.7
-                       }} />
-                  
-                  <div className="absolute inset-[6px] rounded-xl pointer-events-none"
-                       style={{
-                         background: 'radial-gradient(ellipse 100% 60% at 30% 0%, rgba(255,255,255,0.35), transparent 60%)'
-                       }} />
-                  
-                  <div className="relative z-10 flex items-center justify-center gap-[0.4em]">
-                    {/* Large 3D Coin SVG with pulse animation */}
-                    <svg viewBox="0 0 100 100" style={{ 
-                      width: 'clamp(32px, 10cqw, 64px)', 
-                      height: 'auto',
-                      animation: 'bigCoinPulse 1.5s ease-in-out infinite'
-                    }}>
-                      <defs>
-                        <linearGradient id="bigCoinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#FFD700" />
-                          <stop offset="25%" stopColor="#FFC700" />
-                          <stop offset="50%" stopColor="#FFA500" />
-                          <stop offset="75%" stopColor="#FF8C00" />
-                          <stop offset="100%" stopColor="#FFD700" />
-                        </linearGradient>
-                        <radialGradient id="bigCoinHighlight" cx="35%" cy="30%">
-                          <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
-                          <stop offset="40%" stopColor="rgba(255,255,255,0.4)" />
-                          <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-                        </radialGradient>
-                        <filter id="bigCoinShadow">
-                          <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#FF8C00" floodOpacity="0.8"/>
-                        </filter>
-                      </defs>
-                      {/* Outer rim - 3D effect */}
-                      <circle cx="50" cy="50" r="48" fill="url(#bigCoinGrad)" stroke="#B8860B" strokeWidth="3" filter="url(#bigCoinShadow)" />
-                      {/* Inner circle with depth */}
-                      <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(139,69,19,0.4)" strokeWidth="2" />
-                      {/* Highlight effect */}
-                      <ellipse cx="42" cy="38" rx="22" ry="18" fill="url(#bigCoinHighlight)" opacity="0.85" />
-                      {/* Center emblem */}
-                      <circle cx="50" cy="50" r="28" fill="none" stroke="rgba(139,69,19,0.3)" strokeWidth="1.5" />
-                    </svg>
-                    <span className="font-black text-white"
-                          style={{ 
-                            fontSize: 'clamp(1.5rem, 12cqw, 2.5rem)',
-                            textShadow: '0 0 16px rgba(255,255,255,0.3), 0 2px 8px rgba(0,0,0,0.9)',
-                            letterSpacing: '0.02em'
-                          }}>
-                      +{nextReward}
-                    </span>
+                  {/* Normal reward option - purple */}
+                  <div 
+                    className={`relative rounded-xl ${videoAdAvailable ? 'cursor-default' : ''}`} 
+                    style={{ padding: '2.5% 6%', flex: videoAdAvailable ? '1' : 'none' }}
+                  >
+                    <div className="absolute inset-0 rounded-xl translate-y-0.5 translate-x-0.5"
+                         style={{
+                           background: 'rgba(0,0,0,0.3)',
+                           filter: 'blur(4px)',
+                           zIndex: -1
+                         }} />
+                    
+                    <div className="absolute inset-0 rounded-xl"
+                         style={{
+                           background: 'linear-gradient(135deg, hsl(var(--dup-gold-700)), hsl(var(--dup-gold-600)) 50%, hsl(var(--dup-gold-800)))',
+                           boxShadow: 'inset 0 0 0 2px hsl(var(--dup-gold-900)), 0 6px 16px rgba(0,0,0,0.35)'
+                         }} />
+                    
+                    <div className="absolute inset-[3px] rounded-xl"
+                         style={{
+                           background: 'linear-gradient(180deg, hsl(var(--dup-gold-400)), hsl(var(--dup-gold-500)) 40%, hsl(var(--dup-gold-700)))',
+                           boxShadow: 'inset 0 1px 0 hsl(var(--dup-gold-300))'
+                         }} />
+                    
+                    <div className="absolute inset-[6px] rounded-xl"
+                         style={{
+                           background: 'radial-gradient(ellipse 100% 80% at 50% -10%, hsl(var(--dup-purple-500)) 0%, hsl(var(--dup-purple-600)) 40%, hsl(var(--dup-purple-800)) 100%)',
+                           boxShadow: 'inset 0 12px 24px rgba(255,255,255,0.15), inset 0 -12px 24px rgba(0,0,0,0.3)'
+                         }} />
+                    
+                    <div className="absolute inset-[6px] rounded-xl pointer-events-none"
+                         style={{
+                           background: 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.08) 8px, rgba(255,255,255,0.08) 12px, transparent 12px, transparent 20px, rgba(255,255,255,0.05) 20px, rgba(255,255,255,0.05) 24px)',
+                           opacity: 0.7
+                         }} />
+                    
+                    <div className="absolute inset-[6px] rounded-xl pointer-events-none"
+                         style={{
+                           background: 'radial-gradient(ellipse 100% 60% at 30% 0%, rgba(255,255,255,0.35), transparent 60%)'
+                         }} />
+                    
+                    <div className="relative z-10 flex items-center justify-center gap-[0.4em]">
+                      {/* Large 3D Coin SVG with pulse animation */}
+                      <svg viewBox="0 0 100 100" style={{ 
+                        width: videoAdAvailable ? 'clamp(24px, 8cqw, 48px)' : 'clamp(32px, 10cqw, 64px)', 
+                        height: 'auto',
+                        animation: 'bigCoinPulse 1.5s ease-in-out infinite'
+                      }}>
+                        <defs>
+                          <linearGradient id="bigCoinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#FFD700" />
+                            <stop offset="25%" stopColor="#FFC700" />
+                            <stop offset="50%" stopColor="#FFA500" />
+                            <stop offset="75%" stopColor="#FF8C00" />
+                            <stop offset="100%" stopColor="#FFD700" />
+                          </linearGradient>
+                          <radialGradient id="bigCoinHighlight" cx="35%" cy="30%">
+                            <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
+                            <stop offset="40%" stopColor="rgba(255,255,255,0.4)" />
+                            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+                          </radialGradient>
+                          <filter id="bigCoinShadow">
+                            <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#FF8C00" floodOpacity="0.8"/>
+                          </filter>
+                        </defs>
+                        <circle cx="50" cy="50" r="48" fill="url(#bigCoinGrad)" stroke="#B8860B" strokeWidth="3" filter="url(#bigCoinShadow)" />
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(139,69,19,0.4)" strokeWidth="2" />
+                        <ellipse cx="42" cy="38" rx="22" ry="18" fill="url(#bigCoinHighlight)" opacity="0.85" />
+                        <circle cx="50" cy="50" r="28" fill="none" stroke="rgba(139,69,19,0.3)" strokeWidth="1.5" />
+                      </svg>
+                      <span className="font-black text-white"
+                            style={{ 
+                              fontSize: videoAdAvailable ? 'clamp(1.2rem, 9cqw, 2rem)' : 'clamp(1.5rem, 12cqw, 2.5rem)',
+                              textShadow: '0 0 16px rgba(255,255,255,0.3), 0 2px 8px rgba(0,0,0,0.9)',
+                              letterSpacing: '0.02em'
+                            }}>
+                        +{nextReward}
+                      </span>
+                    </div>
                   </div>
-                  <style>{`
-                    @keyframes bigCoinPulse {
-                      0%, 100% { 
-                        transform: scale(1) rotate(0deg);
-                        filter: drop-shadow(0 0 12px rgba(251,191,36,0.8));
-                      }
-                      50% { 
-                        transform: scale(1.08) rotate(5deg);
-                        filter: drop-shadow(0 0 20px rgba(251,191,36,1)) drop-shadow(0 0 32px rgba(251,191,36,0.6));
-                      }
-                    }
-                  `}</style>
+
+                  {/* Double reward option - RED - only show if video available */}
+                  {videoAdAvailable && (
+                    <div 
+                      className="relative rounded-xl cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                      style={{ padding: '2.5% 6%', flex: '1' }}
+                      onClick={handleVideoAccept}
+                    >
+                      <div className="absolute inset-0 rounded-xl translate-y-0.5 translate-x-0.5"
+                           style={{
+                             background: 'rgba(0,0,0,0.3)',
+                             filter: 'blur(4px)',
+                             zIndex: -1
+                           }} />
+                      
+                      {/* Gold frame - same as normal */}
+                      <div className="absolute inset-0 rounded-xl"
+                           style={{
+                             background: 'linear-gradient(135deg, hsl(var(--dup-gold-700)), hsl(var(--dup-gold-600)) 50%, hsl(var(--dup-gold-800)))',
+                             boxShadow: 'inset 0 0 0 2px hsl(var(--dup-gold-900)), 0 6px 16px rgba(0,0,0,0.35)'
+                           }} />
+                      
+                      <div className="absolute inset-[3px] rounded-xl"
+                           style={{
+                             background: 'linear-gradient(180deg, hsl(var(--dup-gold-400)), hsl(var(--dup-gold-500)) 40%, hsl(var(--dup-gold-700)))',
+                             boxShadow: 'inset 0 1px 0 hsl(var(--dup-gold-300))'
+                           }} />
+                      
+                      {/* RED inner - instead of purple */}
+                      <div className="absolute inset-[6px] rounded-xl"
+                           style={{
+                             background: 'radial-gradient(ellipse 100% 80% at 50% -10%, hsl(0 85% 55%) 0%, hsl(0 80% 45%) 40%, hsl(0 75% 35%) 100%)',
+                             boxShadow: 'inset 0 12px 24px rgba(255,255,255,0.15), inset 0 -12px 24px rgba(0,0,0,0.3)'
+                           }} />
+                      
+                      <div className="absolute inset-[6px] rounded-xl pointer-events-none"
+                           style={{
+                             background: 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.08) 8px, rgba(255,255,255,0.08) 12px, transparent 12px, transparent 20px, rgba(255,255,255,0.05) 20px, rgba(255,255,255,0.05) 24px)',
+                             opacity: 0.7
+                           }} />
+                      
+                      <div className="absolute inset-[6px] rounded-xl pointer-events-none"
+                           style={{
+                             background: 'radial-gradient(ellipse 100% 60% at 30% 0%, rgba(255,255,255,0.35), transparent 60%)'
+                           }} />
+                      
+                      <div className="relative z-10 flex items-center justify-center gap-[0.3em]">
+                        {/* Large 3D Coin SVG */}
+                        <svg viewBox="0 0 100 100" style={{ 
+                          width: 'clamp(24px, 8cqw, 48px)', 
+                          height: 'auto',
+                          animation: 'bigCoinPulseRed 1.5s ease-in-out infinite'
+                        }}>
+                          <defs>
+                            <linearGradient id="bigCoinGradRed" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="#FFD700" />
+                              <stop offset="25%" stopColor="#FFC700" />
+                              <stop offset="50%" stopColor="#FFA500" />
+                              <stop offset="75%" stopColor="#FF8C00" />
+                              <stop offset="100%" stopColor="#FFD700" />
+                            </linearGradient>
+                            <radialGradient id="bigCoinHighlightRed" cx="35%" cy="30%">
+                              <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
+                              <stop offset="40%" stopColor="rgba(255,255,255,0.4)" />
+                              <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+                            </radialGradient>
+                            <filter id="bigCoinShadowRed">
+                              <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#DC2626" floodOpacity="0.8"/>
+                            </filter>
+                          </defs>
+                          <circle cx="50" cy="50" r="48" fill="url(#bigCoinGradRed)" stroke="#B8860B" strokeWidth="3" filter="url(#bigCoinShadowRed)" />
+                          <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(139,69,19,0.4)" strokeWidth="2" />
+                          <ellipse cx="42" cy="38" rx="22" ry="18" fill="url(#bigCoinHighlightRed)" opacity="0.85" />
+                          <circle cx="50" cy="50" r="28" fill="none" stroke="rgba(139,69,19,0.3)" strokeWidth="1.5" />
+                        </svg>
+                        
+                        <span className="font-black text-white"
+                              style={{ 
+                                fontSize: 'clamp(1.2rem, 9cqw, 2rem)',
+                                textShadow: '0 0 16px rgba(255,255,255,0.3), 0 2px 8px rgba(0,0,0,0.9)',
+                                letterSpacing: '0.02em'
+                              }}>
+                          +{nextReward * 2}
+                        </span>
+                        
+                        {/* Film icon SVG */}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                             style={{ 
+                               width: 'clamp(16px, 5cqw, 28px)', 
+                               height: 'auto',
+                               color: 'white',
+                               filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
+                             }}>
+                          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+                          <line x1="7" y1="2" x2="7" y2="22"/>
+                          <line x1="17" y1="2" x2="17" y2="22"/>
+                          <line x1="2" y1="12" x2="22" y2="12"/>
+                          <line x1="2" y1="7" x2="7" y2="7"/>
+                          <line x1="2" y1="17" x2="7" y2="17"/>
+                          <line x1="17" y1="17" x2="22" y2="17"/>
+                          <line x1="17" y1="7" x2="22" y2="7"/>
+                        </svg>
+                      </div>
+                    </div>
+                  )}
                 </div>
+                
+                <style>{`
+                  @keyframes bigCoinPulse {
+                    0%, 100% { 
+                      transform: scale(1) rotate(0deg);
+                      filter: drop-shadow(0 0 12px rgba(251,191,36,0.8));
+                    }
+                    50% { 
+                      transform: scale(1.08) rotate(5deg);
+                      filter: drop-shadow(0 0 20px rgba(251,191,36,1)) drop-shadow(0 0 32px rgba(251,191,36,0.6));
+                    }
+                  }
+                  @keyframes bigCoinPulseRed {
+                    0%, 100% { 
+                      transform: scale(1) rotate(0deg);
+                      filter: drop-shadow(0 0 12px rgba(220,38,38,0.8));
+                    }
+                    50% { 
+                      transform: scale(1.08) rotate(5deg);
+                      filter: drop-shadow(0 0 20px rgba(220,38,38,1)) drop-shadow(0 0 32px rgba(220,38,38,0.6));
+                    }
+                  }
+                `}</style>
 
                 {/* Hex Accept Button */}
                 <div 
