@@ -290,12 +290,9 @@ const GamePreview = memo(() => {
     setShowRescuePopup,
     triggerHaptic,
     onDoubleRewardClick: async () => {
-      // Check availability first, then start video if available
-      const available = await videoAdFlow.checkGameEndDoubleAvailable();
-      if (available) {
-        await videoAdFlow.startGameEndDouble(coinsEarned);
-        videoAdFlow.acceptPrompt();
-      } else {
+      // Start video ad flow - goes directly to video if available
+      const started = await videoAdFlow.startGameEndDouble(coinsEarned);
+      if (!started) {
         toast.info(
           lang === 'hu' 
             ? 'Jelenleg nincs elérhető reklámvideó. Próbáld újra később!' 

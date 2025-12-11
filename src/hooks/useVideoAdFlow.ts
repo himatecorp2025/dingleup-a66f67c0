@@ -73,8 +73,8 @@ export const useVideoAdFlow = ({ userId, onRewardClaimed }: UseVideoAdFlowOption
   }, [userId, videoAd]);
 
   // Start game end double flow
-  const startGameEndDouble = useCallback(async (coinsEarned: number) => {
-    if (!userId) return;
+  const startGameEndDouble = useCallback(async (coinsEarned: number): Promise<boolean> => {
+    if (!userId) return false;
     
     setState(prev => ({ ...prev, isLoading: true }));
     
@@ -82,18 +82,23 @@ export const useVideoAdFlow = ({ userId, onRewardClaimed }: UseVideoAdFlowOption
     
     if (!available || videoAd.videos.length === 0) {
       setState(prev => ({ ...prev, isLoading: false }));
-      return;
+      return false;
     }
 
+    // Store videos from videoAd before setting state
+    const loadedVideos = videoAd.videos;
+    
     setState({
-      showPrompt: true,
-      showVideo: false,
-      videos: videoAd.videos,
+      showPrompt: false,
+      showVideo: true, // Go directly to video, skip prompt
+      videos: loadedVideos,
       totalDuration: 15,
       isLoading: false,
       context: 'game_end',
       originalReward: coinsEarned,
     });
+    
+    return true;
   }, [userId, videoAd]);
 
   // Start refill flow (2 videos, 30 seconds total)
