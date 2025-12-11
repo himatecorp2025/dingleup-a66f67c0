@@ -312,15 +312,15 @@ export const VideoAdModal = ({
           backgroundColor: '#000',
         }}
       >
-        {/* Video iframe - heavily scaled and repositioned to hide ALL TikTok UI */}
+        {/* Video iframe - scaled and shifted up to hide bottom TikTok UI (username, description) but keep right icons */}
         {hasVideos && !videoError ? (
           <iframe
             src={embedUrl}
             style={{
               position: 'absolute',
-              top: '42%', // Shift up to hide bottom UI (username, description)
-              left: '35%', // Shift left to hide right side UI (likes, comments, share)
-              transform: 'translate(-50%, -50%) scale(2.5)', // Scale up significantly to crop all TikTok UI
+              top: '40%', // Shift up to hide bottom UI (username, description)
+              left: '50%', // Keep centered to show right side icons
+              transform: 'translate(-50%, -50%) scale(1.6)', // Scale up to crop bottom
               width: '100vw',
               height: '100dvh',
               border: 'none',
