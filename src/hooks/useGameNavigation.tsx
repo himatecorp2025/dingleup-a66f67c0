@@ -114,7 +114,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
           <div className="text-center text-base font-black mb-1 bg-gradient-to-r from-yellow-300 via-yellow-100 to-yellow-300 bg-clip-text text-transparent">
             {t('game_results.title')}
           </div>
-          <div className={`grid ${coinsEarned > 0 && videoAdAvailable ? 'grid-cols-4' : 'grid-cols-3'} gap-1.5 text-xs`}>
+          <div className={`grid ${coinsEarned > 0 ? 'grid-cols-4' : 'grid-cols-3'} gap-1.5 text-xs`}>
             {/* Box 1: Correct answers */}
             <div className="flex flex-col items-center bg-black/30 rounded-lg p-1.5 border border-yellow-500/20">
               <div className="text-base mb-0.5">✅</div>
@@ -127,8 +127,8 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
               <div className="font-bold text-yellow-400 text-sm">{coinsEarned}</div>
               <div className="text-[9px] opacity-70">{t('game_results.gold')}</div>
             </div>
-            {/* Box 3: Double reward - only show if video ad available */}
-            {coinsEarned > 0 && videoAdAvailable ? (
+            {/* Box 3: Double reward - ALWAYS show if coinsEarned > 0, video will be fetched on-demand */}
+            {coinsEarned > 0 ? (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
