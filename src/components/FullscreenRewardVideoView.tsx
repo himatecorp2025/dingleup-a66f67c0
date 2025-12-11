@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { X } from 'lucide-react';
+import { X, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/i18n';
 import introVideo from '@/assets/loading-video.mp4';
@@ -8,8 +8,9 @@ import dingleupLogo from '@/assets/dingleup-logo-loading.png';
 export interface RewardVideo {
   id: string;
   embedUrl: string;
+  videoUrl?: string; // Original video URL for "Go to creator" link
   platform: 'tiktok' | 'youtube' | 'instagram' | 'facebook';
-  durationSeconds?: number; // Video duration in seconds
+  durationSeconds?: number;
 }
 
 interface FullscreenRewardVideoViewProps {
@@ -28,7 +29,6 @@ const buildAutoplayUrl = (video: RewardVideo): string => {
   try {
     const urlObj = new URL(url);
     
-    // Platform-specific autoplay params
     switch (video.platform) {
       case 'youtube':
         urlObj.searchParams.set('autoplay', '1');
@@ -40,16 +40,13 @@ const buildAutoplayUrl = (video: RewardVideo): string => {
         urlObj.searchParams.set('modestbranding', '1');
         break;
       case 'tiktok':
-        // TikTok embed auto-plays by default, but ensure it's set
         urlObj.searchParams.set('autoplay', '1');
         urlObj.searchParams.set('mute', '1');
         break;
       case 'instagram':
-        // Instagram Reels embed
         urlObj.searchParams.set('autoplay', '1');
         break;
       case 'facebook':
-        // Facebook video embed
         urlObj.searchParams.set('autoplay', '1');
         urlObj.searchParams.set('mute', '1');
         break;
@@ -57,9 +54,37 @@ const buildAutoplayUrl = (video: RewardVideo): string => {
     
     return urlObj.toString();
   } catch (e) {
-    // If URL parsing fails, return original
     return url;
   }
+};
+
+// Derive original video URL from embed URL
+const getOriginalVideoUrl = (video: RewardVideo): string => {
+  if (video.videoUrl) return video.videoUrl;
+  
+  // Try to derive from embedUrl
+  try {
+    if (video.platform === 'tiktok') {
+      // TikTok embed: https://www.tiktok.com/embed/v2/VIDEO_ID
+      const match = video.embedUrl.match(/\/embed\/v2\/(\d+)/);
+      if (match) {
+        return `https://www.tiktok.com/@user/video/${match[1]}`;
+      }
+    } else if (video.platform === 'youtube') {
+      // YouTube embed: https://www.youtube.com/embed/VIDEO_ID
+      const match = video.embedUrl.match(/\/embed\/([^?]+)/);
+      if (match) {
+        return `https://www.youtube.com/watch?v=${match[1]}`;
+      }
+    } else if (video.platform === 'instagram') {
+      // Instagram embed
+      return video.embedUrl.replace('/embed', '');
+    }
+  } catch (e) {
+    // Fallback
+  }
+  
+  return video.embedUrl;
 };
 
 export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps> = ({
@@ -78,12 +103,13 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
   const [canClose, setCanClose] = useState(false);
   const [timerFinished, setTimerFinished] = useState(false);
   const [showIntroVideo, setShowIntroVideo] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false); // Black overlay during switch
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [showCreatorLink, setShowCreatorLink] = useState(false);
   const watchedIdsRef = useRef<Set<string>>(new Set());
   const videoQueueRef = useRef<RewardVideo[]>([...videos]);
-  const currentVideoStartRef = useRef<number>(Date.now());
   const [videoKey, setVideoKey] = useState(0);
   const introVideoRef = useRef<HTMLVideoElement>(null);
+  const lastVideoSwitchRef = useRef<number>(Date.now());
 
   const currentVideo = videoQueueRef.current[currentVideoIndex];
 
@@ -109,100 +135,28 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
     };
   }, []);
 
-  // Single unified timer - Date.now() based for accuracy
+  // Simple timer: every 15 seconds switch video, at 12 seconds show creator link
   useEffect(() => {
     const interval = setInterval(() => {
-      const elapsed = (Date.now() - startTimeRef.current) / 1000;
-      const remaining = Math.max(0, totalDurationSeconds - Math.floor(elapsed));
-      
+      const totalElapsed = (Date.now() - startTimeRef.current) / 1000;
+      const remaining = Math.max(0, totalDurationSeconds - Math.floor(totalElapsed));
       setSecondsLeft(remaining);
       
-      // If already showing intro video or timer finished, skip video switching logic
-      if (showIntroVideo || timerFinished || isTransitioning) {
-        // Timer finished - show close button
-        if (remaining === 0 && !timerFinished) {
-          videoQueueRef.current.forEach(v => watchedIdsRef.current.add(v.id));
-          setTimerFinished(true);
-          setCanClose(true);
-          // ALWAYS show intro video when timer ends (hide iframe completely)
-          setShowIntroVideo(true);
-          
-          // Show toast with DOUBLED amount (rewardAmount * 2)
-          let toastMessage: string;
-          if (context === 'refill') {
-            toastMessage = lang === 'hu' 
-              ? 'Zárd be a videót a jutalom jóváírásához! +500 arany és 5 élet' 
-              : 'Close the video to claim your reward! +500 gold and 5 lives';
-          } else if (rewardAmount) {
-            const doubledAmount = rewardAmount * 2;
-            toastMessage = lang === 'hu' 
-              ? `Zárd be a videót a jutalom jóváírásához! +${doubledAmount} arany` 
-              : `Close the video to claim your reward! +${doubledAmount} gold`;
-          } else {
-            toastMessage = lang === 'hu' 
-              ? 'Zárd be a videót a jutalom jóváírásához!' 
-              : 'Close the video to claim your reward!';
-          }
-          
-          toast.success(toastMessage, { position: 'top-center', duration: 2000 });
-        }
-        return;
-      }
-      
-      // Check if current video has ended and we need to switch
-      const currentVid = videoQueueRef.current[currentVideoIndex];
-      if (currentVid && currentVid.durationSeconds && currentVid.durationSeconds > 0) {
-        const videoElapsed = (Date.now() - currentVideoStartRef.current) / 1000;
-        
-        // CRITICAL: Switch 8 seconds EARLY to completely prevent TikTok "Ajánlott tartalom"
-        // TikTok shows recommendations VERY early, need aggressive threshold
-        const switchThreshold = Math.max(0, currentVid.durationSeconds - 8);
-        
-        if (videoElapsed >= switchThreshold) {
-          // IMMEDIATELY show transition overlay with logo to hide TikTok recommendations
-          setIsTransitioning(true);
-          
-          // Mark current video as watched
-          watchedIdsRef.current.add(currentVid.id);
-          
-          // Short delay for overlay to appear, then switch
-          setTimeout(() => {
-            // Decision: if >3 sec remaining → next creator video, else → intro video
-            if (remaining > 3) {
-              console.log('[FullscreenRewardVideoView] Video ending, >3 sec remaining → next creator video');
-              const nextIndex = (currentVideoIndex + 1) % videoQueueRef.current.length;
-              setCurrentVideoIndex(nextIndex);
-              currentVideoStartRef.current = Date.now();
-              setVideoKey(prev => prev + 1);
-            } else {
-              console.log('[FullscreenRewardVideoView] Video ending, ≤3 sec remaining → intro video');
-              setShowIntroVideo(true);
-            }
-            
-            // Remove transition overlay after switch
-            setTimeout(() => {
-              setIsTransitioning(false);
-            }, 100);
-          }, 50);
-        }
-      }
-      
-      // Timer finished - show close button and switch to intro video
+      // Timer finished
       if (remaining === 0 && !timerFinished) {
         videoQueueRef.current.forEach(v => watchedIdsRef.current.add(v.id));
         setTimerFinished(true);
         setCanClose(true);
-        // ALWAYS show intro video when timer ends (hide iframe completely)
         setShowIntroVideo(true);
+        setShowCreatorLink(false);
         
-        // Show toast with DOUBLED amount (rewardAmount * 2)
+        const doubledAmount = rewardAmount ? rewardAmount * 2 : 0;
         let toastMessage: string;
         if (context === 'refill') {
           toastMessage = lang === 'hu' 
             ? 'Zárd be a videót a jutalom jóváírásához! +500 arany és 5 élet' 
             : 'Close the video to claim your reward! +500 gold and 5 lives';
-        } else if (rewardAmount) {
-          const doubledAmount = rewardAmount * 2;
+        } else if (doubledAmount > 0) {
           toastMessage = lang === 'hu' 
             ? `Zárd be a videót a jutalom jóváírásához! +${doubledAmount} arany` 
             : `Close the video to claim your reward! +${doubledAmount} gold`;
@@ -211,19 +165,64 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
             ? 'Zárd be a videót a jutalom jóváírásához!' 
             : 'Close the video to claim your reward!';
         }
-        
         toast.success(toastMessage, { position: 'top-center', duration: 2000 });
+        return;
+      }
+      
+      if (showIntroVideo || timerFinished || isTransitioning) return;
+      
+      // Time elapsed in current 15-second segment
+      const elapsedInSegment = (Date.now() - lastVideoSwitchRef.current) / 1000;
+      
+      // At 12 seconds (3 seconds before switch), show creator link button
+      if (elapsedInSegment >= 12 && !showCreatorLink) {
+        setShowCreatorLink(true);
+      }
+      
+      // At 15 seconds, switch to next video
+      if (elapsedInSegment >= 15) {
+        // Mark current video as watched
+        if (currentVideo) {
+          watchedIdsRef.current.add(currentVideo.id);
+        }
+        
+        // Show transition overlay
+        setIsTransitioning(true);
+        setShowCreatorLink(false);
+        
+        setTimeout(() => {
+          if (remaining > 3) {
+            // More time left - switch to next video
+            const nextIndex = (currentVideoIndex + 1) % videoQueueRef.current.length;
+            setCurrentVideoIndex(nextIndex);
+            lastVideoSwitchRef.current = Date.now();
+            setVideoKey(prev => prev + 1);
+          } else {
+            // Less than 3 seconds - show intro video
+            setShowIntroVideo(true);
+          }
+          
+          setTimeout(() => {
+            setIsTransitioning(false);
+          }, 100);
+        }, 50);
       }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [totalDurationSeconds, lang, currentVideoIndex, timerFinished, showIntroVideo, isTransitioning, context, rewardAmount]);
+  }, [totalDurationSeconds, lang, currentVideoIndex, timerFinished, showIntroVideo, isTransitioning, context, rewardAmount, currentVideo, showCreatorLink]);
 
   const handleClose = useCallback(() => {
     if (!canClose) return;
     onCompleted(Array.from(watchedIdsRef.current));
     onClose();
   }, [canClose, onCompleted, onClose]);
+
+  const handleCreatorLinkClick = useCallback(() => {
+    if (!currentVideo) return;
+    const url = getOriginalVideoUrl(currentVideo);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }, [currentVideo]);
 
   if (!currentVideo && !showIntroVideo) return null;
 
@@ -238,7 +237,7 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         backgroundColor: '#000000',
       }}
     >
-      {/* Solid black background layer - ALWAYS visible */}
+      {/* Solid black background layer */}
       <div 
         className="absolute inset-0" 
         style={{ backgroundColor: '#000000', zIndex: 0 }}
@@ -248,10 +247,7 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
       {isTransitioning && (
         <div 
           className="absolute inset-0 flex items-center justify-center"
-          style={{ 
-            backgroundColor: '#000000', 
-            zIndex: 50,
-          }}
+          style={{ backgroundColor: '#000000', zIndex: 50 }}
         >
           <img 
             src={dingleupLogo} 
@@ -268,7 +264,6 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
 
       {/* Show intro video OR creator video */}
       {showIntroVideo ? (
-        /* Intro video - loops until user closes */
         <video
           ref={introVideoRef}
           src={introVideo}
@@ -304,7 +299,7 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
             />
           )}
           
-          {/* Black overlay strips for sides - ALWAYS visible */}
+          {/* Black overlay strips for sides */}
           <div 
             className="absolute top-0 left-0 h-full"
             style={{ width: '15vw', backgroundColor: '#000000', zIndex: 15 }}
@@ -314,13 +309,13 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
             style={{ width: '15vw', backgroundColor: '#000000', zIndex: 15 }}
           />
           
-          {/* Top black overlay - ALWAYS visible */}
+          {/* Top black overlay */}
           <div 
             className="absolute top-0 left-0 right-0"
             style={{ height: '15vh', backgroundColor: '#000000', zIndex: 15 }}
           />
           
-          {/* Bottom black overlay - ALWAYS visible */}
+          {/* Bottom black overlay */}
           <div 
             className="absolute bottom-0 left-0 right-0"
             style={{ height: '15vh', backgroundColor: '#000000', zIndex: 15 }}
@@ -378,6 +373,28 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
             />
           ))}
         </div>
+      )}
+
+      {/* TikTok-style "Go to creator" button - bottom left, appears at 12 seconds */}
+      {showCreatorLink && currentVideo && !showIntroVideo && !isTransitioning && (
+        <button
+          onClick={handleCreatorLinkClick}
+          className="absolute flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 animate-fade-in"
+          style={{
+            bottom: 'max(env(safe-area-inset-bottom, 0px), 100px)',
+            left: '16px',
+            zIndex: 60,
+            backgroundColor: 'rgba(255,255,255,0.15)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.3)',
+            color: '#fff',
+            fontSize: '14px',
+            fontWeight: 600,
+          }}
+        >
+          <ExternalLink size={16} />
+          <span>{lang === 'hu' ? 'Tovább az alkotó oldalára' : 'Go to creator page'}</span>
+        </button>
       )}
 
       {/* Close button - only visible when countdown finished */}
