@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { X, AlertTriangle, ExternalLink } from 'lucide-react';
+import { X, AlertTriangle, ExternalLink, Play } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import { toast } from 'sonner';
 
@@ -25,12 +25,16 @@ interface VideoData {
 
 const SEGMENT_DURATION = 15;
 
+// Platforms that reliably support autoplay when muted
+const AUTOPLAY_PLATFORMS = ['youtube', 'tiktok', 'facebook'];
+
 /**
  * VideoAdModal - Fullscreen video ad player
  * 
  * Requirements:
  * - FULLSCREEN: 100vw × 100vh like TikTok app
  * - AUTOPLAY: Video starts automatically (muted for browser compatibility)
+ * - For Instagram: Show tap-to-play overlay, countdown starts only after tap
  * - USE BACKEND embedUrl: Don't generate URLs client-side
  * - NO PLATFORM UI: Just the video with countdown overlay
  * - MATTE BLACK background for non-9:16 videos
@@ -50,6 +54,7 @@ export const VideoAdModal = ({
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [canClose, setCanClose] = useState(false);
   const [videoError, setVideoError] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false); // Track if video has started
   const startTimeRef = useRef<number>(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const toastShownRef = useRef(false);
@@ -61,22 +66,26 @@ export const VideoAdModal = ({
       noVideo: 'Nincs elérhető videó',
       close: 'Bezárás',
       goToCreator: 'Tovább az alkotóhoz',
+      tapToPlay: 'Koppints a lejátszáshoz',
     },
     en: {
       seconds: 's',
       noVideo: 'No video available',
       close: 'Close',
       goToCreator: 'Go to creator',
+      tapToPlay: 'Tap to play',
     },
   };
   const t = texts[lang as 'hu' | 'en'] || texts.en;
 
+  const currentVideo = videos[currentVideoIndex];
+  const currentPlatform = currentVideo?.platform?.toLowerCase() || '';
+  const supportsAutoplay = AUTOPLAY_PLATFORMS.includes(currentPlatform);
+
   // Get embed URL with autoplay params - USE BACKEND URL DIRECTLY
   const getEmbedUrl = useCallback((video: VideoData): string => {
-    // ALWAYS prefer backend-provided embed_url
     let url = video.embed_url || '';
     
-    // If no embed_url from backend, we cannot show the video
     if (!url) {
       console.warn('[VideoAdModal] No embed_url from backend for video:', video.id);
       return '';
@@ -84,7 +93,6 @@ export const VideoAdModal = ({
 
     console.log('[VideoAdModal] Using backend embed_url:', url);
 
-    // Add autoplay params if not present
     try {
       const urlObj = new URL(url);
       
@@ -158,21 +166,27 @@ export const VideoAdModal = ({
     };
   }, [isOpen]);
 
-  // Countdown timer using Date.now() for accuracy
+  // Reset state when modal opens
   useEffect(() => {
-    if (!isOpen) return;
+    if (isOpen) {
+      setCountdown(totalDurationSeconds);
+      setCurrentVideoIndex(0);
+      setCanClose(false);
+      setVideoError(false);
+      toastShownRef.current = false;
+      // Auto-start for platforms that support autoplay
+      setIsPlaying(supportsAutoplay);
+    }
+  }, [isOpen, totalDurationSeconds, supportsAutoplay]);
 
-    const duration = totalDurationSeconds > 0 ? totalDurationSeconds : 15;
-    setCountdown(duration);
-    setCurrentVideoIndex(0);
-    setCanClose(false);
-    setVideoError(false);
-    toastShownRef.current = false;
-    startTimeRef.current = Date.now();
-
+  // Start countdown function
+  const startCountdown = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
+
+    const duration = totalDurationSeconds > 0 ? totalDurationSeconds : 15;
+    startTimeRef.current = Date.now();
 
     intervalRef.current = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
@@ -182,7 +196,7 @@ export const VideoAdModal = ({
 
       // Switch videos every SEGMENT_DURATION seconds
       const currentSegment = Math.floor(elapsed / SEGMENT_DURATION);
-      if (currentSegment < videos.length && currentSegment !== currentVideoIndex) {
+      if (currentSegment < videos.length) {
         setCurrentVideoIndex(currentSegment);
       }
 
@@ -195,6 +209,13 @@ export const VideoAdModal = ({
         }
       }
     }, 100);
+  }, [totalDurationSeconds, videos.length, showRewardToast]);
+
+  // Countdown timer - only starts when isPlaying is true
+  useEffect(() => {
+    if (!isOpen || !isPlaying) return;
+
+    startCountdown();
 
     return () => {
       if (intervalRef.current) {
@@ -202,7 +223,12 @@ export const VideoAdModal = ({
         intervalRef.current = null;
       }
     };
-  }, [isOpen, totalDurationSeconds, videos.length, showRewardToast]);
+  }, [isOpen, isPlaying, startCountdown]);
+
+  // Handle tap to play (for Instagram and other non-autoplay platforms)
+  const handleTapToPlay = useCallback(() => {
+    setIsPlaying(true);
+  }, []);
 
   // Handle close - user must click X button
   const handleClose = useCallback(() => {
@@ -228,15 +254,13 @@ export const VideoAdModal = ({
 
   // Handle go to creator
   const handleGoToCreator = useCallback(() => {
-    const currentVideo = videos[currentVideoIndex];
     if (currentVideo?.video_url) {
       window.open(currentVideo.video_url, '_blank', 'noopener,noreferrer');
     }
-  }, [videos, currentVideoIndex]);
+  }, [currentVideo]);
 
   if (!isOpen) return null;
 
-  const currentVideo = videos[currentVideoIndex];
   const embedUrl = currentVideo ? getEmbedUrl(currentVideo) : '';
   const hasVideo = embedUrl.length > 0;
 
@@ -251,26 +275,41 @@ export const VideoAdModal = ({
         bottom: 'calc(-1 * env(safe-area-inset-bottom, 0px))',
         width: 'calc(100vw + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))',
         height: 'calc(100dvh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))',
-        backgroundColor: '#000', // Matte black background
+        backgroundColor: '#000',
       }}
     >
       {/* Video iframe - TRUE FULLSCREEN */}
       {hasVideo && !videoError ? (
-        <iframe
-          src={embedUrl}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-          style={{
-            width: '100vw',
-            height: '100dvh',
-            minWidth: '100vw',
-            minHeight: '100dvh',
-            border: 'none',
-            backgroundColor: '#000',
-          }}
-          allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
-          allowFullScreen
-          onError={() => setVideoError(true)}
-        />
+        <>
+          <iframe
+            src={embedUrl}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+            style={{
+              width: '100vw',
+              height: '100dvh',
+              minWidth: '100vw',
+              minHeight: '100dvh',
+              border: 'none',
+              backgroundColor: '#000',
+            }}
+            allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
+            allowFullScreen
+            onError={() => setVideoError(true)}
+          />
+          
+          {/* Tap to play overlay for non-autoplay platforms (Instagram) */}
+          {!isPlaying && !supportsAutoplay && (
+            <div 
+              className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 cursor-pointer"
+              onClick={handleTapToPlay}
+            >
+              <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4 hover:bg-white/30 transition-colors">
+                <Play className="w-12 h-12 text-white ml-2" fill="white" />
+              </div>
+              <p className="text-white text-lg font-medium">{t.tapToPlay}</p>
+            </div>
+          )}
+        </>
       ) : (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white">
           <AlertTriangle className="w-16 h-16 text-yellow-500" />
@@ -284,23 +323,25 @@ export const VideoAdModal = ({
         </div>
       )}
 
-      {/* Countdown timer overlay - top left */}
-      <div 
-        className="absolute z-10"
-        style={{ 
-          top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
-          left: '16px',
-        }}
-      >
-        <div className="bg-black/70 backdrop-blur-sm rounded-full px-4 py-2 min-w-[60px] text-center">
-          <span className="text-white font-bold text-xl tabular-nums">
-            {Math.max(0, countdown)}{t.seconds}
-          </span>
+      {/* Countdown timer overlay - top left (only show when playing) */}
+      {isPlaying && (
+        <div 
+          className="absolute z-10"
+          style={{ 
+            top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
+            left: '16px',
+          }}
+        >
+          <div className="bg-black/70 backdrop-blur-sm rounded-full px-4 py-2 min-w-[60px] text-center">
+            <span className="text-white font-bold text-xl tabular-nums">
+              {Math.max(0, countdown)}{t.seconds}
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Video progress indicator (if multiple videos) */}
-      {videos.length > 1 && (
+      {videos.length > 1 && isPlaying && (
         <div 
           className="absolute z-10 flex gap-1"
           style={{ 
