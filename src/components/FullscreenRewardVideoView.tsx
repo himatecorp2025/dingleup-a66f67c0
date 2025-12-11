@@ -58,6 +58,45 @@ const buildAutoplayUrl = (video: RewardVideo): string => {
   }
 };
 
+// Extract creator username from embed/video URL
+const extractCreatorUsername = (video: RewardVideo): string | null => {
+  const url = video.videoUrl || video.embedUrl;
+  
+  try {
+    if (video.platform === 'tiktok') {
+      // TikTok patterns: @username in URL
+      const match = url.match(/@([^\/\?\&]+)/);
+      if (match && match[1] !== 'user') return `@${match[1]}`;
+      
+      // Check video URL directly if available
+      if (video.videoUrl) {
+        const videoMatch = video.videoUrl.match(/@([^\/\?\&]+)/);
+        if (videoMatch && videoMatch[1] !== 'user') return `@${videoMatch[1]}`;
+      }
+    } else if (video.platform === 'youtube') {
+      // YouTube: @channel or channel name
+      const channelMatch = url.match(/@([^\/\?\&]+)/);
+      if (channelMatch) return `@${channelMatch[1]}`;
+    } else if (video.platform === 'instagram') {
+      // Instagram: /username/ pattern
+      const match = url.match(/instagram\.com\/([^\/\?\&]+)/);
+      if (match && !['p', 'reel', 'reels', 'embed'].includes(match[1])) {
+        return `@${match[1]}`;
+      }
+    } else if (video.platform === 'facebook') {
+      // Facebook username
+      const match = url.match(/facebook\.com\/([^\/\?\&]+)/);
+      if (match && !['watch', 'video', 'videos', 'plugins'].includes(match[1])) {
+        return match[1];
+      }
+    }
+  } catch (e) {
+    // Silent fail
+  }
+  
+  return null;
+};
+
 // Derive original video URL from embed URL
 const getOriginalVideoUrl = (video: RewardVideo): string => {
   if (video.videoUrl) return video.videoUrl;
@@ -105,6 +144,7 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
   const [showIntroVideo, setShowIntroVideo] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showCreatorLink, setShowCreatorLink] = useState(false);
+  const [lastCreatorUsername, setLastCreatorUsername] = useState<string | null>(null);
   const watchedIdsRef = useRef<Set<string>>(new Set());
   const videoQueueRef = useRef<RewardVideo[]>([...videos]);
   const [videoKey, setVideoKey] = useState(0);
@@ -135,20 +175,20 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
     };
   }, []);
 
-  // Simple timer: every 15 seconds switch video, at 12 seconds show creator link
+  // Simple timer: every 15 seconds switch video, at 10 seconds show creator link
   useEffect(() => {
     const interval = setInterval(() => {
       const totalElapsed = (Date.now() - startTimeRef.current) / 1000;
       const remaining = Math.max(0, totalDurationSeconds - Math.floor(totalElapsed));
       setSecondsLeft(remaining);
       
-      // Timer finished
+      // Timer finished - keep creator link visible!
       if (remaining === 0 && !timerFinished) {
         videoQueueRef.current.forEach(v => watchedIdsRef.current.add(v.id));
         setTimerFinished(true);
         setCanClose(true);
         setShowIntroVideo(true);
-        setShowCreatorLink(false);
+        // DO NOT hide creator link - keep it visible during intro video
         
         const doubledAmount = rewardAmount ? rewardAmount * 2 : 0;
         let toastMessage: string;
@@ -174,9 +214,13 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
       // Time elapsed in current 15-second segment
       const elapsedInSegment = (Date.now() - lastVideoSwitchRef.current) / 1000;
       
-      // At 12 seconds (3 seconds before switch), show creator link button
-      if (elapsedInSegment >= 12 && !showCreatorLink) {
+      // At 10 seconds (5 seconds before switch), show creator link button
+      if (elapsedInSegment >= 10 && !showCreatorLink) {
         setShowCreatorLink(true);
+        // Store current creator username for persistence during intro
+        if (currentVideo) {
+          setLastCreatorUsername(extractCreatorUsername(currentVideo));
+        }
       }
       
       // At 15 seconds, switch to next video
@@ -186,9 +230,8 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
           watchedIdsRef.current.add(currentVideo.id);
         }
         
-        // Show transition overlay
+        // Show transition overlay - but keep creator link visible
         setIsTransitioning(true);
-        setShowCreatorLink(false);
         
         setTimeout(() => {
           if (remaining > 3) {
@@ -197,6 +240,7 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
             setCurrentVideoIndex(nextIndex);
             lastVideoSwitchRef.current = Date.now();
             setVideoKey(prev => prev + 1);
+            setShowCreatorLink(false); // Reset for next video
           } else {
             // Less than 3 seconds - show intro video
             setShowIntroVideo(true);
@@ -375,8 +419,8 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         </div>
       )}
 
-      {/* TikTok-style "Go to creator" button - bottom left, appears at 12 seconds */}
-      {showCreatorLink && currentVideo && !showIntroVideo && !isTransitioning && (
+      {/* TikTok-style "Go to creator" button - bottom left, appears at 10 seconds, stays during intro */}
+      {showCreatorLink && currentVideo && !isTransitioning && (
         <button
           onClick={handleCreatorLinkClick}
           className="absolute flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 animate-fade-in"
@@ -393,7 +437,11 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
           }}
         >
           <ExternalLink size={16} />
-          <span>{lang === 'hu' ? 'Tovább az alkotó oldalára' : 'Go to creator page'}</span>
+          <span>
+            {lang === 'hu' 
+              ? `Tovább ${lastCreatorUsername || extractCreatorUsername(currentVideo) || 'az alkotó'} oldalára` 
+              : `Go to ${lastCreatorUsername || extractCreatorUsername(currentVideo) || 'creator'} page`}
+          </span>
         </button>
       )}
 
