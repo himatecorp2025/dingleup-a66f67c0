@@ -384,7 +384,7 @@ const Creators = () => {
 
           {/* Video List - Only when has videos */}
           {hasVideos && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
+            <div className="grid grid-cols-3 md:grid-cols-4 gap-2 mb-8">
               {videos.map((video) => (
                 <CreatorVideoCard
                   key={video.id}
