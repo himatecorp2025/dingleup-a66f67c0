@@ -269,6 +269,7 @@ const GamePreview = memo(() => {
     continueType,
     errorBannerVisible,
     gameCompleted,
+    videoAdAvailable,
     setIsAnimating,
     setCanSwipe,
     setErrorBannerVisible,
@@ -290,15 +291,8 @@ const GamePreview = memo(() => {
     setShowRescuePopup,
     triggerHaptic,
     onDoubleRewardClick: async () => {
-      // Start video ad flow - goes directly to video if available
-      const started = await videoAdFlow.startGameEndDouble(coinsEarned);
-      if (!started) {
-        toast.info(
-          lang === 'hu' 
-            ? 'Jelenleg nincs elérhető reklámvideó. Próbáld újra később!' 
-            : 'No ad video available right now. Try again later!'
-        );
-      }
+      // Start video ad flow - goes directly to video
+      await videoAdFlow.startGameEndDouble(coinsEarned);
     },
   });
 
@@ -426,6 +420,22 @@ const GamePreview = memo(() => {
 
     trackMilestone();
   }, [currentQuestionIndex, userId, isGameReady, correctAnswers, lang]);
+
+  // Pre-check video ad availability when nearing game end (question 13+)
+  useEffect(() => {
+    const checkVideoAvailability = async () => {
+      if (!userId || currentQuestionIndex < 12) {
+        setVideoAdAvailable(false);
+        return;
+      }
+      
+      // Check if video ads are available for game end
+      const available = await videoAdFlow.checkGameEndDoubleAvailable();
+      setVideoAdAvailable(available);
+    };
+    
+    checkVideoAvailability();
+  }, [currentQuestionIndex, userId, videoAdFlow]);
 
   // REMOVED: Language change detection during active game
   // Language is now locked when game starts - questions are loaded in the user's selected language at game start

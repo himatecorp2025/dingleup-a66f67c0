@@ -18,6 +18,7 @@ interface UseGameNavigationOptions {
   continueType: 'timeout' | 'wrong' | 'out-of-lives';
   errorBannerVisible: boolean;
   gameCompleted: boolean;
+  videoAdAvailable: boolean;
   setIsAnimating: (isAnimating: boolean) => void;
   setCanSwipe: (canSwipe: boolean) => void;
   setErrorBannerVisible: (visible: boolean) => void;
@@ -56,6 +57,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     continueType,
     errorBannerVisible,
     gameCompleted,
+    videoAdAvailable,
     setIsAnimating,
     setCanSwipe,
     setErrorBannerVisible,
@@ -112,7 +114,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
           <div className="text-center text-base font-black mb-1 bg-gradient-to-r from-yellow-300 via-yellow-100 to-yellow-300 bg-clip-text text-transparent">
             {t('game_results.title')}
           </div>
-          <div className="grid grid-cols-4 gap-1.5 text-xs">
+          <div className={`grid ${coinsEarned > 0 && videoAdAvailable ? 'grid-cols-4' : 'grid-cols-3'} gap-1.5 text-xs`}>
             {/* Box 1: Correct answers */}
             <div className="flex flex-col items-center bg-black/30 rounded-lg p-1.5 border border-yellow-500/20">
               <div className="text-base mb-0.5">✅</div>
@@ -125,8 +127,8 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
               <div className="font-bold text-yellow-400 text-sm">{coinsEarned}</div>
               <div className="text-[9px] opacity-70">{t('game_results.gold')}</div>
             </div>
-            {/* Box 3: Double reward - ALWAYS ACTIVE, checks on click */}
-            {coinsEarned > 0 ? (
+            {/* Box 3: Double reward - only show if video ad available */}
+            {coinsEarned > 0 && videoAdAvailable ? (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -145,19 +147,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
                   <span>▶ 2×</span>
                 </div>
               </button>
-            ) : (
-              <div className="flex flex-col items-center bg-black/20 rounded-lg p-1.5 border border-gray-500/20 opacity-50">
-                <div className="flex mb-0.5">
-                  <span className="text-sm opacity-50">💰</span>
-                  <span className="text-sm opacity-50">💰</span>
-                </div>
-                <div className="font-bold text-gray-400 text-sm">-</div>
-                <div className="flex items-center gap-0.5 text-[9px] text-gray-500">
-                  <Film className="w-3 h-3" />
-                  <span>2×</span>
-                </div>
-              </div>
-            )}
+            ) : null}
             {/* Box 4: Time */}
             <div className="flex flex-col items-center bg-black/30 rounded-lg p-1.5 border border-yellow-500/20">
               <div className="text-base mb-0.5">⚡</div>
