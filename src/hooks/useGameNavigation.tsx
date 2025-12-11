@@ -18,7 +18,6 @@ interface UseGameNavigationOptions {
   continueType: 'timeout' | 'wrong' | 'out-of-lives';
   errorBannerVisible: boolean;
   gameCompleted: boolean;
-  videoAdAvailable: boolean;
   setIsAnimating: (isAnimating: boolean) => void;
   setCanSwipe: (canSwipe: boolean) => void;
   setErrorBannerVisible: (visible: boolean) => void;
@@ -57,7 +56,6 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     continueType,
     errorBannerVisible,
     gameCompleted,
-    videoAdAvailable,
     setIsAnimating,
     setCanSwipe,
     setErrorBannerVisible,
@@ -115,26 +113,20 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
             {t('game_results.title')}
           </div>
           <div className="grid grid-cols-4 gap-1.5 text-xs">
-            {/* Correct answers box */}
+            {/* Box 1: Correct answers */}
             <div className="flex flex-col items-center bg-black/30 rounded-lg p-1.5 border border-yellow-500/20">
               <div className="text-base mb-0.5">✅</div>
               <div className="font-bold text-green-400 text-sm">{correctAnswers}/15</div>
               <div className="text-[9px] opacity-70">{t('game_results.correct')}</div>
             </div>
-            {/* Coin earned box */}
+            {/* Box 2: Base coin earned */}
             <div className="flex flex-col items-center bg-black/30 rounded-lg p-1.5 border border-yellow-500/20">
               <div className="text-base mb-0.5">💰</div>
               <div className="font-bold text-yellow-400 text-sm">{coinsEarned}</div>
               <div className="text-[9px] opacity-70">{t('game_results.gold')}</div>
             </div>
-            {/* Time box */}
-            <div className="flex flex-col items-center bg-black/30 rounded-lg p-1.5 border border-yellow-500/20">
-              <div className="text-base mb-0.5">⚡</div>
-              <div className="font-bold text-blue-400 text-sm">{avgResponseTime}s</div>
-              <div className="text-[9px] opacity-70">{t('game_results.time')}</div>
-            </div>
-            {/* Double reward box - clickable to watch ad */}
-            {videoAdAvailable && coinsEarned > 0 ? (
+            {/* Box 3: Double reward - ALWAYS ACTIVE, checks on click */}
+            {coinsEarned > 0 ? (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -166,6 +158,12 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
                 <div className="text-[9px] text-gray-500">2×</div>
               </div>
             )}
+            {/* Box 4: Time */}
+            <div className="flex flex-col items-center bg-black/30 rounded-lg p-1.5 border border-yellow-500/20">
+              <div className="text-base mb-0.5">⚡</div>
+              <div className="font-bold text-blue-400 text-sm">{avgResponseTime}s</div>
+              <div className="text-[9px] opacity-70">{t('game_results.time')}</div>
+            </div>
           </div>
           <div className="text-center mt-1 text-xs font-bold animate-pulse text-white/90">
             {t('game_results.swipe_for_new')}
