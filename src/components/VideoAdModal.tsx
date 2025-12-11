@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { X, Film, AlertTriangle } from 'lucide-react';
+import { X, Film, AlertTriangle, ExternalLink } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import { toast } from 'sonner';
 
@@ -20,6 +19,7 @@ interface VideoData {
   embed_url: string | null;
   platform: string;
   duration_seconds: number | null;
+  creator_name?: string;
 }
 
 const SEGMENT_DURATION = 15; // Each video segment is 15 seconds
@@ -49,13 +49,11 @@ export const VideoAdModal = ({
   // Check if URL is a proper embed URL (not just a shortlink)
   const isValidEmbedUrl = (url: string | null): boolean => {
     if (!url) return false;
-    // Valid embed URLs contain /embed/, /embed/v2/, or plugins/video
     return url.includes('/embed/') || url.includes('/embed') || url.includes('plugins/video');
   };
 
   // Get embed URL for platform
   const getEmbedUrl = (video: VideoData): string => {
-    // Only use stored embed_url if it's a proper embed URL (not a shortlink)
     if (video.embed_url && isValidEmbedUrl(video.embed_url)) {
       console.log('[VideoAdModal] Using stored embed_url:', video.embed_url);
       return video.embed_url;
@@ -68,17 +66,14 @@ export const VideoAdModal = ({
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
       let videoId: string | undefined;
       
-      // YouTube Shorts
       const shortsMatch = url.match(/\/shorts\/([a-zA-Z0-9_-]+)/);
       if (shortsMatch) videoId = shortsMatch[1];
       
-      // Standard watch URL
       if (!videoId) {
         const watchMatch = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
         if (watchMatch) videoId = watchMatch[1];
       }
       
-      // Short URL (youtu.be)
       if (!videoId) {
         const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
         if (shortMatch) videoId = shortMatch[1];
@@ -91,21 +86,16 @@ export const VideoAdModal = ({
       }
     }
     
-    // TikTok - shortlinks (vm.tiktok.com) cannot be embedded, need full URL with video ID
+    // TikTok
     if (url.includes('tiktok.com')) {
-      // Try to extract video ID from full URL format
       const videoIdMatch = url.match(/video\/(\d+)/);
       if (videoIdMatch) {
         const embedUrl = `https://www.tiktok.com/embed/v2/${videoIdMatch[1]}`;
         console.log('[VideoAdModal] Generated TikTok embed:', embedUrl);
         return embedUrl;
       }
-      
-      // TikTok shortlinks (vm.tiktok.com/XXX) cannot be embedded directly
-      // They need to be resolved to get the actual video ID
-      // For now, show an error state for shortlinks
       console.warn('[VideoAdModal] TikTok shortlink detected - cannot embed:', url);
-      return ''; // Return empty to trigger error state
+      return '';
     }
     
     // Instagram
@@ -129,13 +119,12 @@ export const VideoAdModal = ({
     return url;
   };
 
-  // Show toast when countdown ends
+  // Show toast when countdown ends - NO AUTO CLOSE
   const showRewardToast = useCallback(() => {
     if (toastShownRef.current) return;
     toastShownRef.current = true;
 
     if (context === 'refill') {
-      // 30s refill reward
       toast.success(
         lang === 'hu'
           ? 'Jutalmad: 500 arany és 5 élet! Gratulálok!'
@@ -143,7 +132,6 @@ export const VideoAdModal = ({
         { duration: 4000 }
       );
     } else {
-      // 15s double reward (daily_gift or game_end)
       toast.success(
         lang === 'hu'
           ? 'Jutalmad Duplázódott! Gratulálok!'
@@ -153,11 +141,22 @@ export const VideoAdModal = ({
     }
   }, [context, lang]);
 
-  // Start countdown timer
+  // Prevent body scroll when open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  // Start countdown timer - NEVER auto-close
   useEffect(() => {
     if (!isOpen) return;
 
-    // Reset all state
     const initialCountdown = totalDurationSeconds > 0 ? totalDurationSeconds : 15;
     setCountdown(initialCountdown);
     countdownRef.current = initialCountdown;
@@ -167,13 +166,11 @@ export const VideoAdModal = ({
     toastShownRef.current = false;
     videoStartTimeRef.current = Date.now();
 
-    // Clear any existing interval
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
 
-    // Start countdown
     intervalRef.current = setInterval(() => {
       countdownRef.current -= 1;
       const newValue = countdownRef.current;
@@ -195,12 +192,15 @@ export const VideoAdModal = ({
       }
       
       if (newValue <= 0) {
+        // ONLY enable close button - DO NOT auto-close or trigger any other action
         setCanClose(true);
         showRewardToast();
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
         }
+        // CRITICAL: Do NOT call onComplete or onClose here
+        // User MUST click the X button to close
       }
     }, 1000);
 
@@ -212,16 +212,18 @@ export const VideoAdModal = ({
     };
   }, [isOpen, totalDurationSeconds, videos.length, showRewardToast]);
 
+  // Handle close - ONLY when user clicks X button
+  // Only calls onComplete (which handles reward), onClose is just for UI cleanup
   const handleClose = useCallback(() => {
     if (canClose) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      // Call onComplete to process reward, then close UI
       onComplete();
-      onClose();
     }
-  }, [canClose, onComplete, onClose]);
+  }, [canClose, onComplete]);
 
   const handleForceClose = useCallback(() => {
     if (intervalRef.current) {
@@ -232,16 +234,18 @@ export const VideoAdModal = ({
     onClose();
   }, [onCancel, onClose]);
 
-  const handleBackdropClick = useCallback((e: Event) => {
-    e.preventDefault();
-    // Cannot close by clicking backdrop until countdown finishes
-  }, []);
+  // Handle go to creator
+  const handleGoToCreator = useCallback(() => {
+    const currentVideo = videos[currentVideoIndex];
+    if (currentVideo?.video_url) {
+      window.open(currentVideo.video_url, '_blank', 'noopener,noreferrer');
+    }
+  }, [videos, currentVideoIndex]);
 
   const currentVideo = videos[currentVideoIndex];
   const embedUrl = currentVideo ? getEmbedUrl(currentVideo) : '';
   const hasVideos = videos.length > 0 && embedUrl && embedUrl.length > 0;
   
-  // Debug logging
   console.log('[VideoAdModal] Render state:', {
     isOpen,
     videosCount: videos.length,
@@ -259,12 +263,14 @@ export const VideoAdModal = ({
       noVideo: 'Nincs elérhető videó',
       closeEarly: 'Bezárás',
       tiktokShortlink: 'A TikTok videó nem tölthető be közvetlenül. Kérjük, próbáld újra később!',
+      goToCreator: 'Tovább',
     },
     en: {
       secondsRemaining: 's',
       noVideo: 'No video available',
       closeEarly: 'Close',
       tiktokShortlink: 'TikTok video cannot be loaded directly. Please try again later!',
+      goToCreator: 'Go to',
     },
   };
 
@@ -272,83 +278,164 @@ export const VideoAdModal = ({
 
   if (!isOpen) return null;
 
+  // TRUE FULLSCREEN OVERLAY - covers entire device screen
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent 
-        className="sm:max-w-[90vw] md:max-w-[600px] p-0 bg-black border-none overflow-hidden"
-        overlayClassName="!z-[999998]"
-        style={{ zIndex: 999999 }}
-        onPointerDownOutside={handleBackdropClick}
-        onEscapeKeyDown={(e) => e.preventDefault()}
+    <div 
+      className="fixed inset-0 z-[9999] bg-black"
+      style={{
+        top: 'calc(-1 * env(safe-area-inset-top, 0px))',
+        left: 'calc(-1 * env(safe-area-inset-left, 0px))',
+        right: 'calc(-1 * env(safe-area-inset-right, 0px))',
+        bottom: 'calc(-1 * env(safe-area-inset-bottom, 0px))',
+        width: 'calc(100% + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))',
+        height: 'calc(100% + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Video container - fills entire screen */}
+      <div 
+        className="relative w-full h-full"
+        style={{
+          width: '100vw',
+          height: '100dvh',
+          overflow: 'hidden',
+        }}
       >
-        <DialogTitle className="sr-only">Video Ad</DialogTitle>
-        <DialogDescription className="sr-only">Watch video to earn rewards</DialogDescription>
-        <div className="relative w-full aspect-[9/16] md:aspect-video bg-black min-h-[300px]">
-          {/* Video iframe or error state */}
-          {hasVideos && !videoError ? (
-            <iframe
-              src={embedUrl}
-              className="absolute inset-0 w-full h-full"
-              allow="autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-              frameBorder="0"
-              onError={() => setVideoError(true)}
-            />
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white">
-              <AlertTriangle className="w-16 h-16 text-yellow-500" />
-              <p className="text-lg font-medium">{t_local.noVideo}</p>
-              <button
-                onClick={handleForceClose}
-                className="px-6 py-3 bg-primary text-white rounded-full font-bold text-base hover:bg-primary/90 active:scale-95 transition-all"
-              >
-                {t_local.closeEarly}
-              </button>
-            </div>
-          )}
-          
-          {/* Countdown overlay */}
-          <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-50">
-            {/* Countdown timer */}
-            <div className="bg-black/70 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2 pointer-events-none">
-              <Film className="w-5 h-5 text-primary" />
-              <span className="text-white font-bold text-base tabular-nums">
-                {Math.max(0, countdown)}{t_local.secondsRemaining}
-              </span>
-            </div>
-            
-            {/* Close button - only visible after countdown */}
-            {canClose && (
-              <button
-                onClick={handleClose}
-                className="bg-black/70 backdrop-blur-sm rounded-full p-3 hover:bg-black/90 active:scale-95 transition-all touch-manipulation"
-                style={{ minWidth: '48px', minHeight: '48px' }}
-              >
-                <X className="w-6 h-6 text-white" />
-              </button>
+        {/* Video iframe - true fullscreen cover */}
+        {hasVideos && !videoError ? (
+          <iframe
+            src={embedUrl}
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '177.78vh', // 16:9 aspect ratio width based on height
+              height: '100vh',
+              minWidth: '100vw',
+              minHeight: '56.25vw', // 16:9 aspect ratio height based on width
+              border: 'none',
+            }}
+            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+            allowFullScreen
+            onError={() => setVideoError(true)}
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white">
+            <AlertTriangle className="w-16 h-16 text-yellow-500" />
+            <p className="text-lg font-medium">{t_local.noVideo}</p>
+            <button
+              onClick={handleForceClose}
+              className="px-6 py-3 bg-primary text-white rounded-full font-bold text-base hover:bg-primary/90 active:scale-95 transition-all"
+            >
+              {t_local.closeEarly}
+            </button>
+          </div>
+        )}
+
+        {/* Platform icon - top right */}
+        {currentVideo?.platform && (
+          <div 
+            className="absolute top-4 right-4 z-10 bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2"
+            style={{ top: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
+          >
+            {currentVideo.platform === 'tiktok' && (
+              <svg viewBox="0 0 48 48" className="w-6 h-6" fill="none">
+                <path d="M34.1 15.8c-2.2-1.4-3.7-3.8-4-6.6V8h-6v24c0 3.3-2.7 6-6 6s-6-2.7-6-6 2.7-6 6-6c.5 0 1 .1 1.5.2V20c-.5-.1-1-.1-1.5-.1-6.6 0-12 5.4-12 12s5.4 12 12 12 12-5.4 12-12V21.3c2.3 1.6 5 2.5 7.9 2.5v-6c-1.5 0-2.9-.4-4.2-1" fill="currentColor" className="text-cyan-400"/>
+              </svg>
+            )}
+            {currentVideo.platform === 'youtube' && (
+              <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
+                <path d="M23.5 6.2c-.3-1-1-1.8-2-2.1C19.6 3.5 12 3.5 12 3.5s-7.6 0-9.5.6c-1 .3-1.7 1.1-2 2.1C0 8.1 0 12 0 12s0 3.9.5 5.8c.3 1 1 1.8 2 2.1 1.9.6 9.5.6 9.5.6s7.6 0 9.5-.6c1-.3 1.7-1.1 2-2.1.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8z" fill="#FF0000"/>
+                <path d="M9.5 15.5l6.5-3.5-6.5-3.5v7z" fill="#fff"/>
+              </svg>
+            )}
+            {currentVideo.platform === 'instagram' && (
+              <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
+                <defs>
+                  <linearGradient id="igGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#FED576"/>
+                    <stop offset="25%" stopColor="#F47133"/>
+                    <stop offset="50%" stopColor="#BC3081"/>
+                    <stop offset="75%" stopColor="#4C63D2"/>
+                  </linearGradient>
+                </defs>
+                <rect width="20" height="20" x="2" y="2" rx="5" stroke="url(#igGrad)" strokeWidth="2"/>
+                <circle cx="12" cy="12" r="4" stroke="url(#igGrad)" strokeWidth="2"/>
+                <circle cx="18" cy="6" r="1.5" fill="url(#igGrad)"/>
+              </svg>
+            )}
+            {currentVideo.platform === 'facebook' && (
+              <svg viewBox="0 0 24 24" className="w-6 h-6">
+                <path fill="#1877F2" d="M24 12c0-6.6-5.4-12-12-12S0 5.4 0 12c0 6 4.4 11 10.1 11.9v-8.4h-3V12h3V9.4c0-3 1.8-4.7 4.5-4.7 1.3 0 2.7.2 2.7.2v3h-1.5c-1.5 0-2 .9-2 1.9V12h3.4l-.5 3.5h-2.9v8.4C19.6 23 24 18 24 12z"/>
+              </svg>
             )}
           </div>
+        )}
 
-          {/* Video indicator (for multi-video sequences) */}
-          {videos.length > 1 && hasVideos && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-50">
-              {videos.map((_, idx) => (
-                <div
-                  key={idx}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    idx === currentVideoIndex 
-                      ? 'bg-primary w-6' 
-                      : idx < currentVideoIndex 
-                        ? 'bg-green-500' 
-                        : 'bg-white/50'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
+        {/* Countdown timer overlay - top left */}
+        <div 
+          className="absolute top-4 left-4 z-10"
+          style={{ top: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
+        >
+          <div className="bg-black/70 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2">
+            <Film className="w-5 h-5 text-primary" />
+            <span className="text-white font-bold text-xl tabular-nums">
+              {Math.max(0, countdown)}{t_local.secondsRemaining}
+            </span>
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+
+        {/* Close button - ONLY visible after timer completed */}
+        {canClose && (
+          <button
+            onClick={handleClose}
+            className="absolute top-4 right-4 z-20 bg-black/70 backdrop-blur-sm rounded-full p-3 hover:bg-black/90 transition-colors active:scale-95"
+            style={{ 
+              top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
+              right: 'calc(env(safe-area-inset-right, 0px) + 16px)',
+              minWidth: '48px', 
+              minHeight: '48px' 
+            }}
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+        )}
+
+        {/* Go to creator CTA - bottom left, only visible after timer completed */}
+        {canClose && (
+          <button
+            onClick={handleGoToCreator}
+            className="absolute bottom-4 left-4 z-10 bg-black/70 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2 hover:bg-black/90 transition-colors active:scale-95"
+            style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
+          >
+            <span className="text-white font-medium">{t_local.goToCreator}</span>
+            <ExternalLink className="w-4 h-4 text-white" />
+          </button>
+        )}
+
+        {/* Video indicator (for multi-video sequences) */}
+        {videos.length > 1 && hasVideos && (
+          <div 
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10"
+            style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
+          >
+            {videos.map((_, idx) => (
+              <div
+                key={idx}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  idx === currentVideoIndex 
+                    ? 'bg-primary w-6' 
+                    : idx < currentVideoIndex 
+                      ? 'bg-green-500' 
+                      : 'bg-white/50'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

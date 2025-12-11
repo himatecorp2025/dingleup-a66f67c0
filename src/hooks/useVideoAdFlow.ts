@@ -148,9 +148,22 @@ export const useVideoAdFlow = ({ userId, onRewardClaimed }: UseVideoAdFlowOption
     });
   }, []);
 
-  // Video watching completed - claim reward
+  // Video watching completed - claim reward and close
+  // This is called ONLY when user clicks the X button after timer completes
   const onVideoComplete = useCallback(async () => {
-    if (!state.context) return;
+    if (!state.context) {
+      // No context means already processed or not started
+      setState({
+        showPrompt: false,
+        showVideo: false,
+        videos: [],
+        totalDuration: 15,
+        isLoading: false,
+        context: null,
+        originalReward: 0,
+      });
+      return;
+    }
 
     const idempotencyKey = `video-ad-${state.context}-${userId}-${Date.now()}`;
 
@@ -186,7 +199,7 @@ export const useVideoAdFlow = ({ userId, onRewardClaimed }: UseVideoAdFlowOption
       onRewardClaimed(result.coinsCredited || 0, result.livesCredited || 0);
     }
 
-    // Reset state
+    // Reset state AFTER processing reward
     setState({
       showPrompt: false,
       showVideo: false,

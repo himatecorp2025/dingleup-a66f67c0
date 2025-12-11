@@ -233,16 +233,16 @@ export const FullscreenRewardVideoView = ({
         overflow: 'hidden',
       }}
     >
-      {/* Video container - full screen with cover behavior */}
+      {/* Video container - fills entire device screen */}
       <div 
-        className="relative"
+        className="relative w-full h-full"
         style={{
           width: '100vw',
-          height: '100vh',
+          height: '100dvh',
           overflow: 'hidden',
         }}
       >
-        {/* Video iframe - cover mode (fills viewport, may crop edges) */}
+        {/* Video iframe - true fullscreen cover */}
         <iframe
           ref={iframeRef}
           src={embedUrl}
@@ -251,10 +251,10 @@ export const FullscreenRewardVideoView = ({
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
+            width: '177.78vh', // 16:9 aspect ratio width based on height
+            height: '100vh',
             minWidth: '100vw',
-            minHeight: '100vh',
-            width: 'auto',
-            height: 'auto',
+            minHeight: '56.25vw', // 16:9 aspect ratio height based on width
             border: 'none',
           }}
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
