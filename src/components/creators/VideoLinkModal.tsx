@@ -1,24 +1,24 @@
 import { useState } from 'react';
-import { X, Link, AlertCircle } from 'lucide-react';
+import { X, Link, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VideoLinkModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (videoUrl: string) => void;
   lang: 'hu' | 'en';
-  maxVideos: number;
-  currentVideoCount: number;
+  remainingActivations: number;
 }
 
 const texts = {
   title: {
-    hu: 'TikTok videó hozzáadása',
-    en: 'Add TikTok video',
+    hu: 'Videó hozzáadása',
+    en: 'Add video',
   },
   subtitle: {
-    hu: 'Illeszd be a TikTok videód linkjét',
-    en: 'Paste your TikTok video link',
+    hu: 'Illeszd be a videód linkjét',
+    en: 'Paste your video link',
   },
   placeholder: {
     hu: 'https://www.tiktok.com/@felhasznalo/video/...',
@@ -33,25 +33,60 @@ const texts = {
     en: 'Cancel',
   },
   invalidUrl: {
-    hu: 'Érvénytelen TikTok link. Kérlek ellenőrizd!',
-    en: 'Invalid TikTok link. Please check!',
+    hu: 'Érvénytelen link. Támogatott: TikTok, YouTube Shorts, Instagram Reels, Facebook Reels',
+    en: 'Invalid link. Supported: TikTok, YouTube Shorts, Instagram Reels, Facebook Reels',
   },
   limitReached: {
-    hu: 'Elérted a maximális videók számát. Frissítsd a csomagodat több videóért!',
-    en: 'You reached the maximum number of videos. Upgrade your package for more!',
+    hu: 'Elérted a napi 3 új videós limitet. Holnap újra aktiválhatsz videókat.',
+    en: 'You reached the daily limit of 3 new videos. You can activate more tomorrow.',
   },
   videosRemaining: {
-    hu: 'Még hozzáadhatsz',
-    en: 'You can add',
+    hu: 'Ma még aktiválhatsz',
+    en: 'You can activate',
   },
   videos: {
-    hu: 'videót',
-    en: 'more videos',
+    hu: 'új videót',
+    en: 'more videos today',
   },
-  comingSoon: {
-    hu: 'Hamarosan: YouTube, Instagram, Facebook',
-    en: 'Coming soon: YouTube, Instagram, Facebook',
+  supportedPlatforms: {
+    hu: 'Támogatott: TikTok, YouTube Shorts, Instagram Reels, Facebook Reels',
+    en: 'Supported: TikTok, YouTube Shorts, Instagram Reels, Facebook Reels',
   },
+  processing: {
+    hu: 'Feldolgozás...',
+    en: 'Processing...',
+  },
+  success: {
+    hu: 'Videó sikeresen hozzáadva!',
+    en: 'Video added successfully!',
+  },
+  error: {
+    hu: 'Hiba történt. Kérlek próbáld újra!',
+    en: 'An error occurred. Please try again!',
+  },
+  alreadyExists: {
+    hu: 'Ezt a videót már korábban hozzáadtad.',
+    en: 'You already added this video before.',
+  },
+  noSubscription: {
+    hu: 'Nincs aktív Creator előfizetésed.',
+    en: 'You don\'t have an active Creator subscription.',
+  },
+};
+
+// Validate URL pattern for supported platforms
+const validateVideoUrl = (url: string): boolean => {
+  const patterns = [
+    /tiktok\.com/i,
+    /vm\.tiktok\.com/i,
+    /youtube\.com\/shorts/i,
+    /youtu\.be/i,
+    /instagram\.com\/reel/i,
+    /instagram\.com\/p\//i,
+    /facebook\.com\/reel/i,
+    /fb\.watch/i,
+  ];
+  return patterns.some(pattern => pattern.test(url));
 };
 
 const VideoLinkModal = ({ 
@@ -59,26 +94,19 @@ const VideoLinkModal = ({
   onClose, 
   onSuccess, 
   lang, 
-  maxVideos, 
-  currentVideoCount 
+  remainingActivations 
 }: VideoLinkModalProps) => {
   const [videoUrl, setVideoUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
 
-  const remainingVideos = maxVideos - currentVideoCount;
-  const canAddMore = remainingVideos > 0;
-
-  const validateTikTokUrl = (url: string): boolean => {
-    const tiktokPattern = /^https?:\/\/(www\.|vm\.)?tiktok\.com\/.+/i;
-    return tiktokPattern.test(url);
-  };
+  const canAddMore = remainingActivations > 0;
 
   const handleSubmit = async () => {
     if (!videoUrl.trim()) return;
 
-    if (!validateTikTokUrl(videoUrl)) {
+    if (!validateVideoUrl(videoUrl)) {
       toast.error(texts.invalidUrl[lang]);
       return;
     }
@@ -91,23 +119,38 @@ const VideoLinkModal = ({
     setIsLoading(true);
 
     try {
-      // TODO: Save video to database
-      // For now, just show success
-      toast.success(
-        lang === 'hu'
-          ? 'Videó sikeresen hozzáadva!'
-          : 'Video added successfully!'
-      );
-      onSuccess(videoUrl);
-      setVideoUrl('');
-      onClose();
+      const { data, error } = await supabase.functions.invoke('submit-creator-video', {
+        body: {
+          video_url: videoUrl.trim(),
+          activate_now: true, // Immediately activate the video
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success(texts.success[lang]);
+        onSuccess(videoUrl);
+        setVideoUrl('');
+        onClose();
+      } else {
+        // Handle specific errors
+        const errorCode = data?.error;
+        if (errorCode === 'VIDEO_ALREADY_EXISTS') {
+          toast.error(texts.alreadyExists[lang]);
+        } else if (errorCode === 'DAILY_LIMIT_REACHED') {
+          toast.error(texts.limitReached[lang]);
+        } else if (errorCode === 'NO_ACTIVE_SUBSCRIPTION') {
+          toast.error(texts.noSubscription[lang]);
+        } else if (errorCode === 'UNSUPPORTED_PLATFORM') {
+          toast.error(texts.invalidUrl[lang]);
+        } else {
+          throw new Error(errorCode || 'Unknown error');
+        }
+      }
     } catch (err) {
       console.error('Error adding video:', err);
-      toast.error(
-        lang === 'hu'
-          ? 'Hiba történt. Kérlek próbáld újra!'
-          : 'An error occurred. Please try again!'
-      );
+      toast.error(texts.error[lang]);
     } finally {
       setIsLoading(false);
     }
@@ -145,11 +188,11 @@ const VideoLinkModal = ({
             </p>
           </div>
 
-          {/* Remaining videos indicator */}
+          {/* Remaining activations indicator */}
           {canAddMore ? (
             <div className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
               <p className="text-green-400 text-sm text-center">
-                {texts.videosRemaining[lang]} <span className="font-bold">{remainingVideos}</span> {texts.videos[lang]}
+                {texts.videosRemaining[lang]} <span className="font-bold">{remainingActivations}</span> {texts.videos[lang]}
               </p>
             </div>
           ) : (
@@ -171,9 +214,9 @@ const VideoLinkModal = ({
             className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50"
           />
 
-          {/* Coming soon note */}
+          {/* Supported platforms note */}
           <p className="mt-3 text-white/40 text-xs text-center">
-            {texts.comingSoon[lang]}
+            {texts.supportedPlatforms[lang]}
           </p>
 
           {/* Buttons */}
@@ -187,9 +230,16 @@ const VideoLinkModal = ({
             <button
               onClick={handleSubmit}
               disabled={!videoUrl.trim() || !canAddMore || isLoading}
-              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {isLoading ? '...' : texts.submit[lang]}
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {texts.processing[lang]}
+                </>
+              ) : (
+                texts.submit[lang]
+              )}
             </button>
           </div>
         </div>

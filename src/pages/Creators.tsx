@@ -100,7 +100,8 @@ const Creators = () => {
   }, []);
 
   // Use creator subscription hook
-  const { hasActiveSubscription, maxVideos, refetch: refetchSubscription } = useCreatorSubscription(profile?.id);
+  const { hasActiveSubscription, refetch: refetchSubscription } = useCreatorSubscription(profile?.id);
+  const remainingActivations = 3; // Default, will be fetched from API
 
   // Handle checkout success from URL params
   useEffect(() => {
@@ -480,8 +481,7 @@ const Creators = () => {
         onClose={() => setShowVideoLinkModal(false)}
         onSuccess={handleVideoAdded}
         lang={lang as 'hu' | 'en'}
-        maxVideos={maxVideos}
-        currentVideoCount={videos.length}
+        remainingActivations={remainingActivations}
       />
     </div>
   );

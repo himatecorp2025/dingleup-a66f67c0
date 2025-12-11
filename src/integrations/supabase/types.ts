@@ -498,6 +498,105 @@ export type Database = {
           },
         ]
       }
+      creator_video_topics: {
+        Row: {
+          created_at: string
+          creator_video_id: string
+          id: string
+          topic_id: number
+        }
+        Insert: {
+          created_at?: string
+          creator_video_id: string
+          id?: string
+          topic_id: number
+        }
+        Update: {
+          created_at?: string
+          creator_video_id?: string
+          id?: string
+          topic_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_video_topics_creator_video_id_fkey"
+            columns: ["creator_video_id"]
+            isOneToOne: false
+            referencedRelation: "creator_videos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_video_topics_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      creator_videos: {
+        Row: {
+          created_at: string
+          embed_url: string | null
+          expires_at: string | null
+          first_activated_at: string | null
+          id: string
+          is_active: boolean
+          platform: string
+          status: string
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          embed_url?: string | null
+          expires_at?: string | null
+          first_activated_at?: string | null
+          id?: string
+          is_active?: boolean
+          platform: string
+          status?: string
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          embed_url?: string | null
+          expires_at?: string | null
+          first_activated_at?: string | null
+          id?: string
+          is_active?: boolean
+          platform?: string
+          status?: string
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_videos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_videos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_leaderboard_snapshot: {
         Row: {
           avatar_url: string | null
@@ -3722,10 +3821,15 @@ export type Database = {
         Returns: Json
       }
       activate_creator_trial: { Args: { p_plan_id: string }; Returns: Json }
+      activate_creator_video: { Args: { p_video_id: string }; Returns: Json }
       archive_old_lives_ledger: { Args: never; Returns: Json }
       archive_old_wallet_ledger: { Args: never; Returns: Json }
       archive_thread_for_user: { Args: { p_thread_id: string }; Returns: Json }
       award_coins: { Args: { amount: number }; Returns: undefined }
+      check_creator_activation_limit: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
       check_rate_limit: {
         Args: {
           p_max_calls?: number
@@ -3785,6 +3889,24 @@ export type Database = {
         Returns: string
       }
       get_country_from_request: { Args: never; Returns: string }
+      get_creator_videos_with_days: {
+        Args: { p_user_id?: string }
+        Returns: {
+          created_at: string
+          days_remaining: number
+          embed_url: string
+          expires_at: string
+          first_activated_at: string
+          id: string
+          is_active: boolean
+          platform: string
+          status: string
+          thumbnail_url: string
+          title: string
+          user_id: string
+          video_url: string
+        }[]
+      }
       get_current_day_date: { Args: never; Returns: string }
       get_current_week_reward: { Args: never; Returns: Json }
       get_current_week_start: { Args: never; Returns: string }
@@ -3883,6 +4005,7 @@ export type Database = {
       }
       process_invitation_reward: { Args: never; Returns: Json }
       purchase_life: { Args: never; Returns: Json }
+      reactivate_creator_video: { Args: { p_video_id: string }; Returns: Json }
       reactivate_help: {
         Args: { p_cost?: number; p_help_type: string }
         Returns: Json
