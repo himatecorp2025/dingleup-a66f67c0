@@ -312,15 +312,15 @@ export const VideoAdModal = ({
           backgroundColor: '#000', // Matte black background for non-9:16 videos
         }}
       >
-        {/* Video iframe - scaled to crop platform UI (bottom creator info) */}
+        {/* Video iframe - heavily scaled to crop ALL platform UI, only video visible */}
         {hasVideos && !videoError ? (
           <iframe
             src={embedUrl}
             style={{
               position: 'absolute',
-              top: '45%', // Shift up to crop bottom platform UI
-              left: '50%',
-              transform: 'translate(-50%, -50%) scale(1.25)', // Scale up to fill and crop edges
+              top: '35%', // Shift up significantly to crop bottom UI
+              left: '40%', // Shift left to crop right side icons
+              transform: 'translate(-50%, -50%) scale(2.0)', // Scale up 2x to crop all platform UI
               width: '100vw',
               height: '100dvh',
               border: 'none',
