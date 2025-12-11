@@ -302,43 +302,33 @@ export const VideoAdModal = ({
         overflow: 'hidden',
       }}
     >
-      {/* Video container - fills entire screen with overflow hidden to crop TikTok UI */}
+      {/* Video container - fills entire screen like native TikTok */}
       <div 
         className="relative w-full h-full"
         style={{
           width: '100vw',
           height: '100dvh',
           overflow: 'hidden',
-          backgroundColor: '#000',
+          backgroundColor: '#000', // Matte black background for non-9:16 videos
         }}
       >
-        {/* Video iframe - matches Daily Gift styling for autoplay compatibility */}
+        {/* Video iframe - fullscreen cover like native TikTok app */}
         {hasVideos && !videoError ? (
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            overflow: 'hidden',
-            // Clip bottom 15% to hide TikTok username/description
-            clipPath: 'inset(0 0 15% 0)',
-          }}>
-            <iframe
-              src={embedUrl}
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: '177.78vh', // 16:9 aspect ratio width based on height
-                height: '100vh',
-                minWidth: '100vw',
-                minHeight: '56.25vw', // 16:9 aspect ratio height based on width
-                border: 'none',
-              }}
-              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-              allowFullScreen
-              onError={() => setVideoError(true)}
-            />
-          </div>
+          <iframe
+            src={embedUrl}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              border: 'none',
+              backgroundColor: '#000',
+            }}
+            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+            allowFullScreen
+            onError={() => setVideoError(true)}
+          />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white">
             <AlertTriangle className="w-16 h-16 text-yellow-500" />
