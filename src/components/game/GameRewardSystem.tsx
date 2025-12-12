@@ -27,13 +27,15 @@ export const useGameRewards = ({
   const [coinRewardTrigger, setCoinRewardTrigger] = useState(0);
 
   // Start reward - frontend only, adds to visual counter
+  // Only trigger animation if there's actually a reward (START_GAME_REWARD > 0)
   const creditStartReward = useCallback(async () => {
-    setLocalCoinsEarned(START_GAME_REWARD);
-    setCoinRewardAmount(START_GAME_REWARD);
-    setCoinRewardTrigger(prev => prev + 1);
-    
-    // Broadcast for UI sync only (no DB)
-    await broadcast('wallet:update', { source: 'game_start', coinsDelta: START_GAME_REWARD });
+    if (START_GAME_REWARD > 0) {
+      setLocalCoinsEarned(START_GAME_REWARD);
+      setCoinRewardAmount(START_GAME_REWARD);
+      setCoinRewardTrigger(prev => prev + 1);
+      await broadcast('wallet:update', { source: 'game_start', coinsDelta: START_GAME_REWARD });
+    }
+    // If START_GAME_REWARD = 0, do nothing (no animation, no coins)
   }, [broadcast]);
 
   // Correct answer reward - frontend only, no backend calls
