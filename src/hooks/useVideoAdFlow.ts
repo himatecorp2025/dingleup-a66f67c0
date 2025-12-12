@@ -3,6 +3,7 @@ import { useVideoAd, VideoData } from './useVideoAd';
 
 interface UseVideoAdFlowOptions {
   userId: string | undefined;
+  onRewardStarted?: () => void; // Called SYNCHRONOUSLY when video session starts
   onRewardClaimed?: (coins: number, lives: number) => void;
 }
 
@@ -16,7 +17,7 @@ interface VideoAdFlowState {
   originalReward: number;
 }
 
-export const useVideoAdFlow = ({ userId, onRewardClaimed }: UseVideoAdFlowOptions) => {
+export const useVideoAdFlow = ({ userId, onRewardStarted, onRewardClaimed }: UseVideoAdFlowOptions) => {
   const [state, setState] = useState<VideoAdFlowState>({
     showPrompt: false,
     showVideo: false,
@@ -80,6 +81,10 @@ export const useVideoAdFlow = ({ userId, onRewardClaimed }: UseVideoAdFlowOption
   const startGameEndDouble = useCallback(async (coinsEarned: number): Promise<boolean> => {
     if (!userId) return false;
     
+    // CRITICAL: Call onRewardStarted IMMEDIATELY before any async work
+    // This ensures the flag is set BEFORE user can interact with exit button
+    onRewardStarted?.();
+    
     setState(prev => ({ ...prev, isLoading: true }));
     
     const result = await videoAd.checkAvailability('game_end');
@@ -100,7 +105,7 @@ export const useVideoAdFlow = ({ userId, onRewardClaimed }: UseVideoAdFlowOption
     });
     
     return true;
-  }, [userId, videoAd]);
+  }, [userId, videoAd, onRewardStarted]);
 
   // Start refill flow (2 videos, 30 seconds total) - directly starts video, no prompt
   const startRefillFlow = useCallback(async (): Promise<boolean> => {

@@ -91,11 +91,15 @@ const GamePreview = memo(() => {
   // Video ad flow for doubling rewards
   const videoAdFlow = useVideoAdFlow({
     userId,
+    // CRITICAL: onRewardStarted is called SYNCHRONOUSLY when video watching begins
+    // This ensures justFinishedVideoAd is true BEFORE any finishGame() could be called
+    onRewardStarted: () => {
+      setJustFinishedVideoAd(true);
+    },
     onRewardClaimed: async (coins) => {
       await refetchWallet();
       await refreshProfile();
       // Show toast telling user to swipe for new game
-      setJustFinishedVideoAd(true);
       toast.success(
         lang === 'hu' 
           ? 'Új játék indításához görgess tovább!' 
