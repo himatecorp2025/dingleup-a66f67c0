@@ -26,8 +26,8 @@ interface VideoData {
 }
 
 // === BOX DIMENSIONS ===
-const BOX_WIDTH_VW = 90;   // box width (vw)
-const BOX_HEIGHT_VH = 80;  // box height (vh)
+const BOX_WIDTH_VW = 100;  // box width (vw) - fullscreen
+const BOX_HEIGHT_VH = 100; // box height (vh) - fullscreen
 
 // === TUNING CONSTANTS - iframe oversize relative to BOX ===
 const IFRAME_W_PERCENT = 110;  // iframe width as % of box width
