@@ -62,6 +62,27 @@ export default function AdminSessionAnalytics() {
 
   const dayLabels = lang === 'hu' ? DAYS : DAYS_EN;
 
+  const getEventTypeLabel = (eventType: string) => {
+    switch (eventType) {
+      case 'app_opened':
+        return t('admin.session_analytics.event_app_opened');
+      case 'app_closed':
+        return t('admin.session_analytics.event_app_closed');
+      case 'tab_hidden':
+        return t('admin.session_analytics.event_tab_hidden');
+      case 'tab_visible':
+        return t('admin.session_analytics.event_tab_visible');
+      case 'app_installed':
+        return t('admin.session_analytics.event_app_installed');
+      case 'app_launched_standalone':
+        return t('admin.session_analytics.event_standalone_launch');
+      case 'install_prompt_shown':
+        return t('admin.session_analytics.event_install_prompt');
+      default:
+        return eventType.replace(/_/g, ' ');
+    }
+  };
+
   if (loading && !data) {
     return (
       <AdminLayout>
@@ -118,7 +139,7 @@ export default function AdminSessionAnalytics() {
             disabled={loading}
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            {t('common.refresh')}
+            {t('common.action.refresh')}
           </Button>
         </div>
 
@@ -207,7 +228,6 @@ export default function AdminSessionAnalytics() {
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={data?.eventBreakdown || []} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis type="number" stroke="rgba(255,255,255,0.5)" fontSize={12} />
                   <YAxis 
                     type="category" 
@@ -215,7 +235,7 @@ export default function AdminSessionAnalytics() {
                     stroke="rgba(255,255,255,0.5)" 
                     fontSize={10}
                     width={120}
-                    tickFormatter={(value) => value.replace(/_/g, ' ')}
+                    tickFormatter={(value) => getEventTypeLabel(String(value))}
                   />
                   <Tooltip
                     contentStyle={{
@@ -224,6 +244,8 @@ export default function AdminSessionAnalytics() {
                       borderRadius: '8px',
                     }}
                     labelStyle={{ color: '#fff' }}
+                    labelFormatter={(value) => getEventTypeLabel(String(value))}
+                    formatter={(value: number) => [value, t('admin.session_analytics.total_events')]}
                   />
                   <Bar dataKey="count" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
                 </BarChart>
@@ -256,6 +278,7 @@ export default function AdminSessionAnalytics() {
                       borderRadius: '8px',
                     }}
                     labelStyle={{ color: '#fff' }}
+                    formatter={(value: number) => [value, t('admin.session_analytics.total_events')]}
                   />
                   <Line 
                     type="monotone" 
@@ -295,7 +318,7 @@ export default function AdminSessionAnalytics() {
                     <div
                       key={hourIndex}
                       className={`w-6 h-6 rounded-sm ${getHeatmapColor(value, maxHeatmapValue)} flex items-center justify-center`}
-                      title={`${dayLabels[dayIndex]} ${hourIndex}:00 - ${value} events`}
+                      title={`${dayLabels[dayIndex]} ${hourIndex}:00 - ${value} ${t('admin.session_analytics.events_suffix')}`}
                     >
                       {value > 0 && (
                         <span className="text-[8px] text-white/80">{value}</span>
@@ -352,7 +375,7 @@ export default function AdminSessionAnalytics() {
                     </TableCell>
                     <TableCell>
                       <Badge className={`${EVENT_TYPE_COLORS[event.event_type] || 'bg-gray-500/20 text-gray-400'} border text-[10px]`}>
-                        {event.event_type.replace(/_/g, ' ')}
+                        {getEventTypeLabel(event.event_type)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-white/80">
