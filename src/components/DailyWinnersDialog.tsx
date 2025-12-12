@@ -970,12 +970,13 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
                                       background: 'linear-gradient(135deg, hsl(225, 73%, 70%) 0%, hsl(220, 80%, 70%) 25%, hsl(225, 73%, 57%) 50%, hsl(225, 73%, 47%) 75%, hsl(225, 73%, 70%) 100%)',
                                       boxShadow: '0 4px 8px rgba(65, 105, 225, 0.5), inset 0 1px 2px rgba(135, 206, 250, 0.6)'
                                     }} />
-                                    <div className="absolute rounded-full overflow-hidden" style={{ inset: '6%' }}>
+                                    <div className="absolute rounded-full overflow-hidden bg-gray-800" style={{ inset: '6%' }}>
                                       {player.avatar_url ? (
                                         <img 
                                           src={player.avatar_url} 
                                           alt={player.username}
                                           className="w-full h-full object-cover"
+                                          style={{ transform: 'scale(1.15)' }}
                                         />
                                       ) : (
                                         <div 
