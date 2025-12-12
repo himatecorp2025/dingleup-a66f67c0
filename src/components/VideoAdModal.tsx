@@ -259,23 +259,55 @@ export const VideoAdModal = ({
       
       if (context === 'refill') {
         toast.success(
-          lang === 'hu'
-            ? 'Jutalmad jóváíródott: 500 arany és 5 élet!'
-            : 'Reward credited: 500 gold and 5 lives!',
+          <div className="flex flex-col items-center gap-2 text-center max-w-[75vw]">
+            <div className="text-2xl">🎉</div>
+            <div className="font-bold text-lg bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 bg-clip-text text-transparent drop-shadow-lg">
+              {lang === 'hu' ? 'Gratulálunk!' : 'Congratulations!'}
+            </div>
+            <div className="text-sm text-foreground/90">
+              {lang === 'hu' 
+                ? 'Jutalmad jóváíródott!' 
+                : 'Reward credited!'}
+            </div>
+            <div className="flex items-center gap-3 mt-1 px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-500/20 via-amber-500/30 to-yellow-500/20 border border-yellow-500/40 shadow-lg shadow-yellow-500/20">
+              <span className="font-bold text-yellow-400 text-lg">+500 🪙</span>
+              <span className="text-foreground/50">|</span>
+              <span className="font-bold text-red-400 text-lg">+5 ❤️</span>
+            </div>
+          </div>,
           { duration: 4000, position: 'top-center' }
         );
       } else if (doubledAmount) {
         toast.success(
-          lang === 'hu'
-            ? `Duplázott jutalmad: ${doubledAmount} arany!`
-            : `Doubled reward: ${doubledAmount} gold!`,
+          <div className="flex flex-col items-center gap-2 text-center max-w-[75vw]">
+            <div className="text-2xl">🎉</div>
+            <div className="font-bold text-lg bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 bg-clip-text text-transparent drop-shadow-lg">
+              {lang === 'hu' ? 'Gratulálunk!' : 'Congratulations!'}
+            </div>
+            <div className="text-sm text-foreground/90">
+              {lang === 'hu' 
+                ? 'Duplázott jutalmad!' 
+                : 'Doubled reward!'}
+            </div>
+            <div className="flex items-center gap-2 mt-1 px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-500/20 via-amber-500/30 to-yellow-500/20 border border-yellow-500/40 shadow-lg shadow-yellow-500/20">
+              <span className="font-bold text-yellow-400 text-lg">+{doubledAmount} 🪙</span>
+            </div>
+          </div>,
           { duration: 4000, position: 'top-center' }
         );
       } else {
         toast.success(
-          lang === 'hu'
-            ? 'Jutalmad duplázódott!'
-            : 'Your reward has been doubled!',
+          <div className="flex flex-col items-center gap-2 text-center max-w-[75vw]">
+            <div className="text-2xl">🎉</div>
+            <div className="font-bold text-lg bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 bg-clip-text text-transparent drop-shadow-lg">
+              {lang === 'hu' ? 'Gratulálunk!' : 'Congratulations!'}
+            </div>
+            <div className="text-sm text-foreground/90">
+              {lang === 'hu' 
+                ? 'Jutalmad duplázódott!' 
+                : 'Your reward has been doubled!'}
+            </div>
+          </div>,
           { duration: 4000, position: 'top-center' }
         );
       }

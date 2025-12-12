@@ -180,9 +180,21 @@ const DailyGiftDialog = ({
     const doubledReward = nextReward * 2;
     
     if (result.success) {
-      toast.success(lang === 'hu' 
-        ? `Gratulálunk! A jutalmad duplázva jóváíródott! +${doubledReward} arany` 
-        : `Congratulations! Your doubled reward has been credited! +${doubledReward} gold`, 
+      toast.success(
+        <div className="flex flex-col items-center gap-2 text-center max-w-[75vw]">
+          <div className="text-2xl">🎉</div>
+          <div className="font-bold text-lg bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 bg-clip-text text-transparent drop-shadow-lg">
+            {lang === 'hu' ? 'Gratulálunk!' : 'Congratulations!'}
+          </div>
+          <div className="text-sm text-foreground/90">
+            {lang === 'hu' 
+              ? 'A jutalmad duplázva jóváíródott!' 
+              : 'Your doubled reward has been credited!'}
+          </div>
+          <div className="flex items-center gap-2 mt-1 px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-500/20 via-amber-500/30 to-yellow-500/20 border border-yellow-500/40 shadow-lg shadow-yellow-500/20">
+            <span className="font-bold text-yellow-400 text-lg">+{doubledReward} 🪙</span>
+          </div>
+        </div>,
         { position: 'top-center', duration: 2000 }
       );
     }

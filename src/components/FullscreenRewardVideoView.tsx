@@ -159,9 +159,17 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         videos.forEach(v => watchedIdsRef.current.add(v.id));
         setCanClose(true);
         toast.success(
-          lang === 'hu' 
-            ? 'Gratulálok! Jutalmad jóváírva!' 
-            : 'Congratulations! Reward credited!',
+          <div className="flex flex-col items-center gap-2 text-center max-w-[75vw]">
+            <div className="text-2xl">🎉</div>
+            <div className="font-bold text-lg bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 bg-clip-text text-transparent drop-shadow-lg">
+              {lang === 'hu' ? 'Gratulálunk!' : 'Congratulations!'}
+            </div>
+            <div className="text-sm text-foreground/90">
+              {lang === 'hu' 
+                ? 'Jutalmad jóváírva!' 
+                : 'Reward credited!'}
+            </div>
+          </div>,
           { position: 'top-center', duration: 2000 }
         );
         clearInterval(interval);
