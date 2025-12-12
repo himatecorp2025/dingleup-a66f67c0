@@ -17,7 +17,6 @@ import { UpdatePrompt } from "@/components/UpdatePrompt";
 
 import { useBackButton } from "@/hooks/useBackButton";
 import { useAppLifecycle } from "@/hooks/useAppLifecycle";
-import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import { AppRouteGuard } from "@/components/AppRouteGuard";
 import { AudioPolicyManager } from "@/components/AudioPolicyManager";
 import { useI18n } from "@/i18n";
@@ -130,7 +129,6 @@ const AppCore = () => {
       >
         
         <BackButtonHandler />
-        <SessionMonitorWrapper />
         <AppWithAnalytics />
         <ScrollBehaviorManager />
         <AudioPolicyManager />
@@ -210,10 +208,6 @@ const BackButtonHandler = () => {
   return null;
 };
 
-const SessionMonitorWrapper = () => {
-  useSessionMonitor();
-  return null;
-};
 
 // Splash screen while translations load - optimized for perfect centering
 const SplashScreen = () => (
