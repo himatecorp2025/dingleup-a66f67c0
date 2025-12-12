@@ -340,6 +340,7 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
               }}
               allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
               allowFullScreen
+              referrerPolicy="no-referrer-when-downgrade"
             />
           )}
           
