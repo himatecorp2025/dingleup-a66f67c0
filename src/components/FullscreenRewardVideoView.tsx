@@ -265,7 +265,7 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         </div>
       )}
 
-      {/* Creator CTA link - bottom left, only in last 5 seconds of each segment */}
+      {/* Creator CTA link - bottom left, only in last 5 seconds of each segment - must be above BottomNav (z-9999) */}
       {showCTA && activeVideoForCTA && (
         <button
           onClick={handleCreatorClick}
@@ -273,7 +273,7 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
           style={{ 
             bottom: 'max(env(safe-area-inset-bottom, 0px), 24px)', 
             left: '16px',
-            zIndex: 60,
+            zIndex: 1000000,
           }}
         >
           <PlatformIcon platform={activeVideoForCTA.platform} />

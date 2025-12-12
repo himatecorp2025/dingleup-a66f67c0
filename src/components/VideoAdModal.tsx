@@ -485,7 +485,7 @@ export const VideoAdModal = ({
         </button>
       )}
 
-      {/* Go to creator CTA - bottom left */}
+      {/* Go to creator CTA - bottom left - must be above BottomNav (z-9999) */}
       {isPlaying && videoUrl && (
         <button
           onClick={handleGoToCreator}
@@ -493,7 +493,7 @@ export const VideoAdModal = ({
             position: 'absolute',
             bottom: '16px',
             left: '16px',
-            zIndex: 50,
+            zIndex: 1000000,
             backgroundColor: 'rgba(0,0,0,0.75)',
             border: '1px solid rgba(255,255,255,0.3)',
             borderRadius: '20px',
