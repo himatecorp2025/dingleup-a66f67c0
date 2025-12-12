@@ -192,7 +192,7 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
       style={{ width: '100vw', height: '100dvh' }}
     >
       {/* Video embed - same as Creators preview */}
-      <div className="absolute inset-0 w-full h-full">
+      <div className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }}>
         <PlatformEmbedFullscreen
           key={`${currentVideo.id}-${currentVideoIndex}`}
           platform={currentVideo.platform}
