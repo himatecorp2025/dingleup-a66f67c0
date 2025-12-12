@@ -23,31 +23,33 @@ import { useI18n } from "@/i18n";
 import { useTimezoneDetection } from "@/hooks/useTimezoneDetection";
 import loadingLogo from '@/assets/dingleup-loading-logo.png';
 
-// Core pages - Eager load for instant navigation
+// Core pages - Eager load for instant navigation (critical path only)
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
 import Leaderboard from "./pages/Leaderboard";
-import Invitation from "./pages/Invitation";
-import CoinShop from "./pages/CoinShop";
-import Creators from "./pages/Creators";
-import CreatorsLanding from "./pages/CreatorsLanding";
-import CreatorHowItWorks from "./pages/CreatorHowItWorks";
-import CreatorAnalytics from "./pages/CreatorAnalytics";
-import CreatorAnalyticsVideoDetail from "./pages/CreatorAnalyticsVideoDetail";
 import LoginNew from "./pages/LoginNew";
 import RegisterNew from "./pages/RegisterNew";
-import ForgotPin from "./pages/ForgotPin";
 import Game from "./pages/Game";
-import GameRules from "./pages/GameRules";
-import RegistrationSuccess from "./pages/RegistrationSuccess";
-import InstallApp from "./pages/InstallApp";
-import About from "./pages/About";
-import ASZF from "./pages/ASZF";
-import Adatkezeles from "./pages/Adatkezeles";
-import PopularContent from "./pages/PopularContent";
-import ProfileGame from "./pages/ProfileGame";
 import NotFound from "./pages/NotFound";
+
+// Secondary pages - Lazy load for better initial bundle (~15% reduction)
+const Profile = lazy(() => import("./pages/Profile"));
+const Invitation = lazy(() => import("./pages/Invitation"));
+const CoinShop = lazy(() => import("./pages/CoinShop"));
+const Creators = lazy(() => import("./pages/Creators"));
+const CreatorsLanding = lazy(() => import("./pages/CreatorsLanding"));
+const CreatorHowItWorks = lazy(() => import("./pages/CreatorHowItWorks"));
+const CreatorAnalytics = lazy(() => import("./pages/CreatorAnalytics"));
+const CreatorAnalyticsVideoDetail = lazy(() => import("./pages/CreatorAnalyticsVideoDetail"));
+const ForgotPin = lazy(() => import("./pages/ForgotPin"));
+const GameRules = lazy(() => import("./pages/GameRules"));
+const RegistrationSuccess = lazy(() => import("./pages/RegistrationSuccess"));
+const InstallApp = lazy(() => import("./pages/InstallApp"));
+const About = lazy(() => import("./pages/About"));
+const ASZF = lazy(() => import("./pages/ASZF"));
+const Adatkezeles = lazy(() => import("./pages/Adatkezeles"));
+const PopularContent = lazy(() => import("./pages/PopularContent"));
+const ProfileGame = lazy(() => import("./pages/ProfileGame"));
 
 // Admin pages - Lazy load for better initial bundle size (~40% reduction)
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));

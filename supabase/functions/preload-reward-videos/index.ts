@@ -52,32 +52,34 @@ serve(async (req) => {
 
     console.log(`[preload-reward-videos] User ${userId}, requesting ${requestedCount} videos`);
 
-    // Get user's country for filtering
-    const { data: userProfile } = await supabaseClient
-      .from('profiles')
-      .select('country_code')
-      .eq('id', userId)
-      .single();
-    
-    const userCountry = userProfile?.country_code || null;
-    console.log(`[preload-reward-videos] User country: ${userCountry || 'none'}`);
-
     const now = new Date().toISOString();
 
-    // Get active creator videos with valid subscriptions
-    const { data: videos, error: videosError } = await supabaseClient
-      .from('creator_videos')
-      .select(`
-        id,
-        embed_url,
-        video_url,
-        platform,
-        user_id,
-        creator_name
-      `)
-      .eq('is_active', true)
-      .gt('expires_at', now)
-      .not('embed_url', 'is', null);
+    // OPTIMIZATION: Parallel fetch user profile and videos
+    const [profileResult, videosResult] = await Promise.all([
+      supabaseClient
+        .from('profiles')
+        .select('country_code')
+        .eq('id', userId)
+        .single(),
+      supabaseClient
+        .from('creator_videos')
+        .select(`
+          id,
+          embed_url,
+          video_url,
+          platform,
+          user_id,
+          creator_name
+        `)
+        .eq('is_active', true)
+        .gt('expires_at', now)
+        .not('embed_url', 'is', null)
+    ]);
+
+    const userCountry = profileResult.data?.country_code || null;
+    console.log(`[preload-reward-videos] User country: ${userCountry || 'none'}`);
+
+    const { data: videos, error: videosError } = videosResult;
 
     if (videosError) {
       console.error('[preload-reward-videos] Error fetching videos:', videosError);

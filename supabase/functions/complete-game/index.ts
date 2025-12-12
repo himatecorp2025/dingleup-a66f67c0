@@ -361,73 +361,63 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get user profile for leaderboard display
-    const { data: userProfile, error: profileError } = await measureStage(ctx, 'profile_fetch', async () => {
-      incDbQuery(ctx);
-      return await supabaseAdmin
-        .from('profiles')
-        .select('username, avatar_url')
-        .eq('id', user.id)
-        .single();
-    });
-
-    if (profileError) {
-      console.error('[complete-game] Profile fetch error:', profileError);
-      // Not critical, use default username
-    }
-
-    // PHASE 1 OPTIMIZATION: Update daily_rankings WITHOUT rank recalculation
-    // Ranks are now computed every 5 minutes by materialized view refresh
-    await measureStage(ctx, 'daily_ranking', async () => {
-      try {
-        incDbQuery(ctx);
-        const { error: dailyRankError } = await supabaseAdmin.rpc(
-          'upsert_daily_ranking_aggregate',
-          {
-            p_user_id: user.id,
-            p_correct_answers: body.correctAnswers,
-            p_average_response_time: sanitizedAvgResponseTime || 0,
-          },
-        );
-
-        if (dailyRankError) {
-          console.error('[complete-game] Daily ranking aggregate RPC error:', dailyRankError);
-        }
-      } catch (rankErr) {
-        console.error('[complete-game] Daily ranking exception:', rankErr);
-      }
-    });
-
-    // Update global_leaderboard using ADMIN client (AGGREGATE LIFETIME TOTAL)
-    await measureStage(ctx, 'global_leaderboard', async () => {
-      try {
-        incDbQuery(ctx, 2);
-        const { data: existingGlobal } = await supabaseAdmin
+    // OPTIMIZATION: Parallel execution of profile fetch, daily ranking, and global leaderboard
+    const [profileResult, dailyRankResult, globalLeaderboardResult] = await measureStage(ctx, 'parallel_updates', async () => {
+      incDbQuery(ctx, 4); // 1 profile + 1 daily + 2 global
+      return await Promise.all([
+        // 1. Get user profile for leaderboard display
+        supabaseAdmin
+          .from('profiles')
+          .select('username, avatar_url')
+          .eq('id', user.id)
+          .single(),
+        
+        // 2. Update daily_rankings (without rank recalculation)
+        supabaseAdmin.rpc('upsert_daily_ranking_aggregate', {
+          p_user_id: user.id,
+          p_correct_answers: body.correctAnswers,
+          p_average_response_time: sanitizedAvgResponseTime || 0,
+        }),
+        
+        // 3. Get existing global leaderboard data for update
+        supabaseAdmin
           .from('global_leaderboard')
           .select('total_correct_answers, username')
           .eq('user_id', user.id)
-          .maybeSingle();
+          .maybeSingle(),
+      ]);
+    });
 
-        const newGlobalTotal = (existingGlobal?.total_correct_answers || 0) + body.correctAnswers;
+    const userProfile = profileResult.data;
+    const existingGlobal = globalLeaderboardResult.data;
 
-        const { error: leaderboardError } = await supabaseAdmin
-          .from('global_leaderboard')
-          .upsert({
-            user_id: user.id,
-            username: userProfile?.username || existingGlobal?.username || 'Player',
-            total_correct_answers: newGlobalTotal,
-            avatar_url: userProfile?.avatar_url || null,
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'user_id',
-            ignoreDuplicates: false
-          });
+    if (profileResult.error) {
+      console.error('[complete-game] Profile fetch error:', profileResult.error);
+    }
+    if (dailyRankResult.error) {
+      console.error('[complete-game] Daily ranking error:', dailyRankResult.error);
+    }
 
-        if (leaderboardError) {
-          console.error('[complete-game] Global leaderboard update error:', leaderboardError);
-        }
-      } catch (globalErr) {
-        console.error('[complete-game] Global leaderboard exception:', globalErr);
+    // Update global leaderboard with fetched data
+    const newGlobalTotal = (existingGlobal?.total_correct_answers || 0) + body.correctAnswers;
+    
+    await measureStage(ctx, 'global_leaderboard_upsert', async () => {
+      incDbQuery(ctx);
+      const { error: leaderboardError } = await supabaseAdmin
+        .from('global_leaderboard')
+        .upsert({
+          user_id: user.id,
+          username: userProfile?.username || existingGlobal?.username || 'Player',
+          total_correct_answers: newGlobalTotal,
+          avatar_url: userProfile?.avatar_url || null,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id',
+          ignoreDuplicates: false
+        });
+
+      if (leaderboardError) {
+        console.error('[complete-game] Global leaderboard update error:', leaderboardError);
       }
     });
 

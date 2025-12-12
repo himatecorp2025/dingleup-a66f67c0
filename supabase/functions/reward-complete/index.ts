@@ -165,21 +165,23 @@ serve(async (req) => {
 
     console.log(`[reward-complete] Crediting ${coinsToCredit} coins, ${livesToCredit} lives`);
 
-    // Log impressions for watched videos with calculated is_relevant_viewer
-    for (let i = 0; i < watchedVideoIds.length; i++) {
-      const videoId = watchedVideoIds[i];
-      const isRelevant = await calculateIsRelevant(supabaseClient, userId, videoId);
+    // OPTIMIZATION: Parallel log impressions for all watched videos
+    if (watchedVideoIds.length > 0) {
+      const impressionPromises = watchedVideoIds.map(async (videoId, i) => {
+        const isRelevant = await calculateIsRelevant(supabaseClient, userId, videoId);
+        return supabaseClient
+          .from('creator_video_impressions')
+          .insert({
+            creator_video_id: videoId,
+            viewer_user_id: userId,
+            context: eventType,
+            watched_full_15s: true,
+            is_relevant_viewer: isRelevant,
+            sequence_position: i + 1,
+          });
+      });
       
-      await supabaseClient
-        .from('creator_video_impressions')
-        .insert({
-          creator_video_id: videoId,
-          viewer_user_id: userId,
-          context: eventType,
-          watched_full_15s: true,
-          is_relevant_viewer: isRelevant,
-          sequence_position: i + 1,
-        });
+      await Promise.all(impressionPromises);
     }
 
     // Credit wallet using ATOMIC RPC (replaces read-modify-write anti-pattern)
