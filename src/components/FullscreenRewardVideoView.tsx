@@ -257,10 +257,10 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
       )}
 
       {/* Creator CTA link - bottom left, only in last 5 seconds of each segment */}
-      {showCTA && activeVideoForCTA && ctaCreatorName && (
+      {showCTA && activeVideoForCTA && (
         <button
           onClick={handleCreatorClick}
-          className="absolute flex items-center gap-2 px-3 py-2 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
+          className="absolute flex items-center gap-2 px-3 py-2 rounded-full bg-black/80 border-2 border-white/40 text-white hover:bg-black/90 transition-colors"
           style={{ 
             bottom: 'max(env(safe-area-inset-bottom, 0px), 24px)', 
             left: '16px',
@@ -268,7 +268,9 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
           }}
         >
           <PlatformIcon platform={activeVideoForCTA.platform} />
-          <span className="text-sm font-medium">{ctaCreatorName}</span>
+          <span className="text-sm font-medium">
+            {ctaCreatorName || (lang === 'hu' ? 'Tovább az alkotóhoz' : 'Go to creator')}
+          </span>
           <ExternalLink className="w-4 h-4 opacity-60" />
         </button>
       )}
