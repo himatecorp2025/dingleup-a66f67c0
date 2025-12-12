@@ -151,8 +151,8 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         setCanClose(true);
         toast.success(
           lang === 'hu' 
-            ? 'Zárd be a videót a jutalom jóváírásához!' 
-            : 'Close the video to claim your reward!',
+            ? 'Gratulálok! Jutalmad jóváírva!' 
+            : 'Congratulations! Reward credited!',
           { position: 'top-center', duration: 2000 }
         );
         clearInterval(interval);
