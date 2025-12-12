@@ -243,25 +243,23 @@ export const VideoAdModal = ({
       {/* Video iframe - FULLSCREEN with scale to fill */}
       {hasVideo && !videoError ? (
         <>
-          {/* Iframe container with overflow hidden to crop platform UI */}
+          {/* Crop container - clips overflow to hide platform UI */}
           <div 
             className="absolute inset-0 overflow-hidden"
             style={{ backgroundColor: '#000' }}
           >
             <iframe
               src={embedUrl}
-              className="absolute"
+              className="absolute border-0 pointer-events-none"
               style={{
-                // Scale up to hide platform UI elements at edges
-                width: '140vw',
-                height: '140dvh',
-                top: '50%',
+                width: '120vw',
+                height: '120vh',
                 left: '50%',
-                transform: 'translate(-50%, -50%)',
-                border: 'none',
+                top: '50%',
+                transform: 'translate(-50%, -46%)',
                 backgroundColor: '#000',
               }}
-              allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
+              allow="autoplay; encrypted-media; fullscreen"
               allowFullScreen
               onError={() => setVideoError(true)}
             />
