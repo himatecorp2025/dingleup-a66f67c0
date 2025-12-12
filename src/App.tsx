@@ -75,6 +75,7 @@ import AdminCreatorChannels from "./pages/AdminCreatorChannels";
 import AdminCreatorVideos from "./pages/AdminCreatorVideos";
 import AdminCreatorAnalytics from "./pages/AdminCreatorAnalytics";
 import AdminCreatorVideoDetail from "./pages/AdminCreatorVideoDetail";
+import AdminSubscribers from "./pages/AdminSubscribers";
 import NotFound from "./pages/NotFound";
 
 // Loading fallback component - uses fixed positioning to not affect layout
@@ -191,6 +192,7 @@ const AppCore = () => {
               <Route path="/admin/booster-purchases" element={<ErrorBoundary><AdminBoosterPurchases /></ErrorBoundary>} />
               <Route path="/admin/question-pools" element={<ErrorBoundary><AdminQuestionPools /></ErrorBoundary>} />
               <Route path="/admin/manual-credit" element={<ErrorBoundary><AdminManualCredit /></ErrorBoundary>} />
+              <Route path="/admin/subscribers" element={<ErrorBoundary><AdminSubscribers /></ErrorBoundary>} />
               <Route path="/admin/player-behaviors" element={<ErrorBoundary><AdminPlayerBehaviors /></ErrorBoundary>} />
               <Route path="/admin/age-statistics" element={<ErrorBoundary><AdminAgeStatistics /></ErrorBoundary>} />
               <Route path="/admin/legal-documents" element={<ErrorBoundary><AdminLegalDocuments /></ErrorBoundary>} />
