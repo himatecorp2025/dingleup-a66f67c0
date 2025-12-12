@@ -22,6 +22,7 @@ import {
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useI18n } from '@/i18n';
 import { COUNTRIES } from '@/data/countries';
+import DualScrollTable from '@/components/admin/DualScrollTable';
 
 interface TopicStatsRow {
   topicId: number;
@@ -309,98 +310,100 @@ const AdminPopularContent = () => {
               </div>
             </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent border-primary/20">
-                  <TableHead className="text-foreground font-bold w-12">#</TableHead>
-                  <TableHead 
-                    className="text-foreground font-bold cursor-pointer hover:text-primary"
-                    onClick={() => handleSort('topicName')}
-                  >
-                    {lang === 'hu' ? 'Témakör' : 'Topic'} {getSortIndicator('topicName')}
-                  </TableHead>
-                  <TableHead 
-                    className="text-foreground font-bold cursor-pointer hover:text-primary text-center"
-                    onClick={() => handleSort('correctAnswers')}
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-success" />
-                      {lang === 'hu' ? 'Helyes' : 'Correct'} {getSortIndicator('correctAnswers')}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="text-foreground font-bold cursor-pointer hover:text-primary text-center"
-                    onClick={() => handleSort('incorrectAnswers')}
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <XCircle className="w-4 h-4 text-destructive" />
-                      {lang === 'hu' ? 'Helytelen' : 'Incorrect'} {getSortIndicator('incorrectAnswers')}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="text-foreground font-bold cursor-pointer hover:text-primary text-center"
-                    onClick={() => handleSort('correctPercentage')}
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <Percent className="w-4 h-4 text-accent" />
-                      {lang === 'hu' ? 'Arány' : 'Rate'} {getSortIndicator('correctPercentage')}
-                    </div>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAndSortedData.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                      {lang === 'hu' ? 'Nincs adat a megadott szűrőkkel' : 'No data with current filters'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredAndSortedData.map((row, index) => (
-                    <TableRow 
-                      key={row.topicId}
-                      className="border-primary/10 hover:bg-primary/5"
+            <DualScrollTable>
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent border-primary/20">
+                    <TableHead className="text-foreground font-bold w-12 whitespace-nowrap">#</TableHead>
+                    <TableHead 
+                      className="text-foreground font-bold cursor-pointer hover:text-primary whitespace-nowrap"
+                      onClick={() => handleSort('topicName')}
                     >
-                      <TableCell className="text-foreground font-medium">
-                        {index + 1}
-                      </TableCell>
-                      <TableCell className="text-foreground font-medium">
-                        {row.topicName}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="inline-flex items-center gap-1 text-success font-bold">
-                          {row.correctAnswers.toLocaleString()}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="inline-flex items-center gap-1 text-destructive font-bold">
-                          {row.incorrectAnswers.toLocaleString()}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-gradient-to-r from-success to-accent rounded-full"
-                              style={{ width: `${row.correctPercentage}%` }}
-                            />
-                          </div>
-                          <span className={`font-bold min-w-[50px] ${
-                            row.correctPercentage >= 70 
-                              ? 'text-success' 
-                              : row.correctPercentage >= 50 
-                                ? 'text-accent' 
-                                : 'text-destructive'
-                          }`}>
-                            {row.correctPercentage}%
-                          </span>
-                        </div>
+                      {lang === 'hu' ? 'Témakör' : 'Topic'} {getSortIndicator('topicName')}
+                    </TableHead>
+                    <TableHead 
+                      className="text-foreground font-bold cursor-pointer hover:text-primary text-center whitespace-nowrap"
+                      onClick={() => handleSort('correctAnswers')}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-success" />
+                        {lang === 'hu' ? 'Helyes' : 'Correct'} {getSortIndicator('correctAnswers')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-foreground font-bold cursor-pointer hover:text-primary text-center whitespace-nowrap"
+                      onClick={() => handleSort('incorrectAnswers')}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <XCircle className="w-4 h-4 text-destructive" />
+                        {lang === 'hu' ? 'Helytelen' : 'Incorrect'} {getSortIndicator('incorrectAnswers')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-foreground font-bold cursor-pointer hover:text-primary text-center whitespace-nowrap"
+                      onClick={() => handleSort('correctPercentage')}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <Percent className="w-4 h-4 text-accent" />
+                        {lang === 'hu' ? 'Arány' : 'Rate'} {getSortIndicator('correctPercentage')}
+                      </div>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAndSortedData.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                        {lang === 'hu' ? 'Nincs adat a megadott szűrőkkel' : 'No data with current filters'}
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : (
+                    filteredAndSortedData.map((row, index) => (
+                      <TableRow 
+                        key={row.topicId}
+                        className="border-primary/10 hover:bg-primary/5"
+                      >
+                        <TableCell className="text-foreground font-medium">
+                          {index + 1}
+                        </TableCell>
+                        <TableCell className="text-foreground font-medium whitespace-nowrap">
+                          {row.topicName}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex items-center gap-1 text-success font-bold">
+                            {row.correctAnswers.toLocaleString()}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex items-center gap-1 text-destructive font-bold">
+                            {row.incorrectAnswers.toLocaleString()}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-gradient-to-r from-success to-accent rounded-full"
+                                style={{ width: `${row.correctPercentage}%` }}
+                              />
+                            </div>
+                            <span className={`font-bold min-w-[50px] ${
+                              row.correctPercentage >= 70 
+                                ? 'text-success' 
+                                : row.correctPercentage >= 50 
+                                  ? 'text-accent' 
+                                  : 'text-destructive'
+                            }`}>
+                              {row.correctPercentage}%
+                            </span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </DualScrollTable>
           </div>
         )}
       </div>

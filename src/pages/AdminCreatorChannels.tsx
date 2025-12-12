@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Download, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { getPlatformIcon, getPlatformColor, TikTokIcon, YouTubeIcon, InstagramIcon, FacebookIcon } from '@/components/admin/PlatformIcons';
+import DualScrollTable from '@/components/admin/DualScrollTable';
 
 const AdminCreatorChannels = () => {
   const { t } = useI18n();
@@ -269,69 +270,71 @@ const AdminCreatorChannels = () => {
                 ))}
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('admin.creators.platform')}</TableHead>
-                    <TableHead>{t('admin.creators.channel_handle')}</TableHead>
-                    <TableHead>{t('admin.channels.creator')}</TableHead>
-                    <TableHead>{t('common.active')}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.videos')}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.impressions')}</TableHead>
-                    <TableHead>{t('admin.creators.created')}</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {channels?.map((channel) => (
-                    <TableRow key={channel.id} className="hover:bg-muted/50">
-                      <TableCell>
-                        <span className={`flex items-center gap-2 ${getPlatformColor(channel.platform)}`}>
-                          {getPlatformIcon(channel.platform, "w-5 h-5")}
-                          {channel.platform}
-                        </span>
-                      </TableCell>
-                      <TableCell className="font-mono">{channel.channel_handle || '-'}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto"
-                          onClick={() => navigate(`/admin/creators/${channel.creator_id}`)}
-                        >
-                          {channel.profiles?.username || channel.creator_id.slice(0, 8)}
-                        </Button>
-                      </TableCell>
-                      <TableCell>
-                        {channel.is_active 
-                          ? <Badge className="bg-green-500/20 text-green-400">{t('common.active')}</Badge>
-                          : <Badge className="bg-red-500/20 text-red-400">{t('common.inactive')}</Badge>
-                        }
-                      </TableCell>
-                      <TableCell className="text-center">{channel.videos_count}</TableCell>
-                      <TableCell className="text-center">{channel.total_impressions.toLocaleString()}</TableCell>
-                      <TableCell>{format(new Date(channel.created_at), 'yyyy.MM.dd')}</TableCell>
-                      <TableCell>
-                        {channel.channel_url && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => window.open(channel.channel_url, '_blank')}
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {channels?.length === 0 && (
+              <DualScrollTable>
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                        {t('admin.channels.no_channels')}
-                      </TableCell>
+                      <TableHead className="whitespace-nowrap">{t('admin.creators.platform')}</TableHead>
+                      <TableHead className="whitespace-nowrap">{t('admin.creators.channel_handle')}</TableHead>
+                      <TableHead className="whitespace-nowrap">{t('admin.channels.creator')}</TableHead>
+                      <TableHead className="whitespace-nowrap">{t('common.active')}</TableHead>
+                      <TableHead className="text-center whitespace-nowrap">{t('admin.creators.videos')}</TableHead>
+                      <TableHead className="text-center whitespace-nowrap">{t('admin.creators.impressions')}</TableHead>
+                      <TableHead className="whitespace-nowrap">{t('admin.creators.created')}</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {channels?.map((channel) => (
+                      <TableRow key={channel.id} className="hover:bg-muted/50">
+                        <TableCell>
+                          <span className={`flex items-center gap-2 ${getPlatformColor(channel.platform)}`}>
+                            {getPlatformIcon(channel.platform, "w-5 h-5")}
+                            <span className="capitalize">{channel.platform}</span>
+                          </span>
+                        </TableCell>
+                        <TableCell className="font-mono">{channel.channel_handle || '-'}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="link"
+                            className="p-0 h-auto"
+                            onClick={() => navigate(`/admin/creators/${channel.creator_id}`)}
+                          >
+                            {channel.profiles?.username || channel.creator_id.slice(0, 8)}
+                          </Button>
+                        </TableCell>
+                        <TableCell>
+                          {channel.is_active 
+                            ? <Badge className="bg-green-500/20 text-green-400">{t('common.active')}</Badge>
+                            : <Badge className="bg-red-500/20 text-red-400">{t('common.inactive')}</Badge>
+                          }
+                        </TableCell>
+                        <TableCell className="text-center">{channel.videos_count}</TableCell>
+                        <TableCell className="text-center">{channel.total_impressions.toLocaleString()}</TableCell>
+                        <TableCell className="whitespace-nowrap">{format(new Date(channel.created_at), 'yyyy.MM.dd')}</TableCell>
+                        <TableCell>
+                          {channel.channel_url && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => window.open(channel.channel_url, '_blank')}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {channels?.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                          {t('admin.channels.no_channels')}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </DualScrollTable>
             )}
           </CardContent>
         </Card>

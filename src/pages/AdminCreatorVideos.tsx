@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { Search, Download, Video, Eye, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { getPlatformIcon, getPlatformColor, TikTokIcon, YouTubeIcon, InstagramIcon, FacebookIcon } from '@/components/admin/PlatformIcons';
+import DualScrollTable from '@/components/admin/DualScrollTable';
 
 const AdminCreatorVideos = () => {
   const { t } = useI18n();
@@ -229,76 +230,78 @@ const AdminCreatorVideos = () => {
                 ))}
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Video ID</TableHead>
-                    <TableHead>{t('admin.channels.creator')}</TableHead>
-                    <TableHead>{t('admin.creators.platform')}</TableHead>
-                    <TableHead>{t('admin.creators.title')}</TableHead>
-                    <TableHead>{t('admin.creators.status')}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.impressions')}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.completions')}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.clicks')}</TableHead>
-                    <TableHead>{t('admin.creators.created')}</TableHead>
-                    <TableHead>{t('common.actions')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {videos?.map((video) => (
-                    <TableRow key={video.id} className="hover:bg-muted/50">
-                      <TableCell className="font-mono text-xs">{video.id.slice(0, 8)}...</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto"
-                          onClick={() => navigate(`/admin/creators/${video.user_id}`)}
-                        >
-                          {video.profiles?.username || video.user_id.slice(0, 8)}
-                        </Button>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`flex items-center gap-2 ${getPlatformColor(video.platform)}`}>
-                          {getPlatformIcon(video.platform, "w-5 h-5")}
-                          {video.platform}
-                        </span>
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate">{video.title || video.video_url}</TableCell>
-                      <TableCell>{getStatusBadge(video.status)}</TableCell>
-                      <TableCell className="text-center">{video.total_impressions?.toLocaleString() || 0}</TableCell>
-                      <TableCell className="text-center">{video.total_video_completions?.toLocaleString() || 0}</TableCell>
-                      <TableCell className="text-center">{video.total_clickthrough?.toLocaleString() || 0}</TableCell>
-                      <TableCell>{format(new Date(video.created_at), 'yyyy.MM.dd')}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => toggleVideoMutation.mutate({ videoId: video.id, isActive: !video.is_active })}
-                            title={video.is_active ? t('admin.creators.deactivate') : t('admin.creators.activate')}
-                          >
-                            {video.is_active ? <XCircle className="h-4 w-4 text-red-400" /> : <CheckCircle className="h-4 w-4 text-green-400" />}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate(`/admin/creator-videos/${video.id}`)}
-                          >
-                            {t('common.details')}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {videos?.length === 0 && (
+              <DualScrollTable>
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                        {t('admin.videos.no_videos')}
-                      </TableCell>
+                      <TableHead className="whitespace-nowrap">Video ID</TableHead>
+                      <TableHead className="whitespace-nowrap">{t('admin.channels.creator')}</TableHead>
+                      <TableHead className="whitespace-nowrap">{t('admin.creators.platform')}</TableHead>
+                      <TableHead className="whitespace-nowrap">{t('admin.creators.title')}</TableHead>
+                      <TableHead className="whitespace-nowrap">{t('admin.creators.status')}</TableHead>
+                      <TableHead className="text-center whitespace-nowrap">{t('admin.creators.impressions')}</TableHead>
+                      <TableHead className="text-center whitespace-nowrap">{t('admin.creators.completions')}</TableHead>
+                      <TableHead className="text-center whitespace-nowrap">{t('admin.creators.clicks')}</TableHead>
+                      <TableHead className="whitespace-nowrap">{t('admin.creators.created')}</TableHead>
+                      <TableHead className="whitespace-nowrap">{t('common.actions')}</TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {videos?.map((video) => (
+                      <TableRow key={video.id} className="hover:bg-muted/50">
+                        <TableCell className="font-mono text-xs">{video.id.slice(0, 8)}...</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="link"
+                            className="p-0 h-auto"
+                            onClick={() => navigate(`/admin/creators/${video.user_id}`)}
+                          >
+                            {video.profiles?.username || video.user_id.slice(0, 8)}
+                          </Button>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`flex items-center gap-2 ${getPlatformColor(video.platform)}`}>
+                            {getPlatformIcon(video.platform, "w-5 h-5")}
+                            <span className="capitalize">{video.platform}</span>
+                          </span>
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">{video.title || video.video_url}</TableCell>
+                        <TableCell>{getStatusBadge(video.status)}</TableCell>
+                        <TableCell className="text-center">{video.total_impressions?.toLocaleString() || 0}</TableCell>
+                        <TableCell className="text-center">{video.total_video_completions?.toLocaleString() || 0}</TableCell>
+                        <TableCell className="text-center">{video.total_clickthrough?.toLocaleString() || 0}</TableCell>
+                        <TableCell className="whitespace-nowrap">{format(new Date(video.created_at), 'yyyy.MM.dd')}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => toggleVideoMutation.mutate({ videoId: video.id, isActive: !video.is_active })}
+                              title={video.is_active ? t('admin.creators.deactivate') : t('admin.creators.activate')}
+                            >
+                              {video.is_active ? <XCircle className="h-4 w-4 text-red-400" /> : <CheckCircle className="h-4 w-4 text-green-400" />}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => navigate(`/admin/creator-videos/${video.id}`)}
+                            >
+                              {t('common.details')}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {videos?.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                          {t('admin.videos.no_videos')}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </DualScrollTable>
             )}
           </CardContent>
         </Card>

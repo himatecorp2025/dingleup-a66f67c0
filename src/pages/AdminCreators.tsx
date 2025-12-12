@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Users, Video, Eye, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { getPlatformIcon, getPlatformColor, TikTokIcon, YouTubeIcon, InstagramIcon, FacebookIcon } from '@/components/admin/PlatformIcons';
+import DualScrollTable from '@/components/admin/DualScrollTable';
 
 interface CreatorData {
   id: string;
@@ -266,59 +267,61 @@ const AdminCreators = () => {
                 ))}
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Creator ID</TableHead>
-                    <TableHead>{t('admin.creators.username')}</TableHead>
-                    <TableHead>{t('admin.creators.status')}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.channels')}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.videos')}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.active_videos')}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.impressions')}</TableHead>
-                    <TableHead>{t('admin.creators.last_video')}</TableHead>
-                    <TableHead>{t('admin.creators.created')}</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {creators?.map((creator) => (
-                    <TableRow key={creator.id} className="hover:bg-muted/50">
-                      <TableCell className="font-mono text-xs">{creator.id.slice(0, 8)}...</TableCell>
-                      <TableCell className="font-medium">{creator.username}</TableCell>
-                      <TableCell>{getStatusBadge(creator.creator_status)}</TableCell>
-                      <TableCell className="text-center">{creator.channels_count}</TableCell>
-                      <TableCell className="text-center">{creator.videos_count}</TableCell>
-                      <TableCell className="text-center">
-                        <span className="text-green-400">{creator.active_videos_count}</span>
-                      </TableCell>
-                      <TableCell className="text-center">{creator.total_impressions.toLocaleString()}</TableCell>
-                      <TableCell>
-                        {creator.last_video_at 
-                          ? format(new Date(creator.last_video_at), 'yyyy.MM.dd')
-                          : '-'}
-                      </TableCell>
-                      <TableCell>{format(new Date(creator.created_at), 'yyyy.MM.dd')}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/admin/creators/${creator.id}`)}
-                        >
-                          {t('common.open')}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {creators?.length === 0 && (
+              <DualScrollTable>
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                        {t('admin.creators.no_creators')}
-                      </TableCell>
+                      <TableHead className="whitespace-nowrap">Creator ID</TableHead>
+                      <TableHead className="whitespace-nowrap">{t('admin.creators.username')}</TableHead>
+                      <TableHead className="whitespace-nowrap">{t('admin.creators.status')}</TableHead>
+                      <TableHead className="text-center whitespace-nowrap">{t('admin.creators.channels')}</TableHead>
+                      <TableHead className="text-center whitespace-nowrap">{t('admin.creators.videos')}</TableHead>
+                      <TableHead className="text-center whitespace-nowrap">{t('admin.creators.active_videos')}</TableHead>
+                      <TableHead className="text-center whitespace-nowrap">{t('admin.creators.impressions')}</TableHead>
+                      <TableHead className="whitespace-nowrap">{t('admin.creators.last_video')}</TableHead>
+                      <TableHead className="whitespace-nowrap">{t('admin.creators.created')}</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {creators?.map((creator) => (
+                      <TableRow key={creator.id} className="hover:bg-muted/50">
+                        <TableCell className="font-mono text-xs">{creator.id.slice(0, 8)}...</TableCell>
+                        <TableCell className="font-medium">{creator.username}</TableCell>
+                        <TableCell>{getStatusBadge(creator.creator_status)}</TableCell>
+                        <TableCell className="text-center">{creator.channels_count}</TableCell>
+                        <TableCell className="text-center">{creator.videos_count}</TableCell>
+                        <TableCell className="text-center">
+                          <span className="text-green-400">{creator.active_videos_count}</span>
+                        </TableCell>
+                        <TableCell className="text-center">{creator.total_impressions.toLocaleString()}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {creator.last_video_at 
+                            ? format(new Date(creator.last_video_at), 'yyyy.MM.dd')
+                            : '-'}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">{format(new Date(creator.created_at), 'yyyy.MM.dd')}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/admin/creators/${creator.id}`)}
+                          >
+                            {t('common.open')}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {creators?.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                          {t('admin.creators.no_creators')}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </DualScrollTable>
             )}
           </CardContent>
         </Card>

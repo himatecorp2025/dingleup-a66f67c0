@@ -5,10 +5,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useAdminGameProfilesQuery } from '@/hooks/queries/useAdminGameProfilesQuery';
 import { Brain, Search, Info, RefreshCw } from 'lucide-react';
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useI18n } from '@/i18n';
+import DualScrollTable from '@/components/admin/DualScrollTable';
 
 export default function AdminGameProfiles() {
   const { t } = useI18n();
@@ -16,49 +17,6 @@ export default function AdminGameProfiles() {
   const { profiles, loading, isRefreshing, error, refetch } = useAdminGameProfilesQuery();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'answered' | 'correctness'>('answered');
-  
-  // Refs for synced scrollbars
-  const topScrollRef = useRef<HTMLDivElement>(null);
-  const bottomScrollRef = useRef<HTMLDivElement>(null);
-  const [tableWidth, setTableWidth] = useState(0);
-
-  // Sync scrollbars
-  useEffect(() => {
-    const topEl = topScrollRef.current;
-    const bottomEl = bottomScrollRef.current;
-    
-    if (!topEl || !bottomEl) return;
-
-    const handleTopScroll = () => {
-      if (bottomEl) bottomEl.scrollLeft = topEl.scrollLeft;
-    };
-    
-    const handleBottomScroll = () => {
-      if (topEl) topEl.scrollLeft = bottomEl.scrollLeft;
-    };
-
-    topEl.addEventListener('scroll', handleTopScroll);
-    bottomEl.addEventListener('scroll', handleBottomScroll);
-
-    return () => {
-      topEl.removeEventListener('scroll', handleTopScroll);
-      bottomEl.removeEventListener('scroll', handleBottomScroll);
-    };
-  }, []);
-
-  // Update table width for top scrollbar
-  useEffect(() => {
-    const updateWidth = () => {
-      const table = bottomScrollRef.current?.querySelector('table');
-      if (table) {
-        setTableWidth(table.scrollWidth);
-      }
-    };
-    
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
-  }, [profiles]);
 
   const filteredAndSorted = useMemo(() => {
     let result = [...profiles];
@@ -179,28 +137,16 @@ export default function AdminGameProfiles() {
             <CardDescription>{t('admin.game_profiles.table_desc')}</CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Top scrollbar - synced with bottom */}
-            <div 
-              ref={topScrollRef}
-              className="overflow-x-scroll mb-1"
-              style={{ overflowY: 'hidden', height: '16px' }}
-            >
-              <div style={{ width: tableWidth > 0 ? `${tableWidth}px` : '100%', height: '1px' }} />
-            </div>
-            {/* Table with bottom scrollbar */}
-            <div 
-              ref={bottomScrollRef}
-              className="overflow-x-auto"
-            >
+            <DualScrollTable>
               <table className="w-full min-w-[900px]">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4">{t('admin.game_profiles.col_user')}</th>
-                    <th className="text-right py-3 px-4">{t('admin.game_profiles.col_total_answers')}</th>
-                    <th className="text-right py-3 px-4">{t('admin.game_profiles.col_correct_percent')}</th>
-                    <th className="text-center py-3 px-4">{t('admin.game_profiles.col_ai_status')}</th>
-                    <th className="text-left py-3 px-4">{t('admin.game_profiles.col_top3')}</th>
-                    <th className="text-center py-3 px-4">{t('admin.game_profiles.col_actions')}</th>
+                    <th className="text-left py-3 px-4 whitespace-nowrap">{t('admin.game_profiles.col_user')}</th>
+                    <th className="text-right py-3 px-4 whitespace-nowrap">{t('admin.game_profiles.col_total_answers')}</th>
+                    <th className="text-right py-3 px-4 whitespace-nowrap">{t('admin.game_profiles.col_correct_percent')}</th>
+                    <th className="text-center py-3 px-4 whitespace-nowrap">{t('admin.game_profiles.col_ai_status')}</th>
+                    <th className="text-left py-3 px-4 whitespace-nowrap">{t('admin.game_profiles.col_top3')}</th>
+                    <th className="text-center py-3 px-4 whitespace-nowrap">{t('admin.game_profiles.col_actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -232,7 +178,7 @@ export default function AdminGameProfiles() {
                       <td className="py-3 px-4">
                         <div className="flex flex-col gap-1">
                           {profile.topTopics.slice(0, 2).map((topic, idx) => (
-                            <span key={topic.topicId} className="text-xs">
+                            <span key={topic.topicId} className="text-xs whitespace-nowrap">
                               {idx + 1}. {topic.topicName} ({topic.correctCount})
                             </span>
                           ))}
@@ -251,7 +197,7 @@ export default function AdminGameProfiles() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </DualScrollTable>
           </CardContent>
         </Card>
       </div>

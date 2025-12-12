@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useI18n } from '@/i18n';
+import DualScrollTable from '@/components/admin/DualScrollTable';
 
 interface BoosterPurchase {
   id: string;
@@ -199,56 +200,58 @@ export default function AdminBoosterPurchases() {
 
         {/* Purchases Table */}
         <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('admin.booster_purchases.table.user')}</TableHead>
-                <TableHead>{t('admin.booster_purchases.table.booster')}</TableHead>
-                <TableHead>{t('admin.booster_purchases.table.source')}</TableHead>
-                <TableHead>{t('admin.booster_purchases.table.context')}</TableHead>
-                <TableHead className="text-right">{t('admin.booster_purchases.table.gold')}</TableHead>
-                <TableHead className="text-right">{t('admin.booster_purchases.table.usd')}</TableHead>
-                <TableHead>{t('admin.booster_purchases.table.date')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPurchases.map((purchase) => (
-                <TableRow key={purchase.id}>
-                  <TableCell className="font-medium">{purchase.username}</TableCell>
-                  <TableCell>{purchase.booster_name}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                      purchase.purchase_source === 'GOLD'
-                        ? 'bg-yellow-500/20 text-yellow-400'
-                        : 'bg-green-500/20 text-green-400'
-                    }`}>
-                      {purchase.purchase_source}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                      purchase.purchase_context === 'INGAME'
-                        ? 'bg-red-500/20 text-red-400'
-                        : purchase.purchase_context === 'DASHBOARD'
-                        ? 'bg-blue-500/20 text-blue-400'
-                        : 'bg-purple-500/20 text-purple-400'
-                    }`}>
-                      {purchase.purchase_context || 'UNKNOWN'}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right text-yellow-400">
-                    {purchase.gold_spent > 0 ? purchase.gold_spent : '-'}
-                  </TableCell>
-                  <TableCell className="text-right text-green-400">
-                    {purchase.usd_cents_spent > 0 ? `$${(purchase.usd_cents_spent / 100).toFixed(2)}` : '-'}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(purchase.created_at).toLocaleString('hu-HU')}
-                  </TableCell>
+          <DualScrollTable>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="whitespace-nowrap">{t('admin.booster_purchases.table.user')}</TableHead>
+                  <TableHead className="whitespace-nowrap">{t('admin.booster_purchases.table.booster')}</TableHead>
+                  <TableHead className="whitespace-nowrap">{t('admin.booster_purchases.table.source')}</TableHead>
+                  <TableHead className="whitespace-nowrap">{t('admin.booster_purchases.table.context')}</TableHead>
+                  <TableHead className="text-right whitespace-nowrap">{t('admin.booster_purchases.table.gold')}</TableHead>
+                  <TableHead className="text-right whitespace-nowrap">{t('admin.booster_purchases.table.usd')}</TableHead>
+                  <TableHead className="whitespace-nowrap">{t('admin.booster_purchases.table.date')}</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredPurchases.map((purchase) => (
+                  <TableRow key={purchase.id}>
+                    <TableCell className="font-medium">{purchase.username}</TableCell>
+                    <TableCell>{purchase.booster_name}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                        purchase.purchase_source === 'GOLD'
+                          ? 'bg-yellow-500/20 text-yellow-400'
+                          : 'bg-green-500/20 text-green-400'
+                      }`}>
+                        {purchase.purchase_source}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                        purchase.purchase_context === 'INGAME'
+                          ? 'bg-red-500/20 text-red-400'
+                          : purchase.purchase_context === 'DASHBOARD'
+                          ? 'bg-blue-500/20 text-blue-400'
+                          : 'bg-purple-500/20 text-purple-400'
+                      }`}>
+                        {purchase.purchase_context || 'UNKNOWN'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right text-yellow-400">
+                      {purchase.gold_spent > 0 ? purchase.gold_spent : '-'}
+                    </TableCell>
+                    <TableCell className="text-right text-green-400">
+                      {purchase.usd_cents_spent > 0 ? `$${(purchase.usd_cents_spent / 100).toFixed(2)}` : '-'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground whitespace-nowrap">
+                      {new Date(purchase.created_at).toLocaleString('hu-HU')}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </DualScrollTable>
         </Card>
       </div>
     </AdminLayout>
