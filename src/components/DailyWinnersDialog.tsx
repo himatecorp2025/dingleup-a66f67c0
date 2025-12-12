@@ -948,18 +948,22 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
                           ))}
                         </div>
 
-                        {/* SECOND ROW: 8-10 (3 circles CENTERED) */}
+                        {/* SECOND ROW: 8-10 (3 circles CENTERED) - same size as first row */}
                         {rankFourToTen.slice(4, 7).length > 0 && (
                           <div 
-                            className="grid grid-cols-3 w-full" 
+                            className="flex justify-center w-full" 
                             style={{ 
-                              gap: 'clamp(6px, 2vw, 14px)',
-                              maxWidth: '75%',
-                              margin: '0 auto'
+                              gap: 'clamp(6px, 2vw, 14px)'
                             }}
                           >
                             {rankFourToTen.slice(4, 7).map((player) => (
-                              <div key={player.user_id} className="flex flex-col items-center w-full">
+                              <div 
+                                key={player.user_id} 
+                                className="flex flex-col items-center"
+                                style={{ 
+                                  width: 'calc((100% - 3 * clamp(6px, 2vw, 14px)) / 4)' // Same width as first row items
+                                }}
+                              >
                                 <div className="relative w-full" style={{ aspectRatio: '1 / 1' }}>
                                   <div className="w-full h-full rounded-full overflow-hidden bg-gray-800 relative">
                                     <div className="absolute inset-0 rounded-full" style={{
