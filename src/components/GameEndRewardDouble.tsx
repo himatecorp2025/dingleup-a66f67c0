@@ -91,9 +91,20 @@ export const GameEndRewardDouble = ({
     if (result.success) {
       onRewardDoubled(result.coinsDelta);
       toast.success(
-        lang === 'hu' 
-          ? 'Gratulálunk! Jutalmad jóváírásra került!' 
-          : 'Congratulations! Your reward has been credited!',
+        <div className="flex flex-col items-center gap-2 text-center max-w-[75vw]">
+          <div className="text-2xl">🎉</div>
+          <div className="font-bold text-lg bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 bg-clip-text text-transparent drop-shadow-lg">
+            {lang === 'hu' ? 'Gratulálunk!' : 'Congratulations!'}
+          </div>
+          <div className="text-sm text-foreground/90">
+            {lang === 'hu' 
+              ? 'Jutalmad jóváírásra került!' 
+              : 'Your reward has been credited!'}
+          </div>
+          <div className="flex items-center gap-2 mt-1 px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-500/20 via-amber-500/30 to-yellow-500/20 border border-yellow-500/40 shadow-lg shadow-yellow-500/20">
+            <span className="font-bold text-yellow-400 text-lg">2× 🪙</span>
+          </div>
+        </div>,
         { position: 'top-center', duration: 3000 }
       );
       onClose();
