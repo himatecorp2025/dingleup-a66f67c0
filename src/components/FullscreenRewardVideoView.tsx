@@ -331,12 +331,12 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
             <iframe
               key={`${currentVideo?.id}-${currentVideoIndex}-${videoKey}`}
               src={embedSrc}
-              className="absolute left-1/2 -translate-x-1/2 border-0 pointer-events-none"
+              className="absolute left-1/2 border-0 pointer-events-none"
               style={{
-                width: '100vw',
-                height: '100vh',
-                // Shift video DOWN by 15% to hide creator profile at top
-                top: '55%',
+                width: '120vw',
+                height: '140vh',
+                // Video nagyobb és lejjebb tolva, hogy az alkotó profilját elrejtsük
+                top: '60%',
                 transform: 'translateX(-50%) translateY(-50%)',
                 zIndex: 10,
                 backgroundColor: '#000000',
