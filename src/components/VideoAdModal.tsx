@@ -26,9 +26,9 @@ interface VideoData {
 }
 
 // === TUNING CONSTANTS - adjust these to hide bottom platform info ===
-const OVERSIZE_W_VW = 175;    // iframe width vs viewport (175vw)
-const OVERSIZE_H_VH = 250;    // iframe height vs viewport (250vh)
-const SHIFT_DOWN_VH = 25;     // position from top where iframe center lands (75% = pushed down)
+const OVERSIZE_W_VW = 112;    // iframe width vs viewport
+const OVERSIZE_H_VH = 140;    // iframe height vs viewport
+const SHIFT_DOWN_VH = 10;     // shift DOWN to hide bottom info bar
 const SEGMENT_DURATION = 15;  // seconds per video segment
 const LOAD_TIMEOUT_MS = 2500; // show fallback if iframe doesn't load in this time
 
@@ -36,38 +36,73 @@ const LOAD_TIMEOUT_MS = 2500; // show fallback if iframe doesn't load in this ti
 const NEEDS_TAP_TO_PLAY = ['instagram'];
 
 /**
+ * Check if URL is a real embed/player URL (not a regular page URL)
+ */
+const isEmbeddable = (url: string, platform: string): boolean => {
+  if (!url) return false;
+  
+  const p = platform.toLowerCase();
+  
+  switch (p) {
+    case 'youtube':
+      return url.includes('youtube.com/embed/');
+    case 'tiktok':
+      return url.includes('tiktok.com/embed');
+    case 'instagram':
+      return url.includes('/embed');
+    case 'facebook':
+      return url.includes('facebook.com/plugins/video.php');
+    default:
+      return false;
+  }
+};
+
+/**
  * Build embed URL with autoplay parameters per platform
+ * Returns empty string if URL is not embeddable
  */
 const buildEmbedUrl = (url: string, platform: string): string => {
-  if (!url) return url;
+  if (!url) return '';
+  
+  // Only process if it's a real embed URL
+  if (!isEmbeddable(url, platform)) {
+    logger.log('[VideoAdModal] URL is not embeddable:', url);
+    return '';
+  }
   
   try {
     const urlObj = new URL(url);
+    const p = platform.toLowerCase();
     
     // Common autoplay params
     urlObj.searchParams.set('autoplay', '1');
-    urlObj.searchParams.set('muted', '1');
     urlObj.searchParams.set('playsinline', '1');
     
     // Platform-specific params
-    switch (platform.toLowerCase()) {
+    switch (p) {
       case 'youtube':
+        urlObj.searchParams.set('mute', '1');
         urlObj.searchParams.set('controls', '0');
-        urlObj.searchParams.set('showinfo', '0');
         urlObj.searchParams.set('rel', '0');
         urlObj.searchParams.set('modestbranding', '1');
         break;
       case 'tiktok':
         urlObj.searchParams.set('mute', '1');
         break;
+      case 'instagram':
+        urlObj.searchParams.set('muted', '1');
+        break;
       case 'facebook':
         urlObj.searchParams.set('mute', '1');
         break;
+      default:
+        urlObj.searchParams.set('muted', '1');
     }
     
     return urlObj.toString();
   } catch {
-    return url;
+    logger.log('[VideoAdModal] Failed to parse URL:', url);
+    return '';
   }
 };
 
@@ -75,8 +110,8 @@ const buildEmbedUrl = (url: string, platform: string): string => {
  * VideoAdModal - Platform-independent fullscreen video ad player
  * 
  * Features:
- * - True fullscreen (covers entire device screen)
- * - Hides platform bottom info bar via oversized iframe + black overlays
+ * - True fullscreen (covers entire device screen including bottom nav)
+ * - Hides platform bottom info bar via oversized iframe + crop
  * - Autoplay with muted + playsinline for iOS compatibility
  * - Single countdown timer (30s for 2 videos, switches at 15s)
  * - Fallback screen with DingleUP logo if iframe fails/blocks
@@ -129,7 +164,12 @@ export const VideoAdModal = ({
   const currentVideo = playlist[currentVideoIndex];
   const currentPlatform = currentVideo?.platform?.toLowerCase() || '';
   const needsTapToPlay = NEEDS_TAP_TO_PLAY.includes(currentPlatform);
-  const hasVideo = playlist.length > 0 && currentVideo?.embed_url;
+  
+  // Check if current video has a valid embeddable URL
+  const embedUrl = currentVideo?.embed_url 
+    ? buildEmbedUrl(currentVideo.embed_url, currentVideo.platform) 
+    : '';
+  const hasEmbeddableVideo = playlist.length > 0 && embedUrl !== '';
 
   // Lock body scroll and prevent touch
   useEffect(() => {
@@ -308,18 +348,13 @@ export const VideoAdModal = ({
 
   if (!isOpen) return null;
 
-  // Build embed URL with autoplay params
-  const embedUrl = currentVideo?.embed_url 
-    ? buildEmbedUrl(currentVideo.embed_url, currentVideo.platform) 
-    : '';
-
   // Determine if we should show the iframe or fallback/end screen
-  const shouldShowIframe = hasVideo && !showFallback && !showEndScreen;
+  const shouldShowIframe = hasEmbeddableVideo && !showFallback && !showEndScreen;
 
   return (
-    // ROOT: True fullscreen, black background, covers everything
+    // ROOT: True fullscreen with dynamic viewport, black background, covers everything
     <div 
-      className="fixed inset-0 z-[9999]"
+      className="fixed inset-0"
       style={{ 
         width: '100dvw', 
         height: '100dvh',
@@ -327,11 +362,10 @@ export const VideoAdModal = ({
         overflow: 'hidden',
         touchAction: 'none',
         overscrollBehavior: 'none',
-        paddingTop: 'env(safe-area-inset-top)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
+        zIndex: 999999,
       }}
     >
-      {/* Solid black background - always visible */}
+      {/* Solid black background - always visible, never white */}
       <div 
         className="absolute inset-0" 
         style={{ backgroundColor: '#000000', zIndex: 0 }}
@@ -356,38 +390,16 @@ export const VideoAdModal = ({
                 width: `${OVERSIZE_W_VW}vw`,
                 height: `${OVERSIZE_H_VH}vh`,
                 left: '50%',
-                top: `${SHIFT_DOWN_VH + 50}%`,
-                transform: 'translateX(-50%) translateY(-50%)',
+                top: '50%',
+                transform: `translate(-50%, -50%) translateY(${SHIFT_DOWN_VH}vh)`,
                 zIndex: 10,
                 backgroundColor: '#000000',
               }}
-              allow="autoplay; encrypted-media; fullscreen; picture-in-picture; accelerometer; gyroscope"
+              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
               allowFullScreen
               referrerPolicy="no-referrer-when-downgrade"
             />
           </div>
-          
-          {/* Black overlay strips for sides - hide side UI */}
-          <div 
-            className="absolute top-0 left-0 h-full"
-            style={{ width: '15vw', backgroundColor: '#000000', zIndex: 15 }}
-          />
-          <div 
-            className="absolute top-0 right-0 h-full"
-            style={{ width: '15vw', backgroundColor: '#000000', zIndex: 15 }}
-          />
-          
-          {/* Top black overlay - hide creator profile area */}
-          <div 
-            className="absolute top-0 left-0 right-0"
-            style={{ height: '25vh', backgroundColor: '#000000', zIndex: 15 }}
-          />
-          
-          {/* Bottom black overlay - hide platform footer */}
-          <div 
-            className="absolute bottom-0 left-0 right-0"
-            style={{ height: '15vh', backgroundColor: '#000000', zIndex: 15 }}
-          />
           
           {/* Loading indicator - while iframe loads */}
           {!isLoaded && (
@@ -422,7 +434,7 @@ export const VideoAdModal = ({
           )}
         </>
       ) : (
-        // Fallback / End screen - DingleUP logo on black
+        // Fallback / End screen - DingleUP logo on black (never white)
         <div 
           className="absolute inset-0 flex flex-col items-center justify-center gap-6"
           style={{ backgroundColor: '#000000', zIndex: 20 }}
