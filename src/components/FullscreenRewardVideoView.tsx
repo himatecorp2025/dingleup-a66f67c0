@@ -118,10 +118,18 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
   const [secondsLeft, setSecondsLeft] = useState(totalDuration);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [canClose, setCanClose] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const watchedIdsRef = useRef<Set<string>>(new Set());
   const lastSwitchRef = useRef<number>(Date.now());
 
   const currentVideo = videos[currentVideoIndex];
+
+  // CTA visibility logic: show only in last 5 seconds of each segment (10-15s)
+  const SEGMENT_DURATION = 15;
+  const segmentIndex = Math.floor(elapsedSeconds / SEGMENT_DURATION);
+  const segmentElapsed = elapsedSeconds % SEGMENT_DURATION;
+  const showCTA = segmentElapsed >= 10 && segmentElapsed < SEGMENT_DURATION && !canClose;
+  const activeVideoForCTA = videos[segmentIndex] || null;
 
   // Lock body scroll
   useEffect(() => {
@@ -144,6 +152,7 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
       const remaining = Math.max(0, totalDuration - Math.floor(elapsed));
       setSecondsLeft(remaining);
+      setElapsedSeconds(Math.floor(elapsed));
 
       // Timer finished
       if (remaining === 0) {
@@ -178,13 +187,14 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
   }, [canClose, onCompleted, onClose]);
 
   const handleCreatorClick = useCallback(() => {
-    if (!currentVideo) return;
-    window.open(getOriginalVideoUrl(currentVideo), '_blank', 'noopener,noreferrer');
-  }, [currentVideo]);
+    if (!activeVideoForCTA) return;
+    window.open(getOriginalVideoUrl(activeVideoForCTA), '_blank', 'noopener,noreferrer');
+  }, [activeVideoForCTA]);
 
   if (!currentVideo) return null;
 
-  const creatorName = getCreatorDisplayName(currentVideo);
+  // CTA creator name is from activeVideoForCTA (segment-based)
+  const ctaCreatorName = activeVideoForCTA ? getCreatorDisplayName(activeVideoForCTA) : null;
 
   return (
     <div 
@@ -241,8 +251,8 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         </div>
       )}
 
-      {/* Creator link - bottom left */}
-      {creatorName && (
+      {/* Creator CTA link - bottom left, only in last 5 seconds of each segment */}
+      {showCTA && activeVideoForCTA && ctaCreatorName && (
         <button
           onClick={handleCreatorClick}
           className="absolute flex items-center gap-2 px-3 py-2 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
@@ -252,8 +262,8 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
             zIndex: 60,
           }}
         >
-          <PlatformIcon platform={currentVideo.platform} />
-          <span className="text-sm font-medium">{creatorName}</span>
+          <PlatformIcon platform={activeVideoForCTA.platform} />
+          <span className="text-sm font-medium">{ctaCreatorName}</span>
           <ExternalLink className="w-4 h-4 opacity-60" />
         </button>
       )}
