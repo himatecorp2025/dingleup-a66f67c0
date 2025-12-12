@@ -326,15 +326,18 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
             style={{ backgroundColor: '#000000', zIndex: 5 }}
           />
           
-          {/* Creator video iframe - HIDDEN during transition, CENTERED vertically */}
+          {/* Creator video iframe - HIDDEN during transition, SHIFTED DOWN to hide creator profile */}
           {!isTransitioning && (
             <iframe
               key={`${currentVideo?.id}-${currentVideoIndex}-${videoKey}`}
               src={embedSrc}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0 pointer-events-none"
+              className="absolute left-1/2 -translate-x-1/2 border-0 pointer-events-none"
               style={{
                 width: '100vw',
                 height: '100vh',
+                // Shift video DOWN by 15% to hide creator profile at top
+                top: '55%',
+                transform: 'translateX(-50%) translateY(-50%)',
                 zIndex: 10,
                 backgroundColor: '#000000',
               }}
@@ -354,10 +357,10 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
             style={{ width: '15vw', backgroundColor: '#000000', zIndex: 15 }}
           />
           
-          {/* Top black overlay */}
+          {/* Top black overlay - THICKER to hide more of creator profile */}
           <div 
             className="absolute top-0 left-0 right-0"
-            style={{ height: '15vh', backgroundColor: '#000000', zIndex: 15 }}
+            style={{ height: '25vh', backgroundColor: '#000000', zIndex: 15 }}
           />
           
           {/* Bottom black overlay */}

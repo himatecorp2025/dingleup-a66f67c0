@@ -20,6 +20,7 @@ interface UseGameNavigationOptions {
   errorBannerVisible: boolean;
   gameCompleted: boolean;
   videoAdAvailable: boolean;
+  rewardAlreadyClaimed: boolean; // NEW: Track if video reward already credited coins
   setIsAnimating: (isAnimating: boolean) => void;
   setCanSwipe: (canSwipe: boolean) => void;
   setErrorBannerVisible: (visible: boolean) => void;
@@ -59,6 +60,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     errorBannerVisible,
     gameCompleted,
     videoAdAvailable,
+    rewardAlreadyClaimed,
     setIsAnimating,
     setCanSwipe,
     setErrorBannerVisible,
@@ -313,7 +315,11 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     // If game completed, FIRST save results to backend THEN restart new game
     if (gameCompleted) {
       toast.dismiss(); // Dismiss game results toast before new game
-      await finishGame(); // Credit coins to DB before restart
+      // CRITICAL: Only call finishGame if reward was NOT already claimed via video ad
+      // Video ad reward (reward-complete) already credits 2× coins, so finishGame would double-credit
+      if (!rewardAlreadyClaimed) {
+        await finishGame(); // Credit coins to DB before restart
+      }
       await restartGameImmediately();
       return;
     }
@@ -346,6 +352,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     }
   }, [
     gameCompleted,
+    rewardAlreadyClaimed,
     errorBannerVisible,
     profile,
     continueType,
@@ -367,12 +374,12 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     if (errorBannerVisible) {
       setErrorBannerVisible(false);
     }
-    // If game completed, credit coins before restart
-    if (gameCompleted) {
+    // If game completed and reward NOT already claimed via video ad, credit coins
+    if (gameCompleted && !rewardAlreadyClaimed) {
       await finishGame();
     }
     await restartGameImmediately();
-  }, [errorBannerVisible, gameCompleted, setErrorBannerVisible, finishGame, restartGameImmediately]);
+  }, [errorBannerVisible, gameCompleted, rewardAlreadyClaimed, setErrorBannerVisible, finishGame, restartGameImmediately]);
 
   return {
     handleNextQuestion,

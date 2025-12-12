@@ -285,6 +285,7 @@ const GamePreview = memo(() => {
     errorBannerVisible,
     gameCompleted,
     videoAdAvailable,
+    rewardAlreadyClaimed: justFinishedVideoAd, // If video reward already claimed, don't credit again
     setIsAnimating,
     setCanSwipe,
     setErrorBannerVisible,
@@ -693,9 +694,9 @@ const GamePreview = memo(() => {
                 setShowExitDialog(false);
                 // INSTANT navigation - don't wait for async operations
                 navigate('/dashboard');
-                // Only credit coins if game was completed (15 questions answered)
+                // Only credit coins if game was completed AND reward wasn't already claimed via video
                 // If game incomplete, coins are lost (frontend-only, no DB credit)
-                if (gameCompleted) {
+                if (gameCompleted && !justFinishedVideoAd) {
                   finishGame().catch(console.error);
                 }
               }}
