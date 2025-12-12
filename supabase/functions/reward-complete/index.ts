@@ -182,51 +182,41 @@ serve(async (req) => {
         });
     }
 
-    // Credit wallet with idempotency
-    const { error: walletError } = await supabaseClient
-      .from('wallet_ledger')
-      .insert({
-        user_id: userId,
-        delta_coins: coinsToCredit,
-        delta_lives: livesToCredit,
-        source: `video_reward_${eventType}`,
-        idempotency_key: idempotencyKey,
-        metadata: {
-          reward_session_id: rewardSessionId,
-          event_type: eventType,
-          original_reward: originalReward,
-          watched_video_ids: watchedVideoIds,
-        },
-      });
+    // Credit wallet using ATOMIC RPC (replaces read-modify-write anti-pattern)
+    const { data: walletResult, error: walletError } = await supabaseClient.rpc('credit_wallet', {
+      p_user_id: userId,
+      p_delta_coins: coinsToCredit,
+      p_delta_lives: livesToCredit,
+      p_source: `video_reward_${eventType}`,
+      p_idempotency_key: idempotencyKey,
+      p_metadata: {
+        reward_session_id: rewardSessionId,
+        event_type: eventType,
+        original_reward: originalReward,
+        multiplier: multiplier,
+        watched_video_ids: watchedVideoIds,
+      },
+    });
 
     if (walletError) {
-      console.error('[reward-complete] Wallet ledger error:', walletError);
+      console.error('[reward-complete] credit_wallet RPC error:', walletError);
       return new Response(
         JSON.stringify({ error: 'Failed to credit reward' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Update profile balance directly
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('coins, lives, max_lives')
-      .eq('id', userId)
-      .single();
-
-    if (profile) {
-      const newCoins = (profile.coins || 0) + coinsToCredit;
-      // Lives can exceed max_lives when rewarded
-      const newLives = (profile.lives || 0) + livesToCredit;
-
-      await supabaseClient
-        .from('profiles')
-        .update({
-          coins: newCoins,
-          lives: newLives,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', userId);
+    // Handle idempotency - already processed is success
+    if (walletResult?.already_processed) {
+      console.log(`[reward-complete] credit_wallet already processed: ${idempotencyKey}`);
+    } else if (walletResult?.success === false) {
+      console.error('[reward-complete] credit_wallet failed:', walletResult?.error);
+      return new Response(
+        JSON.stringify({ error: walletResult?.error || 'Failed to credit reward' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } else {
+      console.log(`[reward-complete] credit_wallet success: +${coinsToCredit} coins, +${livesToCredit} lives`);
     }
 
     // Mark session as completed with multiplier

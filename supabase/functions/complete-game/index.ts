@@ -328,47 +328,33 @@ Deno.serve(async (req) => {
         }
       });
     } else if (coinsEarned > 0) {
-      // No video doubling - credit coins immediately (1× reward)
+      // No video doubling - credit coins immediately (1× reward) using ATOMIC RPC
       await measureStage(ctx, 'credit_wallet', async () => {
         try {
           const walletIdempotencyKey = `game_complete:${user.id}:${gameResult?.id || Date.now()}`;
           
-          // Insert wallet ledger entry
           incDbQuery(ctx);
-          await supabaseAdmin
-            .from('wallet_ledger')
-            .insert({
-              user_id: user.id,
-              delta_coins: coinsEarned,
-              delta_lives: 0,
-              source: 'game_complete',
-              idempotency_key: walletIdempotencyKey,
-              metadata: {
-                correct_answers: body.correctAnswers,
-                game_result_id: gameResult?.id,
-              },
-            });
+          const { data: walletResult, error: walletError } = await supabaseAdmin.rpc('credit_wallet', {
+            p_user_id: user.id,
+            p_delta_coins: coinsEarned,
+            p_delta_lives: 0,
+            p_source: 'game_complete',
+            p_idempotency_key: walletIdempotencyKey,
+            p_metadata: {
+              correct_answers: body.correctAnswers,
+              game_result_id: gameResult?.id,
+            },
+          });
 
-          // Update profile coins
-          incDbQuery(ctx);
-          const { data: profile } = await supabaseAdmin
-            .from('profiles')
-            .select('coins')
-            .eq('id', user.id)
-            .single();
-
-          if (profile) {
-            incDbQuery(ctx);
-            await supabaseAdmin
-              .from('profiles')
-              .update({
-                coins: (profile.coins || 0) + coinsEarned,
-                updated_at: new Date().toISOString(),
-              })
-              .eq('id', user.id);
+          if (walletError) {
+            console.error('[complete-game] credit_wallet RPC error:', walletError);
+          } else if (walletResult?.already_processed) {
+            console.log(`[complete-game] credit_wallet already processed: ${walletIdempotencyKey}`);
+          } else if (walletResult?.success === false) {
+            console.error('[complete-game] credit_wallet failed:', walletResult?.error);
+          } else {
+            console.log(`[complete-game] credit_wallet success: +${coinsEarned} coins to user ${user.id}`);
           }
-
-          console.log(`[complete-game] Credited ${coinsEarned} coins to user ${user.id} (no doubling)`);
         } catch (walletErr) {
           console.error('[complete-game] Wallet credit error:', walletErr);
         }
