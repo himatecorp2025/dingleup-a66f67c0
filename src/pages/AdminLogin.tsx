@@ -152,6 +152,7 @@ const AdminLogin = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="DingleUP"
+                  autoComplete="off"
                   className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-purple-400/50 focus:ring-purple-400/20 transition-all"
                   required
                 />
@@ -168,6 +169,7 @@ const AdminLogin = () => {
                   onChange={(e) => setPin(e.target.value)}
                   placeholder="••••••"
                   maxLength={6}
+                  autoComplete="off"
                   className="pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-purple-400/50 focus:ring-purple-400/20 transition-all"
                   required
                 />

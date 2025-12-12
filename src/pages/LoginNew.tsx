@@ -188,6 +188,7 @@ const LoginNew = () => {
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   className="h-12 pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-yellow-400 focus:ring-yellow-400/20 text-base"
                   placeholder={t('auth.login.usernamePlaceholder')}
+                  autoComplete="off"
                   disabled={isLoading}
                 />
               </div>
@@ -206,6 +207,7 @@ const LoginNew = () => {
                   onChange={(e) => setFormData({ ...formData, pin: e.target.value.replace(/\D/g, '').slice(0, 6) })}
                   className="h-12 pl-10 pr-10 bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-yellow-400 focus:ring-yellow-400/20 text-base"
                   placeholder={t('auth.login.pinPlaceholder')}
+                  autoComplete="off"
                   disabled={isLoading}
                   maxLength={6}
                 />
