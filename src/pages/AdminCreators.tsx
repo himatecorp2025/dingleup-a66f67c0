@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Users, Video, Eye, Download } from 'lucide-react';
 import { format } from 'date-fns';
+import { getPlatformIcon, getPlatformColor, TikTokIcon, YouTubeIcon, InstagramIcon, FacebookIcon } from '@/components/admin/PlatformIcons';
 
 interface CreatorData {
   id: string;
@@ -141,7 +142,12 @@ const AdminCreators = () => {
       inactive: 'bg-yellow-500/20 text-yellow-400',
       suspended: 'bg-red-500/20 text-red-400',
     };
-    return <Badge className={colors[status] || 'bg-gray-500/20 text-gray-400'}>{status}</Badge>;
+    const labels: Record<string, string> = {
+      active: t('common.active'),
+      inactive: t('common.inactive'),
+      suspended: t('admin.creators.suspended'),
+    };
+    return <Badge className={colors[status] || 'bg-gray-500/20 text-gray-400'}>{labels[status] || status}</Badge>;
   };
 
   const stats = {
@@ -160,7 +166,7 @@ const AdminCreators = () => {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                {t('admin.creators.total') || 'Összes tartalomgyártó'}
+                {t('admin.creators.total')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -171,7 +177,7 @@ const AdminCreators = () => {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Users className="h-4 w-4 text-green-400" />
-                {t('admin.creators.active') || 'Aktív'}
+                {t('admin.creators.active')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -182,7 +188,7 @@ const AdminCreators = () => {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Video className="h-4 w-4" />
-                {t('admin.creators.total_videos') || 'Összes videó'}
+                {t('admin.creators.total_videos')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -193,7 +199,7 @@ const AdminCreators = () => {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Eye className="h-4 w-4" />
-                {t('admin.creators.total_impressions') || 'Összes megjelenítés'}
+                {t('admin.creators.total_impressions')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -207,7 +213,7 @@ const AdminCreators = () => {
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={t('admin.creators.search') || 'Keresés ID vagy felhasználónév alapján...'}
+              placeholder={t('admin.creators.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10 bg-background/50"
@@ -215,30 +221,38 @@ const AdminCreators = () => {
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[150px] bg-background/50">
-              <SelectValue placeholder={t('admin.creators.status') || 'Státusz'} />
+              <SelectValue placeholder={t('admin.creators.status')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('common.all') || 'Összes'}</SelectItem>
-              <SelectItem value="active">{t('common.active') || 'Aktív'}</SelectItem>
-              <SelectItem value="inactive">{t('common.inactive') || 'Inaktív'}</SelectItem>
-              <SelectItem value="suspended">{t('admin.creators.suspended') || 'Felfüggesztett'}</SelectItem>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              <SelectItem value="active">{t('common.active')}</SelectItem>
+              <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
+              <SelectItem value="suspended">{t('admin.creators.suspended')}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={platformFilter} onValueChange={setPlatformFilter}>
             <SelectTrigger className="w-[150px] bg-background/50">
-              <SelectValue placeholder={t('admin.creators.platform') || 'Platform'} />
+              <SelectValue placeholder={t('admin.creators.platform')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('common.all') || 'Összes'}</SelectItem>
-              <SelectItem value="tiktok">TikTok</SelectItem>
-              <SelectItem value="youtube">YouTube</SelectItem>
-              <SelectItem value="instagram">Instagram</SelectItem>
-              <SelectItem value="facebook">Facebook</SelectItem>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              <SelectItem value="tiktok">
+                <span className="flex items-center gap-2"><TikTokIcon className="w-4 h-4" /> TikTok</span>
+              </SelectItem>
+              <SelectItem value="youtube">
+                <span className="flex items-center gap-2"><YouTubeIcon className="w-4 h-4" /> YouTube</span>
+              </SelectItem>
+              <SelectItem value="instagram">
+                <span className="flex items-center gap-2"><InstagramIcon className="w-4 h-4" /> Instagram</span>
+              </SelectItem>
+              <SelectItem value="facebook">
+                <span className="flex items-center gap-2"><FacebookIcon className="w-4 h-4" /> Facebook</span>
+              </SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={handleExportCSV} className="gap-2">
             <Download className="h-4 w-4" />
-            CSV Export
+            {t('admin.creators.export_csv')}
           </Button>
         </div>
 
@@ -256,14 +270,14 @@ const AdminCreators = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Creator ID</TableHead>
-                    <TableHead>{t('admin.creators.username') || 'Felhasználónév'}</TableHead>
-                    <TableHead>{t('admin.creators.status') || 'Státusz'}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.channels') || 'Csatornák'}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.videos') || 'Videók'}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.active_videos') || 'Aktív'}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.impressions') || 'Megjelenítések'}</TableHead>
-                    <TableHead>{t('admin.creators.last_video') || 'Utolsó videó'}</TableHead>
-                    <TableHead>{t('admin.creators.created') || 'Regisztráció'}</TableHead>
+                    <TableHead>{t('admin.creators.username')}</TableHead>
+                    <TableHead>{t('admin.creators.status')}</TableHead>
+                    <TableHead className="text-center">{t('admin.creators.channels')}</TableHead>
+                    <TableHead className="text-center">{t('admin.creators.videos')}</TableHead>
+                    <TableHead className="text-center">{t('admin.creators.active_videos')}</TableHead>
+                    <TableHead className="text-center">{t('admin.creators.impressions')}</TableHead>
+                    <TableHead>{t('admin.creators.last_video')}</TableHead>
+                    <TableHead>{t('admin.creators.created')}</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -291,7 +305,7 @@ const AdminCreators = () => {
                           size="sm"
                           onClick={() => navigate(`/admin/creators/${creator.id}`)}
                         >
-                          {t('common.open') || 'Megnyitás'}
+                          {t('common.open')}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -299,7 +313,7 @@ const AdminCreators = () => {
                   {creators?.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                        {t('admin.creators.no_creators') || 'Nincs tartalomgyártó'}
+                        {t('admin.creators.no_creators')}
                       </TableCell>
                     </TableRow>
                   )}

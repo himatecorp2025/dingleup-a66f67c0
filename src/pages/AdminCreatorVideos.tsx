@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Search, Download, Video, Eye, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { getPlatformIcon, getPlatformColor, TikTokIcon, YouTubeIcon, InstagramIcon, FacebookIcon } from '@/components/admin/PlatformIcons';
 
 const AdminCreatorVideos = () => {
   const { t } = useI18n();
@@ -63,22 +64,12 @@ const AdminCreatorVideos = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-videos'] });
-      toast.success(t('admin.creators.video_updated') || 'Videó frissítve');
+      toast.success(t('admin.creators.video_updated'));
     },
     onError: () => {
-      toast.error(t('common.error') || 'Hiba történt');
+      toast.error(t('common.error'));
     },
   });
-
-  const getPlatformIcon = (platform: string) => {
-    const icons: Record<string, string> = {
-      tiktok: '🎵',
-      youtube: '▶️',
-      instagram: '📷',
-      facebook: '📘',
-    };
-    return icons[platform] || '🎬';
-  };
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -87,7 +78,13 @@ const AdminCreatorVideos = () => {
       pending: 'bg-blue-500/20 text-blue-400',
       rejected: 'bg-red-500/20 text-red-400',
     };
-    return <Badge className={colors[status] || 'bg-gray-500/20 text-gray-400'}>{status}</Badge>;
+    const labels: Record<string, string> = {
+      active: t('common.active'),
+      inactive: t('common.inactive'),
+      pending: t('admin.videos.pending'),
+      rejected: t('admin.videos.rejected'),
+    };
+    return <Badge className={colors[status] || 'bg-gray-500/20 text-gray-400'}>{labels[status] || status}</Badge>;
   };
 
   const handleExportCSV = () => {
@@ -131,7 +128,7 @@ const AdminCreatorVideos = () => {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Video className="h-4 w-4" />
-                {t('admin.videos.total') || 'Összes videó'}
+                {t('admin.videos.total')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -142,7 +139,7 @@ const AdminCreatorVideos = () => {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-green-400 flex items-center gap-2">
                 <CheckCircle className="h-4 w-4" />
-                {t('common.active') || 'Aktív'}
+                {t('common.active')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -153,7 +150,7 @@ const AdminCreatorVideos = () => {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Eye className="h-4 w-4" />
-                {t('admin.creators.impressions') || 'Megjelenítések'}
+                {t('admin.creators.impressions')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -164,7 +161,7 @@ const AdminCreatorVideos = () => {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Video className="h-4 w-4" />
-                {t('admin.creators.completions') || 'Befejezések'}
+                {t('admin.creators.completions')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -178,7 +175,7 @@ const AdminCreatorVideos = () => {
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={t('admin.videos.search') || 'Keresés cím, URL vagy ID alapján...'}
+              placeholder={t('admin.videos.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10 bg-background/50"
@@ -186,31 +183,39 @@ const AdminCreatorVideos = () => {
           </div>
           <Select value={platformFilter} onValueChange={setPlatformFilter}>
             <SelectTrigger className="w-[150px] bg-background/50">
-              <SelectValue placeholder={t('admin.creators.platform') || 'Platform'} />
+              <SelectValue placeholder={t('admin.creators.platform')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('common.all') || 'Összes'}</SelectItem>
-              <SelectItem value="tiktok">TikTok</SelectItem>
-              <SelectItem value="youtube">YouTube</SelectItem>
-              <SelectItem value="instagram">Instagram</SelectItem>
-              <SelectItem value="facebook">Facebook</SelectItem>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              <SelectItem value="tiktok">
+                <span className="flex items-center gap-2"><TikTokIcon className="w-4 h-4" /> TikTok</span>
+              </SelectItem>
+              <SelectItem value="youtube">
+                <span className="flex items-center gap-2"><YouTubeIcon className="w-4 h-4" /> YouTube</span>
+              </SelectItem>
+              <SelectItem value="instagram">
+                <span className="flex items-center gap-2"><InstagramIcon className="w-4 h-4" /> Instagram</span>
+              </SelectItem>
+              <SelectItem value="facebook">
+                <span className="flex items-center gap-2"><FacebookIcon className="w-4 h-4" /> Facebook</span>
+              </SelectItem>
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[150px] bg-background/50">
-              <SelectValue placeholder={t('admin.creators.status') || 'Státusz'} />
+              <SelectValue placeholder={t('admin.creators.status')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('common.all') || 'Összes'}</SelectItem>
-              <SelectItem value="active">{t('common.active') || 'Aktív'}</SelectItem>
-              <SelectItem value="inactive">{t('common.inactive') || 'Inaktív'}</SelectItem>
-              <SelectItem value="pending">Függőben</SelectItem>
-              <SelectItem value="rejected">Elutasítva</SelectItem>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              <SelectItem value="active">{t('common.active')}</SelectItem>
+              <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
+              <SelectItem value="pending">{t('admin.videos.pending')}</SelectItem>
+              <SelectItem value="rejected">{t('admin.videos.rejected')}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={handleExportCSV} className="gap-2">
             <Download className="h-4 w-4" />
-            CSV Export
+            {t('admin.creators.export_csv')}
           </Button>
         </div>
 
@@ -228,15 +233,15 @@ const AdminCreatorVideos = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Video ID</TableHead>
-                    <TableHead>{t('admin.channels.creator') || 'Tartalomgyártó'}</TableHead>
-                    <TableHead>{t('admin.creators.platform') || 'Platform'}</TableHead>
-                    <TableHead>{t('admin.creators.title') || 'Cím'}</TableHead>
-                    <TableHead>{t('admin.creators.status') || 'Státusz'}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.impressions') || 'Megjelenítések'}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.completions') || 'Befejezések'}</TableHead>
-                    <TableHead className="text-center">{t('admin.creators.clicks') || 'Kattintások'}</TableHead>
-                    <TableHead>{t('admin.creators.created') || 'Létrehozva'}</TableHead>
-                    <TableHead>{t('common.actions') || 'Műveletek'}</TableHead>
+                    <TableHead>{t('admin.channels.creator')}</TableHead>
+                    <TableHead>{t('admin.creators.platform')}</TableHead>
+                    <TableHead>{t('admin.creators.title')}</TableHead>
+                    <TableHead>{t('admin.creators.status')}</TableHead>
+                    <TableHead className="text-center">{t('admin.creators.impressions')}</TableHead>
+                    <TableHead className="text-center">{t('admin.creators.completions')}</TableHead>
+                    <TableHead className="text-center">{t('admin.creators.clicks')}</TableHead>
+                    <TableHead>{t('admin.creators.created')}</TableHead>
+                    <TableHead>{t('common.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -253,8 +258,10 @@ const AdminCreatorVideos = () => {
                         </Button>
                       </TableCell>
                       <TableCell>
-                        <span className="mr-2">{getPlatformIcon(video.platform)}</span>
-                        {video.platform}
+                        <span className={`flex items-center gap-2 ${getPlatformColor(video.platform)}`}>
+                          {getPlatformIcon(video.platform, "w-5 h-5")}
+                          {video.platform}
+                        </span>
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate">{video.title || video.video_url}</TableCell>
                       <TableCell>{getStatusBadge(video.status)}</TableCell>
@@ -268,7 +275,7 @@ const AdminCreatorVideos = () => {
                             variant="ghost"
                             size="icon"
                             onClick={() => toggleVideoMutation.mutate({ videoId: video.id, isActive: !video.is_active })}
-                            title={video.is_active ? 'Deaktiválás' : 'Aktiválás'}
+                            title={video.is_active ? t('admin.creators.deactivate') : t('admin.creators.activate')}
                           >
                             {video.is_active ? <XCircle className="h-4 w-4 text-red-400" /> : <CheckCircle className="h-4 w-4 text-green-400" />}
                           </Button>
@@ -277,7 +284,7 @@ const AdminCreatorVideos = () => {
                             size="sm"
                             onClick={() => navigate(`/admin/creator-videos/${video.id}`)}
                           >
-                            {t('common.details') || 'Részletek'}
+                            {t('common.details')}
                           </Button>
                         </div>
                       </TableCell>
@@ -286,7 +293,7 @@ const AdminCreatorVideos = () => {
                   {videos?.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                        {t('admin.videos.no_videos') || 'Nincs videó'}
+                        {t('admin.videos.no_videos')}
                       </TableCell>
                     </TableRow>
                   )}

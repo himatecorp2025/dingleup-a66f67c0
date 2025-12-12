@@ -5,7 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useI18n } from '@/i18n/useI18n';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,8 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { ArrowLeft, User, Video, BarChart3, FileText, Save, ExternalLink, Eye, MousePointer } from 'lucide-react';
+import { ArrowLeft, User, Video, BarChart3, FileText, Save, ExternalLink, Eye, MousePointer, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { getPlatformIcon, getPlatformColor } from '@/components/admin/PlatformIcons';
 
 const AdminCreatorDetail = () => {
   const { creatorId } = useParams<{ creatorId: string }>();
@@ -126,10 +126,10 @@ const AdminCreatorDetail = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-creator', creatorId] });
       queryClient.invalidateQueries({ queryKey: ['admin-creator-audit', creatorId] });
-      toast.success(t('admin.creators.status_updated') || 'Státusz frissítve');
+      toast.success(t('admin.creators.status_updated'));
     },
     onError: () => {
-      toast.error(t('common.error') || 'Hiba történt');
+      toast.error(t('common.error'));
     },
   });
 
@@ -147,7 +147,7 @@ const AdminCreatorDetail = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-creator-notes', creatorId] });
       setAdminNote('');
-      toast.success(t('admin.creators.note_added') || 'Megjegyzés hozzáadva');
+      toast.success(t('admin.creators.note_added'));
     },
   });
 
@@ -172,7 +172,7 @@ const AdminCreatorDetail = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-creator-videos', creatorId] });
       queryClient.invalidateQueries({ queryKey: ['admin-creator-audit', creatorId] });
-      toast.success(t('admin.creators.video_updated') || 'Videó frissítve');
+      toast.success(t('admin.creators.video_updated'));
     },
   });
 
@@ -184,17 +184,14 @@ const AdminCreatorDetail = () => {
       pending: 'bg-blue-500/20 text-blue-400',
       rejected: 'bg-red-500/20 text-red-400',
     };
-    return <Badge className={colors[status] || 'bg-gray-500/20 text-gray-400'}>{status}</Badge>;
-  };
-
-  const getPlatformIcon = (platform: string) => {
-    const icons: Record<string, string> = {
-      tiktok: '🎵',
-      youtube: '▶️',
-      instagram: '📷',
-      facebook: '📘',
+    const labels: Record<string, string> = {
+      active: t('common.active'),
+      inactive: t('common.inactive'),
+      suspended: t('admin.creators.suspended'),
+      pending: t('admin.videos.pending'),
+      rejected: t('admin.videos.rejected'),
     };
-    return icons[platform] || '🎬';
+    return <Badge className={colors[status] || 'bg-gray-500/20 text-gray-400'}>{labels[status] || status}</Badge>;
   };
 
   // Calculate analytics
@@ -222,7 +219,7 @@ const AdminCreatorDetail = () => {
         {/* Back button */}
         <Button variant="ghost" onClick={() => navigate('/admin/creators')} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
-          {t('common.back') || 'Vissza'}
+          {t('common.back')}
         </Button>
 
         {/* Header */}
@@ -244,23 +241,23 @@ const AdminCreatorDetail = () => {
           <TabsList className="grid w-full grid-cols-5 bg-muted/50">
             <TabsTrigger value="profile" className="gap-2">
               <User className="h-4 w-4" />
-              {t('admin.creators.tab_profile') || 'Profil'}
+              {t('admin.creators.tab_profile')}
             </TabsTrigger>
             <TabsTrigger value="channels" className="gap-2">
               <ExternalLink className="h-4 w-4" />
-              {t('admin.creators.tab_channels') || 'Csatornák'}
+              {t('admin.creators.tab_channels')}
             </TabsTrigger>
             <TabsTrigger value="videos" className="gap-2">
               <Video className="h-4 w-4" />
-              {t('admin.creators.tab_videos') || 'Videók'}
+              {t('admin.creators.tab_videos')}
             </TabsTrigger>
             <TabsTrigger value="analytics" className="gap-2">
               <BarChart3 className="h-4 w-4" />
-              {t('admin.creators.tab_analytics') || 'Analitika'}
+              {t('admin.creators.tab_analytics')}
             </TabsTrigger>
             <TabsTrigger value="audit" className="gap-2">
               <FileText className="h-4 w-4" />
-              {t('admin.creators.tab_audit') || 'Napló'}
+              {t('admin.creators.tab_audit')}
             </TabsTrigger>
           </TabsList>
 
@@ -268,39 +265,39 @@ const AdminCreatorDetail = () => {
           <TabsContent value="profile" className="space-y-4">
             <Card className="bg-card/50 border-border/50">
               <CardHeader>
-                <CardTitle>{t('admin.creators.basic_info') || 'Alapadatok'}</CardTitle>
+                <CardTitle>{t('admin.creators.basic_info')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm text-muted-foreground">{t('admin.creators.username') || 'Felhasználónév'}</label>
+                    <label className="text-sm text-muted-foreground">{t('admin.creators.username')}</label>
                     <p className="font-medium">{creator?.username}</p>
                   </div>
                   <div>
-                    <label className="text-sm text-muted-foreground">{t('admin.creators.created') || 'Regisztráció'}</label>
+                    <label className="text-sm text-muted-foreground">{t('admin.creators.created')}</label>
                     <p className="font-medium">{creator?.created_at ? format(new Date(creator.created_at), 'yyyy.MM.dd HH:mm') : '-'}</p>
                   </div>
                   <div>
-                    <label className="text-sm text-muted-foreground">{t('admin.creators.country') || 'Ország'}</label>
+                    <label className="text-sm text-muted-foreground">{t('admin.creators.country')}</label>
                     <p className="font-medium">{creator?.country_code || '-'}</p>
                   </div>
                   <div>
-                    <label className="text-sm text-muted-foreground">{t('admin.creators.subscription') || 'Előfizetés'}</label>
+                    <label className="text-sm text-muted-foreground">{t('admin.creators.subscription')}</label>
                     <p className="font-medium">{creator?.creator_subscription_status || '-'}</p>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-border/50">
-                  <label className="text-sm text-muted-foreground">{t('admin.creators.status') || 'Státusz'}</label>
+                  <label className="text-sm text-muted-foreground">{t('admin.creators.status')}</label>
                   <div className="flex items-center gap-4 mt-2">
                     <Select value={newStatus} onValueChange={setNewStatus}>
                       <SelectTrigger className="w-[200px]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="active">{t('common.active') || 'Aktív'}</SelectItem>
-                        <SelectItem value="inactive">{t('common.inactive') || 'Inaktív'}</SelectItem>
-                        <SelectItem value="suspended">{t('admin.creators.suspended') || 'Felfüggesztett'}</SelectItem>
+                        <SelectItem value="active">{t('common.active')}</SelectItem>
+                        <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
+                        <SelectItem value="suspended">{t('admin.creators.suspended')}</SelectItem>
                       </SelectContent>
                     </Select>
                     <Button 
@@ -308,7 +305,7 @@ const AdminCreatorDetail = () => {
                       disabled={newStatus === creator?.creator_status || updateStatusMutation.isPending}
                     >
                       <Save className="h-4 w-4 mr-2" />
-                      {t('common.save') || 'Mentés'}
+                      {t('common.save')}
                     </Button>
                   </div>
                 </div>
@@ -318,12 +315,12 @@ const AdminCreatorDetail = () => {
             {/* Admin Notes */}
             <Card className="bg-card/50 border-border/50">
               <CardHeader>
-                <CardTitle>{t('admin.creators.admin_notes') || 'Admin megjegyzések'}</CardTitle>
+                <CardTitle>{t('admin.creators.admin_notes')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
                   <Textarea
-                    placeholder={t('admin.creators.add_note') || 'Új megjegyzés...'}
+                    placeholder={t('admin.creators.add_note')}
                     value={adminNote}
                     onChange={(e) => setAdminNote(e.target.value)}
                     className="flex-1"
@@ -332,7 +329,7 @@ const AdminCreatorDetail = () => {
                     onClick={() => addNoteMutation.mutate(adminNote)}
                     disabled={!adminNote.trim() || addNoteMutation.isPending}
                   >
-                    {t('common.add') || 'Hozzáadás'}
+                    {t('common.add')}
                   </Button>
                 </div>
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
@@ -345,7 +342,7 @@ const AdminCreatorDetail = () => {
                     </div>
                   ))}
                   {(!notes || notes.length === 0) && (
-                    <p className="text-muted-foreground text-sm">{t('admin.creators.no_notes') || 'Nincs megjegyzés'}</p>
+                    <p className="text-muted-foreground text-sm">{t('admin.creators.no_notes')}</p>
                   )}
                 </div>
               </CardContent>
@@ -364,20 +361,22 @@ const AdminCreatorDetail = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>{t('admin.creators.platform') || 'Platform'}</TableHead>
-                        <TableHead>{t('admin.creators.channel_handle') || 'Handle'}</TableHead>
-                        <TableHead>{t('admin.creators.channel_url') || 'URL'}</TableHead>
-                        <TableHead>{t('admin.creators.verified') || 'Ellenőrzött'}</TableHead>
-                        <TableHead>{t('common.active') || 'Aktív'}</TableHead>
-                        <TableHead>{t('admin.creators.created') || 'Létrehozva'}</TableHead>
+                        <TableHead>{t('admin.creators.platform')}</TableHead>
+                        <TableHead>{t('admin.creators.channel_handle')}</TableHead>
+                        <TableHead>{t('admin.creators.channel_url')}</TableHead>
+                        <TableHead>{t('admin.creators.verified')}</TableHead>
+                        <TableHead>{t('common.active')}</TableHead>
+                        <TableHead>{t('admin.creators.created')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {channels?.map((channel) => (
                         <TableRow key={channel.id}>
                           <TableCell>
-                            <span className="mr-2">{getPlatformIcon(channel.platform)}</span>
-                            {channel.platform}
+                            <span className={`flex items-center gap-2 ${getPlatformColor(channel.platform)}`}>
+                              {getPlatformIcon(channel.platform, "w-5 h-5")}
+                              {channel.platform}
+                            </span>
                           </TableCell>
                           <TableCell className="font-mono">{channel.channel_handle || '-'}</TableCell>
                           <TableCell>
@@ -388,14 +387,19 @@ const AdminCreatorDetail = () => {
                             ) : '-'}
                           </TableCell>
                           <TableCell>{channel.is_verified ? '✓' : '-'}</TableCell>
-                          <TableCell>{channel.is_active ? <Badge className="bg-green-500/20 text-green-400">Aktív</Badge> : <Badge className="bg-red-500/20 text-red-400">Inaktív</Badge>}</TableCell>
+                          <TableCell>
+                            {channel.is_active 
+                              ? <Badge className="bg-green-500/20 text-green-400">{t('common.active')}</Badge> 
+                              : <Badge className="bg-red-500/20 text-red-400">{t('common.inactive')}</Badge>
+                            }
+                          </TableCell>
                           <TableCell>{format(new Date(channel.created_at), 'yyyy.MM.dd')}</TableCell>
                         </TableRow>
                       ))}
                       {(!channels || channels.length === 0) && (
                         <TableRow>
                           <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                            {t('admin.creators.no_channels') || 'Nincs csatorna'}
+                            {t('admin.creators.no_channels')}
                           </TableCell>
                         </TableRow>
                       )}
@@ -419,12 +423,14 @@ const AdminCreatorDetail = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Video ID</TableHead>
-                        <TableHead>{t('admin.creators.platform') || 'Platform'}</TableHead>
-                        <TableHead>{t('admin.creators.title') || 'Cím'}</TableHead>
-                        <TableHead>{t('admin.creators.status') || 'Státusz'}</TableHead>
-                        <TableHead className="text-center">{t('admin.creators.impressions') || 'Megjelenítések'}</TableHead>
-                        <TableHead>{t('admin.creators.created') || 'Létrehozva'}</TableHead>
-                        <TableHead>{t('common.actions') || 'Műveletek'}</TableHead>
+                        <TableHead>{t('admin.creators.platform')}</TableHead>
+                        <TableHead>{t('admin.creators.title')}</TableHead>
+                        <TableHead>{t('admin.creators.status')}</TableHead>
+                        <TableHead className="text-center">{t('admin.creators.impressions')}</TableHead>
+                        <TableHead className="text-center">{t('admin.creators.completions')}</TableHead>
+                        <TableHead className="text-center">{t('admin.creators.clicks')}</TableHead>
+                        <TableHead>{t('admin.creators.created')}</TableHead>
+                        <TableHead>{t('common.actions')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -432,28 +438,33 @@ const AdminCreatorDetail = () => {
                         <TableRow key={video.id}>
                           <TableCell className="font-mono text-xs">{video.id.slice(0, 8)}...</TableCell>
                           <TableCell>
-                            <span className="mr-2">{getPlatformIcon(video.platform)}</span>
-                            {video.platform}
+                            <span className={`flex items-center gap-2 ${getPlatformColor(video.platform)}`}>
+                              {getPlatformIcon(video.platform, "w-5 h-5")}
+                              {video.platform}
+                            </span>
                           </TableCell>
                           <TableCell className="max-w-[200px] truncate">{video.title || video.video_url}</TableCell>
                           <TableCell>{getStatusBadge(video.status)}</TableCell>
                           <TableCell className="text-center">{video.total_impressions?.toLocaleString() || 0}</TableCell>
+                          <TableCell className="text-center">{video.total_video_completions?.toLocaleString() || 0}</TableCell>
+                          <TableCell className="text-center">{video.total_clickthrough?.toLocaleString() || 0}</TableCell>
                           <TableCell>{format(new Date(video.created_at), 'yyyy.MM.dd')}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
                               <Button
                                 variant="ghost"
-                                size="sm"
+                                size="icon"
                                 onClick={() => toggleVideoMutation.mutate({ videoId: video.id, isActive: !video.is_active })}
+                                title={video.is_active ? t('admin.creators.deactivate') : t('admin.creators.activate')}
                               >
-                                {video.is_active ? t('admin.creators.deactivate') || 'Deaktiválás' : t('admin.creators.activate') || 'Aktiválás'}
+                                {video.is_active ? <XCircle className="h-4 w-4 text-red-400" /> : <CheckCircle className="h-4 w-4 text-green-400" />}
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => navigate(`/admin/creator-videos/${video.id}`)}
                               >
-                                {t('common.details') || 'Részletek'}
+                                {t('common.details')}
                               </Button>
                             </div>
                           </TableCell>
@@ -461,8 +472,8 @@ const AdminCreatorDetail = () => {
                       ))}
                       {(!videos || videos.length === 0) && (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                            {t('admin.creators.no_videos') || 'Nincs videó'}
+                          <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                            {t('admin.videos.no_videos')}
                           </TableCell>
                         </TableRow>
                       )}
@@ -474,13 +485,13 @@ const AdminCreatorDetail = () => {
           </TabsContent>
 
           {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <TabsContent value="analytics">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="bg-card/50 border-border/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <Eye className="h-4 w-4" />
-                    {t('admin.creators.impressions') || 'Megjelenítések'}
+                    {t('admin.creators.impressions')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -491,7 +502,7 @@ const AdminCreatorDetail = () => {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <Video className="h-4 w-4" />
-                    {t('admin.creators.completions') || 'Befejezések'}
+                    {t('admin.creators.completions')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -500,9 +511,8 @@ const AdminCreatorDetail = () => {
               </Card>
               <Card className="bg-card/50 border-border/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    {t('admin.creators.relevant_hits') || 'Releváns nézők'}
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {t('admin.creators.relevant_hits')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -513,90 +523,47 @@ const AdminCreatorDetail = () => {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <MousePointer className="h-4 w-4" />
-                    {t('admin.creators.clicks') || 'Átkattintások'}
+                    {t('admin.creators.clicks')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{analytics.totalClicks.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">
-                    CTR: {analytics.totalImpressions > 0 ? ((analytics.totalClicks / analytics.totalImpressions) * 100).toFixed(2) : 0}%
-                  </p>
                 </CardContent>
               </Card>
             </div>
-
-            {/* Per-video breakdown */}
-            <Card className="bg-card/50 border-border/50">
-              <CardHeader>
-                <CardTitle>{t('admin.creators.video_breakdown') || 'Videónkénti bontás'}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('admin.creators.video') || 'Videó'}</TableHead>
-                      <TableHead>{t('admin.creators.platform') || 'Platform'}</TableHead>
-                      <TableHead className="text-right">{t('admin.creators.impressions') || 'Megjelenítések'}</TableHead>
-                      <TableHead className="text-right">{t('admin.creators.completions') || 'Befejezések'}</TableHead>
-                      <TableHead className="text-right">{t('admin.creators.relevant_hits') || 'Releváns'}</TableHead>
-                      <TableHead className="text-right">{t('admin.creators.clicks') || 'Kattintások'}</TableHead>
-                      <TableHead className="text-right">CTR</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {videos?.map((video) => (
-                      <TableRow key={video.id}>
-                        <TableCell className="max-w-[200px] truncate">{video.title || video.id.slice(0, 8)}</TableCell>
-                        <TableCell>{getPlatformIcon(video.platform)} {video.platform}</TableCell>
-                        <TableCell className="text-right">{video.total_impressions?.toLocaleString() || 0}</TableCell>
-                        <TableCell className="text-right">{video.total_video_completions?.toLocaleString() || 0}</TableCell>
-                        <TableCell className="text-right">{video.total_relevant_hits?.toLocaleString() || 0}</TableCell>
-                        <TableCell className="text-right">{video.total_clickthrough?.toLocaleString() || 0}</TableCell>
-                        <TableCell className="text-right">
-                          {video.total_impressions > 0 
-                            ? ((video.total_clickthrough / video.total_impressions) * 100).toFixed(2) 
-                            : 0}%
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* Audit Tab */}
           <TabsContent value="audit">
             <Card className="bg-card/50 border-border/50">
-              <CardHeader>
-                <CardTitle>{t('admin.creators.audit_log') || 'Admin napló'}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                  {auditLog?.map((entry) => (
-                    <div key={entry.id} className="p-3 bg-muted/30 rounded-lg flex items-start justify-between">
-                      <div>
-                        <p className="font-medium">{entry.action}</p>
-                        {entry.old_value && (
-                          <p className="text-xs text-muted-foreground">
-                            Előző: {JSON.stringify(entry.old_value)}
-                          </p>
-                        )}
-                        {entry.new_value && (
-                          <p className="text-xs text-muted-foreground">
-                            Új: {JSON.stringify(entry.new_value)}
-                          </p>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(entry.created_at), 'yyyy.MM.dd HH:mm')}
-                      </p>
-                    </div>
-                  ))}
-                  {(!auditLog || auditLog.length === 0) && (
-                    <p className="text-muted-foreground text-center py-8">{t('admin.creators.no_audit') || 'Nincs bejegyzés'}</p>
-                  )}
-                </div>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('admin.creators.action')}</TableHead>
+                      <TableHead>{t('admin.creators.old_value')}</TableHead>
+                      <TableHead>{t('admin.creators.new_value')}</TableHead>
+                      <TableHead>{t('admin.creators.date')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {auditLog?.map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell className="font-medium">{log.action}</TableCell>
+                        <TableCell className="text-xs font-mono">{JSON.stringify(log.old_value)}</TableCell>
+                        <TableCell className="text-xs font-mono">{JSON.stringify(log.new_value)}</TableCell>
+                        <TableCell>{format(new Date(log.created_at), 'yyyy.MM.dd HH:mm')}</TableCell>
+                      </TableRow>
+                    ))}
+                    {(!auditLog || auditLog.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                          {t('admin.creators.no_audit')}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </TabsContent>

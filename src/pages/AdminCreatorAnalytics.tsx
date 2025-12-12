@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Download, Eye, Video, MousePointer, Users, TrendingUp } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { getPlatformIcon, getPlatformColor, TikTokIcon, YouTubeIcon, InstagramIcon, FacebookIcon } from '@/components/admin/PlatformIcons';
 
 const AdminCreatorAnalytics = () => {
   const { t } = useI18n();
@@ -127,16 +128,6 @@ const AdminCreatorAnalytics = () => {
     staleTime: 0,
   });
 
-  const getPlatformIcon = (platform: string) => {
-    const icons: Record<string, string> = {
-      tiktok: '🎵',
-      youtube: '▶️',
-      instagram: '📷',
-      facebook: '📘',
-    };
-    return icons[platform] || '🎬';
-  };
-
   const handleExportCSV = () => {
     if (!analytics) return;
 
@@ -165,14 +156,22 @@ const AdminCreatorAnalytics = () => {
         <div className="flex flex-wrap gap-4">
           <Select value={platformFilter} onValueChange={setPlatformFilter}>
             <SelectTrigger className="w-[150px] bg-background/50">
-              <SelectValue placeholder={t('admin.creators.platform') || 'Platform'} />
+              <SelectValue placeholder={t('admin.creators.platform')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('common.all') || 'Összes'}</SelectItem>
-              <SelectItem value="tiktok">TikTok</SelectItem>
-              <SelectItem value="youtube">YouTube</SelectItem>
-              <SelectItem value="instagram">Instagram</SelectItem>
-              <SelectItem value="facebook">Facebook</SelectItem>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              <SelectItem value="tiktok">
+                <span className="flex items-center gap-2"><TikTokIcon className="w-4 h-4" /> TikTok</span>
+              </SelectItem>
+              <SelectItem value="youtube">
+                <span className="flex items-center gap-2"><YouTubeIcon className="w-4 h-4" /> YouTube</span>
+              </SelectItem>
+              <SelectItem value="instagram">
+                <span className="flex items-center gap-2"><InstagramIcon className="w-4 h-4" /> Instagram</span>
+              </SelectItem>
+              <SelectItem value="facebook">
+                <span className="flex items-center gap-2"><FacebookIcon className="w-4 h-4" /> Facebook</span>
+              </SelectItem>
             </SelectContent>
           </Select>
           <Select value={dateRange} onValueChange={setDateRange}>
@@ -180,15 +179,15 @@ const AdminCreatorAnalytics = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7">{t('admin.analytics.last_7_days') || 'Utolsó 7 nap'}</SelectItem>
-              <SelectItem value="14">{t('admin.analytics.last_14_days') || 'Utolsó 14 nap'}</SelectItem>
-              <SelectItem value="30">{t('admin.analytics.last_30_days') || 'Utolsó 30 nap'}</SelectItem>
-              <SelectItem value="90">{t('admin.analytics.last_90_days') || 'Utolsó 90 nap'}</SelectItem>
+              <SelectItem value="7">{t('admin.analytics.last_7_days')}</SelectItem>
+              <SelectItem value="14">{t('admin.analytics.last_14_days')}</SelectItem>
+              <SelectItem value="30">{t('admin.analytics.last_30_days')}</SelectItem>
+              <SelectItem value="90">{t('admin.analytics.last_90_days')}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={handleExportCSV} className="gap-2">
             <Download className="h-4 w-4" />
-            CSV Export
+            {t('admin.creators.export_csv')}
           </Button>
         </div>
 
@@ -203,7 +202,7 @@ const AdminCreatorAnalytics = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <Eye className="h-4 w-4" />
-                  {t('admin.creators.impressions') || 'Megjelenítések'}
+                  {t('admin.creators.impressions')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -214,7 +213,7 @@ const AdminCreatorAnalytics = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <Video className="h-4 w-4" />
-                  {t('admin.creators.completions') || 'Befejezések'}
+                  {t('admin.creators.completions')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -225,7 +224,7 @@ const AdminCreatorAnalytics = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <Users className="h-4 w-4" />
-                  {t('admin.creators.relevant_hits') || 'Releváns nézők'}
+                  {t('admin.creators.relevant_hits')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -236,7 +235,7 @@ const AdminCreatorAnalytics = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <MousePointer className="h-4 w-4" />
-                  {t('admin.creators.clicks') || 'Átkattintások'}
+                  {t('admin.creators.clicks')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -262,7 +261,7 @@ const AdminCreatorAnalytics = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <Video className="h-4 w-4" />
-                  {t('admin.videos.active') || 'Aktív videók'}
+                  {t('admin.videos.active')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -276,17 +275,17 @@ const AdminCreatorAnalytics = () => {
 
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList className="grid w-full grid-cols-4 bg-muted/50">
-            <TabsTrigger value="overview">{t('admin.analytics.overview') || 'Összesített'}</TabsTrigger>
-            <TabsTrigger value="platform">{t('admin.analytics.by_platform') || 'Platformonként'}</TabsTrigger>
-            <TabsTrigger value="videos">{t('admin.analytics.by_video') || 'Videónként'}</TabsTrigger>
-            <TabsTrigger value="time">{t('admin.analytics.by_time') || 'Időben'}</TabsTrigger>
+            <TabsTrigger value="overview">{t('admin.analytics.overview')}</TabsTrigger>
+            <TabsTrigger value="platform">{t('admin.analytics.by_platform')}</TabsTrigger>
+            <TabsTrigger value="videos">{t('admin.analytics.by_video')}</TabsTrigger>
+            <TabsTrigger value="time">{t('admin.analytics.by_time')}</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview">
             <Card className="bg-card/50 border-border/50">
               <CardHeader>
-                <CardTitle>{t('admin.analytics.daily_trend') || 'Napi trend'}</CardTitle>
+                <CardTitle>{t('admin.analytics.daily_trend')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {analytics?.daily && analytics.daily.length > 0 ? (
@@ -302,13 +301,13 @@ const AdminCreatorAnalytics = () => {
                           borderRadius: '8px'
                         }}
                       />
-                      <Line type="monotone" dataKey="impressions" stroke="#8884d8" strokeWidth={2} name="Megjelenítések" />
-                      <Line type="monotone" dataKey="completions" stroke="#82ca9d" strokeWidth={2} name="Befejezések" />
-                      <Line type="monotone" dataKey="clicks" stroke="#ffc658" strokeWidth={2} name="Kattintások" />
+                      <Line type="monotone" dataKey="impressions" stroke="#8884d8" strokeWidth={2} name={t('admin.creators.impressions')} />
+                      <Line type="monotone" dataKey="completions" stroke="#82ca9d" strokeWidth={2} name={t('admin.creators.completions')} />
+                      <Line type="monotone" dataKey="clicks" stroke="#ffc658" strokeWidth={2} name={t('admin.creators.clicks')} />
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
-                  <p className="text-center text-muted-foreground py-8">{t('admin.analytics.no_data') || 'Nincs adat'}</p>
+                  <p className="text-center text-muted-foreground py-8">{t('admin.analytics.no_data')}</p>
                 )}
               </CardContent>
             </Card>
@@ -318,7 +317,7 @@ const AdminCreatorAnalytics = () => {
           <TabsContent value="platform">
             <Card className="bg-card/50 border-border/50">
               <CardHeader>
-                <CardTitle>{t('admin.analytics.platform_breakdown') || 'Platform bontás'}</CardTitle>
+                <CardTitle>{t('admin.analytics.platform_breakdown')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {analytics?.platformBreakdown && analytics.platformBreakdown.length > 0 ? (
@@ -335,26 +334,31 @@ const AdminCreatorAnalytics = () => {
                             borderRadius: '8px'
                           }}
                         />
-                        <Bar dataKey="impressions" fill="#8884d8" name="Megjelenítések" />
-                        <Bar dataKey="completions" fill="#82ca9d" name="Befejezések" />
-                        <Bar dataKey="clicks" fill="#ffc658" name="Kattintások" />
+                        <Bar dataKey="impressions" fill="#8884d8" name={t('admin.creators.impressions')} />
+                        <Bar dataKey="completions" fill="#82ca9d" name={t('admin.creators.completions')} />
+                        <Bar dataKey="clicks" fill="#ffc658" name={t('admin.creators.clicks')} />
                       </BarChart>
                     </ResponsiveContainer>
                     <Table className="mt-4">
                       <TableHeader>
                         <TableRow>
-                          <TableHead>{t('admin.creators.platform') || 'Platform'}</TableHead>
-                          <TableHead className="text-right">{t('admin.creators.videos') || 'Videók'}</TableHead>
-                          <TableHead className="text-right">{t('admin.creators.impressions') || 'Megjelenítések'}</TableHead>
-                          <TableHead className="text-right">{t('admin.creators.completions') || 'Befejezések'}</TableHead>
-                          <TableHead className="text-right">{t('admin.creators.clicks') || 'Kattintások'}</TableHead>
+                          <TableHead>{t('admin.creators.platform')}</TableHead>
+                          <TableHead className="text-right">{t('admin.creators.videos')}</TableHead>
+                          <TableHead className="text-right">{t('admin.creators.impressions')}</TableHead>
+                          <TableHead className="text-right">{t('admin.creators.completions')}</TableHead>
+                          <TableHead className="text-right">{t('admin.creators.clicks')}</TableHead>
                           <TableHead className="text-right">CTR</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {analytics.platformBreakdown.map((p) => (
                           <TableRow key={p.platform}>
-                            <TableCell>{getPlatformIcon(p.platform)} {p.platform}</TableCell>
+                            <TableCell>
+                              <span className={`flex items-center gap-2 ${getPlatformColor(p.platform)}`}>
+                                {getPlatformIcon(p.platform, "w-5 h-5")}
+                                {p.platform}
+                              </span>
+                            </TableCell>
                             <TableCell className="text-right">{p.videos}</TableCell>
                             <TableCell className="text-right">{p.impressions.toLocaleString()}</TableCell>
                             <TableCell className="text-right">{p.completions.toLocaleString()}</TableCell>
@@ -368,7 +372,7 @@ const AdminCreatorAnalytics = () => {
                     </Table>
                   </>
                 ) : (
-                  <p className="text-center text-muted-foreground py-8">{t('admin.analytics.no_data') || 'Nincs adat'}</p>
+                  <p className="text-center text-muted-foreground py-8">{t('admin.analytics.no_data')}</p>
                 )}
               </CardContent>
             </Card>
@@ -378,30 +382,35 @@ const AdminCreatorAnalytics = () => {
           <TabsContent value="videos">
             <Card className="bg-card/50 border-border/50">
               <CardHeader>
-                <CardTitle>{t('admin.analytics.top_videos') || 'Top videók'}</CardTitle>
+                <CardTitle>{t('admin.analytics.top_videos')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>#</TableHead>
-                      <TableHead>{t('admin.creators.video') || 'Videó'}</TableHead>
-                      <TableHead>{t('admin.creators.platform') || 'Platform'}</TableHead>
-                      <TableHead className="text-right">{t('admin.creators.impressions') || 'Megjelenítések'}</TableHead>
-                      <TableHead className="text-right">{t('admin.creators.completions') || 'Befejezések'}</TableHead>
-                      <TableHead className="text-right">{t('admin.creators.clicks') || 'Kattintások'}</TableHead>
+                      <TableHead>{t('admin.creators.video')}</TableHead>
+                      <TableHead>{t('admin.creators.platform')}</TableHead>
+                      <TableHead className="text-right">{t('admin.creators.impressions')}</TableHead>
+                      <TableHead className="text-right">{t('admin.creators.completions')}</TableHead>
+                      <TableHead className="text-right">{t('admin.creators.clicks')}</TableHead>
                       <TableHead className="text-right">CTR</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {analytics?.topVideos?.map((video, index) => (
+                    {analytics?.topVideos?.map((video, idx) => (
                       <TableRow key={video.id}>
-                        <TableCell className="font-bold">{index + 1}</TableCell>
+                        <TableCell className="font-medium">{idx + 1}</TableCell>
                         <TableCell className="max-w-[200px] truncate">{video.title || video.id.slice(0, 8)}</TableCell>
-                        <TableCell>{getPlatformIcon(video.platform)} {video.platform}</TableCell>
-                        <TableCell className="text-right">{video.total_impressions?.toLocaleString() || 0}</TableCell>
-                        <TableCell className="text-right">{video.total_video_completions?.toLocaleString() || 0}</TableCell>
-                        <TableCell className="text-right">{video.total_clickthrough?.toLocaleString() || 0}</TableCell>
+                        <TableCell>
+                          <span className={`flex items-center gap-2 ${getPlatformColor(video.platform)}`}>
+                            {getPlatformIcon(video.platform, "w-5 h-5")}
+                            {video.platform}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">{(video.total_impressions || 0).toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{(video.total_video_completions || 0).toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{(video.total_clickthrough || 0).toLocaleString()}</TableCell>
                         <TableCell className="text-right">
                           {video.total_impressions > 0 
                             ? ((video.total_clickthrough / video.total_impressions) * 100).toFixed(2) 
@@ -412,7 +421,7 @@ const AdminCreatorAnalytics = () => {
                     {(!analytics?.topVideos || analytics.topVideos.length === 0) && (
                       <TableRow>
                         <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                          {t('admin.analytics.no_data') || 'Nincs adat'}
+                          {t('admin.analytics.no_data')}
                         </TableCell>
                       </TableRow>
                     )}
@@ -426,19 +435,14 @@ const AdminCreatorAnalytics = () => {
           <TabsContent value="time">
             <Card className="bg-card/50 border-border/50">
               <CardHeader>
-                <CardTitle>{t('admin.analytics.hourly_distribution') || 'Óránkénti eloszlás'}</CardTitle>
+                <CardTitle>{t('admin.analytics.hourly_distribution')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {analytics?.hourlyData && analytics.hourlyData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={analytics.hourlyData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis 
-                        dataKey="hour" 
-                        stroke="hsl(var(--muted-foreground))" 
-                        fontSize={12}
-                        tickFormatter={(h) => `${h}:00`}
-                      />
+                      <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(h) => `${h}:00`} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <Tooltip 
                         contentStyle={{ 
@@ -448,11 +452,11 @@ const AdminCreatorAnalytics = () => {
                         }}
                         labelFormatter={(h) => `${h}:00`}
                       />
-                      <Bar dataKey="impressions" fill="#8884d8" name="Megjelenítések" />
+                      <Bar dataKey="impressions" fill="#8884d8" name={t('admin.creators.impressions')} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <p className="text-center text-muted-foreground py-8">{t('admin.analytics.no_hourly_data') || 'Nincs óránkénti adat'}</p>
+                  <p className="text-center text-muted-foreground py-8">{t('admin.analytics.no_data')}</p>
                 )}
               </CardContent>
             </Card>

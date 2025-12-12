@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, Eye, Video, MousePointer, Play, ExternalLink, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { getPlatformIcon, getPlatformColor } from '@/components/admin/PlatformIcons';
 
 const AdminCreatorVideoDetail = () => {
   const { videoId } = useParams<{ videoId: string }>();
@@ -97,22 +98,12 @@ const AdminCreatorVideoDetail = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-video-detail', videoId] });
-      toast.success(t('admin.creators.video_updated') || 'Videó frissítve');
+      toast.success(t('admin.creators.video_updated'));
     },
     onError: () => {
-      toast.error(t('common.error') || 'Hiba történt');
+      toast.error(t('common.error'));
     },
   });
-
-  const getPlatformIcon = (platform: string) => {
-    const icons: Record<string, string> = {
-      tiktok: '🎵',
-      youtube: '▶️',
-      instagram: '📷',
-      facebook: '📘',
-    };
-    return icons[platform] || '🎬';
-  };
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -121,7 +112,13 @@ const AdminCreatorVideoDetail = () => {
       pending: 'bg-blue-500/20 text-blue-400',
       rejected: 'bg-red-500/20 text-red-400',
     };
-    return <Badge className={colors[status] || 'bg-gray-500/20 text-gray-400'}>{status}</Badge>;
+    const labels: Record<string, string> = {
+      active: t('common.active'),
+      inactive: t('common.inactive'),
+      pending: t('admin.videos.pending'),
+      rejected: t('admin.videos.rejected'),
+    };
+    return <Badge className={colors[status] || 'bg-gray-500/20 text-gray-400'}>{labels[status] || status}</Badge>;
   };
 
   if (isLoading) {
@@ -138,7 +135,7 @@ const AdminCreatorVideoDetail = () => {
   if (!video) {
     return (
       <AdminLayout>
-        <p className="text-muted-foreground">{t('admin.videos.not_found') || 'Videó nem található'}</p>
+        <p className="text-muted-foreground">{t('admin.videos.not_found')}</p>
       </AdminLayout>
     );
   }
@@ -153,15 +150,17 @@ const AdminCreatorVideoDetail = () => {
         {/* Back button */}
         <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
-          {t('common.back') || 'Vissza'}
+          {t('common.back')}
         </Button>
 
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">{getPlatformIcon(video.platform)}</span>
-              <h2 className="text-2xl font-bold">{video.title || 'Névtelen videó'}</h2>
+              <span className={getPlatformColor(video.platform)}>
+                {getPlatformIcon(video.platform, "w-8 h-8")}
+              </span>
+              <h2 className="text-2xl font-bold">{video.title || t('admin.videos.untitled')}</h2>
               {getStatusBadge(video.status)}
             </div>
             <p className="text-muted-foreground font-mono text-sm">{video.id}</p>
@@ -170,7 +169,7 @@ const AdminCreatorVideoDetail = () => {
               className="p-0 h-auto"
               onClick={() => navigate(`/admin/creators/${video.user_id}`)}
             >
-              Tartalomgyártó: {video.profiles?.username || video.user_id.slice(0, 8)}
+              {t('admin.channels.creator')}: {video.profiles?.username || video.user_id.slice(0, 8)}
             </Button>
           </div>
           <div className="flex gap-2">
@@ -178,12 +177,12 @@ const AdminCreatorVideoDetail = () => {
               <DialogTrigger asChild>
                 <Button variant="outline" className="gap-2">
                   <Play className="h-4 w-4" />
-                  {t('admin.videos.preview') || 'Előnézet'}
+                  {t('admin.videos.preview')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl">
                 <DialogHeader>
-                  <DialogTitle>{t('admin.videos.preview') || 'Videó előnézet'}</DialogTitle>
+                  <DialogTitle>{t('admin.videos.preview')}</DialogTitle>
                 </DialogHeader>
                 <div className="aspect-video w-full">
                   {video.embed_url ? (
@@ -195,7 +194,7 @@ const AdminCreatorVideoDetail = () => {
                     />
                   ) : (
                     <div className="w-full h-full bg-muted flex items-center justify-center rounded-lg">
-                      <p className="text-muted-foreground">{t('admin.videos.no_embed') || 'Nincs embed URL'}</p>
+                      <p className="text-muted-foreground">{t('admin.videos.no_embed')}</p>
                     </div>
                   )}
                 </div>
@@ -210,12 +209,12 @@ const AdminCreatorVideoDetail = () => {
               {video.is_active ? (
                 <>
                   <XCircle className="h-4 w-4" />
-                  {t('admin.creators.deactivate') || 'Deaktiválás'}
+                  {t('admin.creators.deactivate')}
                 </>
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4" />
-                  {t('admin.creators.activate') || 'Aktiválás'}
+                  {t('admin.creators.activate')}
                 </>
               )}
             </Button>
@@ -228,7 +227,7 @@ const AdminCreatorVideoDetail = () => {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Eye className="h-4 w-4" />
-                {t('admin.creators.impressions') || 'Megjelenítések'}
+                {t('admin.creators.impressions')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -239,7 +238,7 @@ const AdminCreatorVideoDetail = () => {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Video className="h-4 w-4" />
-                {t('admin.creators.completions') || 'Befejezések'}
+                {t('admin.creators.completions')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -249,7 +248,7 @@ const AdminCreatorVideoDetail = () => {
           <Card className="bg-card/50 border-border/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t('admin.creators.relevant_hits') || 'Releváns nézők'}
+                {t('admin.creators.relevant_hits')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -260,7 +259,7 @@ const AdminCreatorVideoDetail = () => {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <MousePointer className="h-4 w-4" />
-                {t('admin.creators.clicks') || 'Átkattintások'}
+                {t('admin.creators.clicks')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -281,24 +280,27 @@ const AdminCreatorVideoDetail = () => {
           {/* Video Info */}
           <Card className="bg-card/50 border-border/50">
             <CardHeader>
-              <CardTitle>{t('admin.videos.info') || 'Videó információk'}</CardTitle>
+              <CardTitle>{t('admin.videos.info')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-muted-foreground">{t('admin.creators.platform') || 'Platform'}</label>
-                  <p className="font-medium">{getPlatformIcon(video.platform)} {video.platform}</p>
+                  <label className="text-sm text-muted-foreground">{t('admin.creators.platform')}</label>
+                  <p className={`font-medium flex items-center gap-2 ${getPlatformColor(video.platform)}`}>
+                    {getPlatformIcon(video.platform, "w-5 h-5")}
+                    {video.platform}
+                  </p>
                 </div>
                 <div>
-                  <label className="text-sm text-muted-foreground">{t('admin.creators.status') || 'Státusz'}</label>
+                  <label className="text-sm text-muted-foreground">{t('admin.creators.status')}</label>
                   <p className="font-medium">{video.status}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-muted-foreground">{t('admin.creators.created') || 'Létrehozva'}</label>
+                  <label className="text-sm text-muted-foreground">{t('admin.creators.created')}</label>
                   <p className="font-medium">{format(new Date(video.created_at), 'yyyy.MM.dd HH:mm')}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-muted-foreground">{t('admin.videos.activated') || 'Aktiválva'}</label>
+                  <label className="text-sm text-muted-foreground">{t('admin.videos.activated')}</label>
                   <p className="font-medium">
                     {video.first_activated_at 
                       ? format(new Date(video.first_activated_at), 'yyyy.MM.dd HH:mm')
@@ -306,7 +308,7 @@ const AdminCreatorVideoDetail = () => {
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm text-muted-foreground">{t('admin.videos.expires') || 'Lejár'}</label>
+                  <label className="text-sm text-muted-foreground">{t('admin.videos.expires')}</label>
                   <p className="font-medium">
                     {video.expires_at 
                       ? format(new Date(video.expires_at), 'yyyy.MM.dd HH:mm')
@@ -314,7 +316,7 @@ const AdminCreatorVideoDetail = () => {
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm text-muted-foreground">{t('admin.videos.duration') || 'Időtartam'}</label>
+                  <label className="text-sm text-muted-foreground">{t('admin.videos.duration')}</label>
                   <p className="font-medium">{video.duration_seconds ? `${video.duration_seconds}s` : '-'}</p>
                 </div>
               </div>
@@ -337,10 +339,10 @@ const AdminCreatorVideoDetail = () => {
               {/* Topics */}
               {topics && topics.length > 0 && (
                 <div className="pt-4 border-t border-border/50">
-                  <label className="text-sm text-muted-foreground">{t('admin.videos.topics') || 'Témakörök'}</label>
+                  <label className="text-sm text-muted-foreground">{t('admin.videos.topics')}</label>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {topics.map((t) => (
-                      <Badge key={t.id} variant="outline">{t.topics?.name}</Badge>
+                    {topics.map((topic) => (
+                      <Badge key={topic.id} variant="outline">{topic.topics?.name}</Badge>
                     ))}
                   </div>
                 </div>
@@ -351,20 +353,20 @@ const AdminCreatorVideoDetail = () => {
           {/* Moderation */}
           <Card className="bg-card/50 border-border/50">
             <CardHeader>
-              <CardTitle>{t('admin.videos.moderation') || 'Moderáció'}</CardTitle>
+              <CardTitle>{t('admin.videos.moderation')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm text-muted-foreground">{t('admin.videos.moderation_note') || 'Moderációs megjegyzés'}</label>
+                <label className="text-sm text-muted-foreground">{t('admin.videos.moderation_note')}</label>
                 <Textarea
-                  placeholder={t('admin.videos.add_moderation_note') || 'Megjegyzés hozzáadása...'}
+                  placeholder={t('admin.videos.add_moderation_note')}
                   value={moderationNote}
                   onChange={(e) => setModerationNote(e.target.value)}
                   className="mt-2"
                 />
               </div>
               <Button disabled={!moderationNote.trim()}>
-                {t('common.save') || 'Mentés'}
+                {t('common.save')}
               </Button>
             </CardContent>
           </Card>
@@ -373,7 +375,7 @@ const AdminCreatorVideoDetail = () => {
         {/* Daily Analytics Chart */}
         <Card className="bg-card/50 border-border/50">
           <CardHeader>
-            <CardTitle>{t('admin.analytics.daily_activity') || 'Napi aktivitás'}</CardTitle>
+            <CardTitle>{t('admin.analytics.daily_activity')}</CardTitle>
           </CardHeader>
           <CardContent>
             {dailyAnalytics && dailyAnalytics.length > 0 ? (
@@ -389,13 +391,13 @@ const AdminCreatorVideoDetail = () => {
                       borderRadius: '8px'
                     }}
                   />
-                  <Line type="monotone" dataKey="impressions" stroke="#8884d8" strokeWidth={2} name="Megjelenítések" />
-                  <Line type="monotone" dataKey="video_completions" stroke="#82ca9d" strokeWidth={2} name="Befejezések" />
-                  <Line type="monotone" dataKey="clickthroughs" stroke="#ffc658" strokeWidth={2} name="Kattintások" />
+                  <Line type="monotone" dataKey="impressions" stroke="#8884d8" strokeWidth={2} name={t('admin.creators.impressions')} />
+                  <Line type="monotone" dataKey="video_completions" stroke="#82ca9d" strokeWidth={2} name={t('admin.creators.completions')} />
+                  <Line type="monotone" dataKey="clickthroughs" stroke="#ffc658" strokeWidth={2} name={t('admin.creators.clicks')} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-center text-muted-foreground py-8">{t('admin.analytics.no_data') || 'Nincs adat'}</p>
+              <p className="text-center text-muted-foreground py-8">{t('admin.analytics.no_data')}</p>
             )}
           </CardContent>
         </Card>
