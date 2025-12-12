@@ -94,9 +94,12 @@ const Profile = () => {
   const fetchDailyCorrectAnswers = async () => {
     if (!userId) return;
 
-    // Calculate current day (YYYY-MM-DD UTC)
+    // Calculate current day in user's local timezone (YYYY-MM-DD)
     const now = new Date();
-    const currentDay = now.toISOString().split('T')[0];
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const currentDay = `${year}-${month}-${day}`;
 
     const { data, error } = await supabase
       .from('daily_rankings')
