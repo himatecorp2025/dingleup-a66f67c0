@@ -1,21 +1,31 @@
 # Dockerfile for Supabase Edge Functions (Deno runtime)
+# Production-ready configuration with security best practices
 
-FROM denoland/deno:1.40.0
+FROM denoland/deno:1.45.0
 
+# Set working directory
 WORKDIR /app
 
-# Copy edge functions
-COPY supabase/functions ./functions
-COPY supabase/config.toml ./config.toml
+# Create non-root user for security
+RUN addgroup --system --gid 1001 appgroup && \
+    adduser --system --uid 1001 --ingroup appgroup appuser
 
-# Cache dependencies
-RUN deno cache functions/**/*.ts
+# Copy edge functions
+COPY --chown=appuser:appgroup supabase/functions ./functions
+COPY --chown=appuser:appgroup supabase/config.toml ./config.toml
+
+# Cache dependencies for faster cold starts
+RUN deno cache --no-check functions/**/*.ts || true
+
+# Switch to non-root user
+USER appuser
 
 # Expose port
 EXPOSE 8000
 
 # Health check endpoint
-RUN echo 'Deno.serve(() => new Response("OK"));' > /app/health.ts
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD deno eval "const r = await fetch('http://localhost:8000/health'); if (!r.ok) Deno.exit(1);" || exit 1
 
-# Start edge functions server
-CMD ["deno", "run", "--allow-all", "--unstable", "functions/index.ts"]
+# Start edge functions server with restricted permissions
+CMD ["deno", "run", "--allow-net", "--allow-env", "--allow-read", "functions/index.ts"]

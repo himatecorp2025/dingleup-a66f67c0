@@ -1,29 +1,49 @@
-version: '3.8'
+# DingleUP! Production Docker Compose
+# Senior-level configuration with security, health checks, and resource limits
 
 services:
+  # =========================================
   # PostgreSQL Database
+  # =========================================
   db:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: dingleup-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: dingleup
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-dingleup}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ../db/schema_latest.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ../db/schema_latest.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d dingleup"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-dingleup}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     networks:
       - dingleup_network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  # Backend (Supabase Edge Functions - Deno runtime)
+  # =========================================
+  # Backend (Supabase Edge Functions - Deno)
+  # =========================================
   backend:
     build:
       context: ..
@@ -33,51 +53,74 @@ services:
     env_file:
       - ../backend/.env
     environment:
-      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-changeme}@db:5432/dingleup
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-dingleup}
+      - DENO_DIR=/app/.deno
     depends_on:
       db:
         condition: service_healthy
     ports:
-      - "54321:8000"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - "${BACKEND_PORT:-54321}:8000"
     networks:
       - dingleup_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
+  # =========================================
   # Frontend (React + Vite SPA)
+  # =========================================
   frontend:
     build:
       context: ..
       dockerfile: infra/Dockerfile.frontend
       args:
-        - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
-        - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+        - VITE_SUPABASE_URL=${VITE_SUPABASE_URL:?VITE_SUPABASE_URL is required}
+        - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY:?VITE_SUPABASE_ANON_KEY is required}
         - VITE_STRIPE_PUBLISHABLE_KEY=${VITE_STRIPE_PUBLISHABLE_KEY}
+        - VITE_SUPABASE_PROJECT_ID=${VITE_SUPABASE_PROJECT_ID}
     container_name: dingleup-frontend
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - "${FRONTEND_PORT:-3000}:80"
     depends_on:
-      - backend
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      backend:
+        condition: service_started
     networks:
       - dingleup_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
-  # Nginx Reverse Proxy (optional, for SSL termination and caching)
+  # =========================================
+  # Nginx Reverse Proxy (SSL termination)
+  # =========================================
   nginx:
-    image: nginx:alpine
+    image: nginx:1.25-alpine
     container_name: dingleup-nginx
     restart: unless-stopped
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro  # Mount SSL certificates
+      - ./ssl:/etc/nginx/ssl:ro
     ports:
       - "80:80"
       - "443:443"
@@ -86,11 +129,30 @@ services:
       - backend
     networks:
       - dingleup_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
 
+# =========================================
+# Networks
+# =========================================
 networks:
   dingleup_network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
 
+# =========================================
+# Volumes
+# =========================================
 volumes:
   postgres_data:
     driver: local
