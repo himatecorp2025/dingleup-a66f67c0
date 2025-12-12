@@ -26,17 +26,28 @@ const AdminLogin = () => {
       );
 
       if (loginError) {
-        const rawMessage = (loginError as any)?.message || 'Hibás felhasználónév vagy PIN';
+        const rawMessage = (loginError as any)?.message || '';
         try {
           const match = rawMessage.match(/\{.*\}/);
           if (match) {
             const parsed = JSON.parse(match[0]);
-            toast.error(parsed.error || t('admin.error_invalid_credentials'));
+            // Check for rate limiting (429 - too many attempts)
+            if (parsed.error?.includes('Too many failed attempts') || rawMessage.includes('429')) {
+              toast.error(t('admin.login.error_too_many_attempts'));
+            } else {
+              toast.error(parsed.error || t('admin.error_invalid_credentials'));
+            }
+          } else if (rawMessage.includes('429') || rawMessage.includes('Too many')) {
+            toast.error(t('admin.login.error_too_many_attempts'));
           } else {
-            toast.error(rawMessage);
+            toast.error(t('admin.error_invalid_credentials'));
           }
         } catch {
-          toast.error(rawMessage);
+          if (rawMessage.includes('429') || rawMessage.includes('Too many')) {
+            toast.error(t('admin.login.error_too_many_attempts'));
+          } else {
+            toast.error(t('admin.error_invalid_credentials'));
+          }
         }
         return;
       }
