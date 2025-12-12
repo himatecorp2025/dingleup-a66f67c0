@@ -335,9 +335,10 @@ const VideoEditModal = ({ isOpen, onClose, onSuccess, video, lang }: VideoEditMo
           />
           <button
             onClick={() => setShowVideoPreview(false)}
-            className="absolute top-4 right-4 z-[70] w-10 h-10 flex items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+            className="fixed top-4 right-4 z-[10001] w-12 h-12 flex items-center justify-center rounded-full bg-black/70 text-white hover:bg-black/90 transition-colors"
+            style={{ top: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
           >
-            <X className="w-6 h-6" />
+            <X className="w-7 h-7" />
           </button>
         </div>
       )}
