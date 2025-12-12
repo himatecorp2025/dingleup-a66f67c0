@@ -128,7 +128,7 @@ export function AdminSidebar() {
                   className={isActive('/admin/subscribers') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
                 >
                   <Mail className="text-purple-400" />
-                  <span>{lang === 'hu' ? 'Feliratkozások' : 'Subscriptions'}</span>
+                  <span>{t('admin.sidebar.subscriptions')}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
@@ -199,7 +199,7 @@ export function AdminSidebar() {
         {/* TARTALOMGYÁRTÓK */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-white/50 text-xs font-bold uppercase tracking-wider">
-            {!isCollapsed && (lang === 'hu' ? 'Tartalomgyártók' : 'Creators')}
+            {!isCollapsed && t('admin.sidebar.creators')}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -210,7 +210,7 @@ export function AdminSidebar() {
                   className={isActive('/admin/creators') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
                 >
                   <Users className="text-purple-400" />
-                  <span>{lang === 'hu' ? 'Összes tartalomgyártó' : 'All Creators'}</span>
+                  <span>{t('admin.sidebar.all_creators')}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
@@ -220,7 +220,7 @@ export function AdminSidebar() {
                   className={isActive('/admin/creator-channels') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
                 >
                   <TrendingUp className="text-purple-400" />
-                  <span>{lang === 'hu' ? 'Csatornák' : 'Channels'}</span>
+                  <span>{t('admin.sidebar.channels')}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
@@ -230,7 +230,7 @@ export function AdminSidebar() {
                   className={isActive('/admin/creator-videos') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
                 >
                   <Gamepad2 className="text-purple-400" />
-                  <span>{lang === 'hu' ? 'Videók' : 'Videos'}</span>
+                  <span>{t('admin.sidebar.videos')}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
@@ -240,7 +240,7 @@ export function AdminSidebar() {
                   className={isActive('/admin/creator-analytics') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
                 >
                   <BarChart3 className="text-purple-400" />
-                  <span>{lang === 'hu' ? 'Analitika' : 'Analytics'}</span>
+                  <span>{t('admin.sidebar.analytics')}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -322,7 +322,7 @@ export function AdminSidebar() {
                   className={isActive('/admin/manual-credit') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
                 >
                   <Coins className="text-purple-400" />
-                  <span>Manual Credit</span>
+                  <span>{t('admin.sidebar.manual_credit')}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -429,7 +429,7 @@ export function AdminSidebar() {
                   className={isActive('/admin/legal-documents') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
                 >
                   <FileText className="text-purple-400" />
-                  <span>{lang === 'hu' ? 'Jogi Dokumentumok' : 'Legal Documents'}</span>
+                  <span>{t('admin.sidebar.legal_documents')}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
