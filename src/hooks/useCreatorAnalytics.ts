@@ -146,9 +146,10 @@ export const useCreatorAnalyticsVideo = (videoId: string, days: number = 14) => 
   return useQuery({
     queryKey: ['creator-analytics-video', videoId, days],
     queryFn: async (): Promise<{ video: VideoDetails }> => {
-      const { data, error } = await supabase.functions.invoke('get-creator-analytics-video', {
-        body: { videoId, days },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        `get-creator-analytics-video?videoId=${encodeURIComponent(videoId)}&days=${days}`,
+        { method: 'GET' }
+      );
 
       if (error) throw error;
       return data;
