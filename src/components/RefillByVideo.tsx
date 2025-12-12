@@ -6,6 +6,7 @@ import { VideoAdModal } from './VideoAdModal';
 import { VideoAdPrompt } from './VideoAdPrompt';
 import { useVideoAdFlow } from '@/hooks/useVideoAdFlow';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 interface RefillByVideoProps {
   userId: string | undefined;
@@ -154,7 +155,7 @@ export const useRefillAvailability = (userId: string | undefined) => {
       setIsAvailable(available);
       return available;
     } catch (error) {
-      console.error('[useRefillAvailability] Error:', error);
+      logger.error('[useRefillAvailability] Error:', error);
       setIsAvailable(false);
       return false;
     } finally {

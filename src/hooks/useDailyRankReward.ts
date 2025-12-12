@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useI18n } from '@/i18n';
+import { logger } from '@/lib/logger';
 
 export interface DailyRankReward {
   rank: number;
@@ -42,14 +43,14 @@ export const useDailyRankReward = (userId: string | undefined) => {
           .maybeSingle();
 
         if (error) {
-          console.error('[RANK-REWARD] Query error:', error);
+          logger.error('[RANK-REWARD] Query error:', error);
           setPendingReward(null);
           setShowRewardPopup(false);
           return;
         }
 
         if (reward) {
-          console.log('[RANK-REWARD] Found pending reward:', reward);
+          logger.log('[RANK-REWARD] Found pending reward:', reward);
           setPendingReward({
             rank: reward.rank,
             gold: reward.gold_awarded,
@@ -64,7 +65,7 @@ export const useDailyRankReward = (userId: string | undefined) => {
           setShowRewardPopup(false);
         }
       } catch (error) {
-        console.error('[RANK-REWARD] Exception:', error);
+        logger.error('[RANK-REWARD] Exception:', error);
         setPendingReward(null);
         setShowRewardPopup(false);
       } finally {
@@ -85,7 +86,7 @@ export const useDailyRankReward = (userId: string | undefined) => {
       });
 
       if (error || !data?.success) {
-        console.error('[RANK-REWARD] Claim error:', error);
+        logger.error('[RANK-REWARD] Claim error:', error);
         toast({
           title: t('rank_reward.claim_error_title'),
           description: t('rank_reward.claim_error_desc'),
@@ -95,7 +96,7 @@ export const useDailyRankReward = (userId: string | undefined) => {
         return { success: false };
       }
 
-      console.log('[RANK-REWARD] Claimed successfully:', data);
+      logger.log('[RANK-REWARD] Claimed successfully:', data);
       setShowRewardPopup(false);
       setPendingReward(null);
 
@@ -109,7 +110,7 @@ export const useDailyRankReward = (userId: string | undefined) => {
       
       return { success: true };
     } catch (error) {
-      console.error('[RANK-REWARD] Claim exception:', error);
+      logger.error('[RANK-REWARD] Claim exception:', error);
       toast({
         title: t('rank_reward.claim_error_title'),
         description: t('rank_reward.claim_exception_desc'),
@@ -138,14 +139,14 @@ export const useDailyRankReward = (userId: string | undefined) => {
         .eq('status', 'pending');
 
       if (error) {
-        console.error('[RANK-REWARD] Dismiss error:', error);
+        logger.error('[RANK-REWARD] Dismiss error:', error);
       }
 
-      console.log('[RANK-REWARD] Dismissed (lost)');
+      logger.log('[RANK-REWARD] Dismissed (lost)');
       setShowRewardPopup(false);
       setPendingReward(null);
     } catch (error) {
-      console.error('[RANK-REWARD] Dismiss exception:', error);
+      logger.error('[RANK-REWARD] Dismiss exception:', error);
     }
   };
 

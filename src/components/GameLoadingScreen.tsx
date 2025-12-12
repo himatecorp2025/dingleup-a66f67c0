@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import loadingVideo from '@/assets/loading-video.mp4';
+import { logger } from '@/lib/logger';
 
 interface GameLoadingScreenProps {
   onVideoEnd: () => void;
@@ -17,24 +18,22 @@ export const GameLoadingScreen = ({ onVideoEnd }: GameLoadingScreenProps) => {
 
     hasStarted.current = true;
     
-    console.log('[GameLoadingScreen] Starting video initialization');
+    logger.log('[GameLoadingScreen] Starting video initialization');
     let playStarted = false;
     let canPlayFired = false;
 
     const handleCanPlay = () => {
       canPlayFired = true;
       setVideoLoaded(true);
-      console.log('[GameLoadingScreen] canplay event - attempting play');
+      logger.log('[GameLoadingScreen] canplay event - attempting play');
       
-      // Start playing immediately without any delay
       video.play()
         .then(() => {
           playStarted = true;
-          console.log('[GameLoadingScreen] Video play() successful');
+          logger.log('[GameLoadingScreen] Video play() successful');
         })
         .catch((err) => {
-          console.warn('[GameLoadingScreen] Autoplay failed:', err);
-          // On autoplay failure, immediately proceed to game
+          logger.warn('[GameLoadingScreen] Autoplay failed:', err);
           if (!hasEnded.current) {
             hasEnded.current = true;
             onVideoEnd();
@@ -45,13 +44,13 @@ export const GameLoadingScreen = ({ onVideoEnd }: GameLoadingScreenProps) => {
     const handleEnded = () => {
       if (!hasEnded.current) {
         hasEnded.current = true;
-        console.log('[GameLoadingScreen] Video ended normally');
+        logger.log('[GameLoadingScreen] Video ended normally');
         onVideoEnd();
       }
     };
 
     const handleError = (e: any) => {
-      console.error('[GameLoadingScreen] Video loading error:', e);
+      logger.error('[GameLoadingScreen] Video loading error:', e);
       if (!hasEnded.current) {
         hasEnded.current = true;
         onVideoEnd();
@@ -71,16 +70,16 @@ export const GameLoadingScreen = ({ onVideoEnd }: GameLoadingScreenProps) => {
     video.play()
       .then(() => {
         playStarted = true;
-        console.log('[GameLoadingScreen] Initial play() successful');
+        logger.log('[GameLoadingScreen] Initial play() successful');
       })
       .catch(() => {
-        console.log('[GameLoadingScreen] Initial play() blocked - waiting for canplay');
+        logger.log('[GameLoadingScreen] Initial play() blocked - waiting for canplay');
       });
 
     // FAST FALLBACK: If video doesn't start playing within 3 seconds, skip it
     const fastFallback = setTimeout(() => {
       if (!playStarted && !hasEnded.current) {
-        console.warn('[GameLoadingScreen] Fast fallback (3s) - video not playing, skipping intro');
+        logger.warn('[GameLoadingScreen] Fast fallback (3s) - video not playing, skipping intro');
         hasEnded.current = true;
         onVideoEnd();
       }
@@ -89,7 +88,7 @@ export const GameLoadingScreen = ({ onVideoEnd }: GameLoadingScreenProps) => {
     // MEDIUM FALLBACK: If canplay never fires within 5 seconds, skip video
     const mediumFallback = setTimeout(() => {
       if (!canPlayFired && !hasEnded.current) {
-        console.warn('[GameLoadingScreen] Medium fallback (5s) - canplay never fired, skipping intro');
+        logger.warn('[GameLoadingScreen] Medium fallback (5s) - canplay never fired, skipping intro');
         hasEnded.current = true;
         onVideoEnd();
       }
@@ -98,7 +97,7 @@ export const GameLoadingScreen = ({ onVideoEnd }: GameLoadingScreenProps) => {
     // SAFETY FALLBACK: Force video end after 8 seconds maximum (reduced from 15s)
     const safetyTimeout = setTimeout(() => {
       if (!hasEnded.current) {
-        console.warn('[GameLoadingScreen] Safety timeout (8s) - forcing video end');
+        logger.warn('[GameLoadingScreen] Safety timeout (8s) - forcing video end');
         hasEnded.current = true;
         onVideoEnd();
       }

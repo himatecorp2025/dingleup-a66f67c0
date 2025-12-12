@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import AudioManager from '@/lib/audioManager';
+import { logger } from '@/lib/logger';
 
 interface AudioState {
   musicEnabled: boolean;
@@ -24,7 +25,7 @@ export const useAudioStore = create<AudioState>((set, get) => {
     localStorage.setItem('musicVolume', '0.03');
   }
   
-  console.log('[AudioStore] Initialized with settings:', { 
+  logger.log('[AudioStore] Initialized with settings:', { 
     musicEnabled: initialEnabled, 
     volume: initialVolume 
   });
@@ -35,22 +36,20 @@ export const useAudioStore = create<AudioState>((set, get) => {
     loaded: true,
     
     setMusicEnabled: (enabled) => {
-      console.log('[AudioStore] Setting music enabled:', enabled);
+      logger.log('[AudioStore] Setting music enabled:', enabled);
       set({ musicEnabled: enabled });
       localStorage.setItem('musicEnabled', JSON.stringify(enabled));
     },
     
     setVolume: (vol) => {
       const v = Math.max(0, Math.min(1, vol));
-      console.log('[AudioStore] Setting volume:', v);
+      logger.log('[AudioStore] Setting volume:', v);
       set({ volume: v });
       localStorage.setItem('musicVolume', v.toString());
     },
     
     loadSettings: () => {
-      // Settings are already loaded on initialization, this is a no-op
-      // Kept for backward compatibility with existing components
-      console.log('[AudioStore] loadSettings called (settings already loaded on init)');
+      logger.log('[AudioStore] loadSettings called (settings already loaded on init)');
     },
   };
 });

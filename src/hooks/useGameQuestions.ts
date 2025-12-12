@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useI18n } from '@/i18n';
-
+import { logger } from '@/lib/logger';
 interface Question {
   id: string;
   question: string;
@@ -43,7 +43,7 @@ export function useGameQuestions() {
       const poolOrder = parseInt(stored, 10);
       return isNaN(poolOrder) ? null : poolOrder;
     } catch (err) {
-      console.error('[useGameQuestions] Error reading last pool order:', err);
+      logger.error('[useGameQuestions] Error reading last pool order:', err);
       return null;
     }
   }, []);
@@ -57,14 +57,14 @@ export function useGameQuestions() {
         localStorage.setItem(POOL_STORAGE_KEY, poolOrder.toString());
       }
     } catch (err) {
-      console.error('[useGameQuestions] Error saving last pool order:', err);
+      logger.error('[useGameQuestions] Error saving last pool order:', err);
     }
   }, []);
 
   // Prefetch next game questions (background operation)
   const prefetchNextGameQuestions = useCallback(async (currentPoolOrder: number | null, lang?: string) => {
     if (isPrefetchingRef.current) {
-      console.log('[useGameQuestions] Prefetch already in progress, skipping');
+      logger.log('[useGameQuestions] Prefetch already in progress, skipping');
       return;
     }
 
@@ -74,7 +74,7 @@ export function useGameQuestions() {
     const effectiveLang = lang || currentLang;
 
     try {
-      console.log(`[useGameQuestions] Prefetching next game questions (background, lang: ${effectiveLang})...`);
+      logger.log(`[useGameQuestions] Prefetching next game questions (background, lang: ${effectiveLang})...`);
 
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -87,8 +87,7 @@ export function useGameQuestions() {
       });
 
       if (funcError) {
-        console.error('[useGameQuestions] Prefetch error:', funcError);
-        // CRITICAL: Reset flag on error to allow retry
+        logger.error('[useGameQuestions] Prefetch error:', funcError);
         isPrefetchingRef.current = false;
         return;
       }
@@ -99,12 +98,12 @@ export function useGameQuestions() {
         setPrefetchedQuestions(response.questions);
         setPrefetchedPoolOrder(response.used_pool_order);
         const perfInfo = response.performance ? ` (${response.performance.selection_time_ms}ms)` : '';
-        console.log(`[useGameQuestions] ✓ Prefetched ${response.questions.length} questions from pool ${response.used_pool_order || 'fallback'}${perfInfo}`);
+        logger.log(`[useGameQuestions] ✓ Prefetched ${response.questions.length} questions from pool ${response.used_pool_order || 'fallback'}${perfInfo}`);
       } else {
-        console.warn('[useGameQuestions] Prefetch returned empty response');
+        logger.warn('[useGameQuestions] Prefetch returned empty response');
       }
     } catch (err) {
-      console.error('[useGameQuestions] Prefetch exception:', err);
+      logger.error('[useGameQuestions] Prefetch exception:', err);
     } finally {
       // CRITICAL: Always reset flag in finally block
       isPrefetchingRef.current = false;
@@ -122,18 +121,16 @@ export function useGameQuestions() {
     try {
       // Check if we have prefetched questions
       if (prefetchedQuestions && prefetchedQuestions.length > 0) {
-        console.log('[useGameQuestions] ✓ Using prefetched questions (instant, <1ms)');
+        logger.log('[useGameQuestions] ✓ Using prefetched questions (instant, <1ms)');
         const questions = prefetchedQuestions;
         const poolOrder = prefetchedPoolOrder;
 
-        // Clear prefetched data
         setPrefetchedQuestions(null);
         setPrefetchedPoolOrder(null);
 
-        // Save the pool order
         if (poolOrder !== null) {
           saveLastPoolOrder(poolOrder);
-          console.log(`[useGameQuestions] Saved pool order ${poolOrder}`);
+          logger.log(`[useGameQuestions] Saved pool order ${poolOrder}`);
         }
 
         // Start prefetching next questions in background
@@ -143,10 +140,9 @@ export function useGameQuestions() {
         return questions;
       }
 
-      // No prefetched questions - fetch synchronously
       const lastPoolOrder = getLastPoolOrder();
 
-      console.log(`[useGameQuestions] Fetching questions (last pool: ${lastPoolOrder}, lang: ${effectiveLang})`);
+      logger.log(`[useGameQuestions] Fetching questions (last pool: ${lastPoolOrder}, lang: ${effectiveLang})`);
 
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -168,18 +164,17 @@ export function useGameQuestions() {
         throw new Error('No questions returned from server');
       }
 
-      // Save the pool order for next time
       if (response.used_pool_order !== null) {
         saveLastPoolOrder(response.used_pool_order);
-        console.log(`[useGameQuestions] Saved pool order ${response.used_pool_order}`);
+        logger.log(`[useGameQuestions] Saved pool order ${response.used_pool_order}`);
       }
 
       if (response.fallback) {
-        console.warn('[useGameQuestions] Using fallback random selection (no pools available)');
+        logger.warn('[useGameQuestions] Using fallback random selection (no pools available)');
       }
 
       const perfInfo = response.performance ? ` (${response.performance.selection_time_ms}ms, cache: ${response.performance.cache_hit})` : '';
-      console.log(`[useGameQuestions] ✓ Questions loaded${perfInfo}`);
+      logger.log(`[useGameQuestions] ✓ Questions loaded${perfInfo}`);
 
       // Start prefetching next questions in background
       prefetchNextGameQuestions(response.used_pool_order, effectiveLang);
@@ -189,7 +184,7 @@ export function useGameQuestions() {
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load questions';
-      console.error('[useGameQuestions] Error loading game questions:', err);
+      logger.error('[useGameQuestions] Error loading game questions:', err);
       setError(errorMessage);
       setLoading(false);
       throw err;
