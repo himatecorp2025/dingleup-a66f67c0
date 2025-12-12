@@ -108,8 +108,8 @@ export const PersonalWinnerDialog = ({
           className="overflow-visible p-0 border-0 bg-transparent w-screen h-screen max-w-none rounded-none [&>button[data-dialog-close]]:hidden z-[99999]"
           style={{ 
             margin: 0,
-            maxHeight: 'none',
-            minHeight: '100vh',
+            maxHeight: '100dvh',
+            minHeight: '100dvh',
             borderRadius: 0,
             zIndex: 99999
           }}
@@ -117,7 +117,7 @@ export const PersonalWinnerDialog = ({
           <DialogTitle className="sr-only">Személyes Nyertes</DialogTitle>
           <DialogDescription className="sr-only">Gratulálunk a helyezéshez és a jutalmakhoz!</DialogDescription>
 
-          <div className="fixed inset-0 flex items-center justify-center overflow-hidden">
+          <div className="fixed inset-0 flex items-center justify-center overflow-hidden" style={{ minHeight: '100dvh' }}>
             <div
               className="personal-winner-canvas"
               style={{

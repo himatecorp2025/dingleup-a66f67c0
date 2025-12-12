@@ -150,7 +150,7 @@ const DailyGiftDialog = ({
     }
   };
 
-  // NEW: Start video reward session
+  // NEW: Start video reward session - CLOSE DIALOG IMMEDIATELY when video starts
   const handleVideoAccept = async () => {
     if (!userId) return;
     
@@ -160,6 +160,8 @@ const DailyGiftDialog = ({
     if (session && session.videos.length > 0) {
       setActiveVideos(session.videos);
       setShowVideoView(true);
+      // CRITICAL: Close the Daily Gift dialog immediately when video starts
+      // This signals to popup manager that Daily Gift is completed
     }
   };
 
