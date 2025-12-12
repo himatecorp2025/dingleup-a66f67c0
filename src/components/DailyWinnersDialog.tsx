@@ -7,7 +7,6 @@ import HexAcceptButton from './ui/HexAcceptButton';
 import { useI18n } from '@/i18n/useI18n';
 import { toast } from 'sonner';
 import laurelWreathGold from '@/assets/laurel_wreath_gold.svg';
-import { useDailyRankReward } from '@/hooks/useDailyRankReward';
 import { logger } from '@/lib/logger';
 interface DailyWinnersDialogProps {
   open: boolean;
@@ -45,7 +44,7 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
   const BASE_WIDTH = 414;
   const BASE_HEIGHT = 736;
   
-  // Fetch current user for pendingReward check
+  // Fetch current user
   const [userId, setUserId] = useState<string | undefined>();
   useEffect(() => {
     const fetchUser = async () => {
@@ -54,9 +53,6 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
     };
     fetchUser();
   }, []);
-  
-  // Integrate useDailyRankReward hook for dynamic button
-  const { pendingReward, claimReward, isClaiming } = useDailyRankReward(userId);
   
   // Generate unique IDs once per component instance
   const svgIds = useMemo(() => ({
@@ -287,21 +283,10 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
     navigate('/game');
   }, [onClose, navigate]);
 
+  // DailyWinners only shows for non-winners, so just close (no reward to claim)
   const handleAccept = useCallback(async () => {
-    if (!userId) return;
-
-    try {
-      if (pendingReward) {
-        await claimReward();
-        toast.success(t('dailyWinners.claimSuccess') || 'Reward claimed successfully!');
-      }
-      onClose();
-    } catch (error) {
-      logger.error('[DAILY-WINNERS] Accept error:', error);
-      toast.error(t('dailyWinners.claimError') || 'Failed to claim reward');
-      onClose();
-    }
-  }, [userId, pendingReward, claimReward, onClose, t]);
+    onClose();
+  }, [onClose]);
 
   const rankFourToTen = useMemo(() => topPlayers.slice(3, 10), [topPlayers]);
 
@@ -1033,7 +1018,7 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
               <div 
                 className="absolute left-1/2 flex justify-center"
                 style={{ 
-                  bottom: '8%', // Position at shield's bottom area
+                  bottom: '8%',
                   transform: 'translateX(-50%)',
                   zIndex: 50,
                   width: '80%',
@@ -1043,13 +1028,9 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
                 <HexAcceptButton 
                   onClick={handleAccept}
                   className="w-full"
-                  disabled={isClaiming}
                 >
                   <span className="font-bold leading-tight flex items-center justify-center w-full" style={{ fontSize: 'clamp(0.875rem, 3.5vw, 1.125rem)' }}>
-                    {pendingReward 
-                      ? t('dailyWinners.claimReward')
-                      : t('dailyWinners.congratulate')
-                    }
+                    {t('dailyWinners.congratulate')}
                   </span>
                 </HexAcceptButton>
               </div>
