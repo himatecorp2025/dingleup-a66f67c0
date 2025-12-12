@@ -206,7 +206,7 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
       className="fixed inset-0 z-[9999] bg-black"
       style={{ width: '100vw', height: '100dvh' }}
     >
-      {/* Video embed - same as Creators preview */}
+      {/* Video embed - lowest layer */}
       <div className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }}>
         <PlatformEmbedFullscreen
           key={`${currentVideo.id}-${currentVideoIndex}`}
@@ -215,6 +215,15 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
           embedUrl={currentVideo.embedUrl}
         />
       </div>
+
+      {/* Transparent blocking overlay - prevents interaction with embedded video controls */}
+      <div 
+        className="absolute inset-0 w-full h-full"
+        style={{ 
+          zIndex: 50,
+          backgroundColor: 'transparent',
+        }}
+      />
 
       {/* Timer - top left */}
       <div 
