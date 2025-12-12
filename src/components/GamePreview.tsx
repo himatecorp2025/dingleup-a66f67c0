@@ -693,8 +693,11 @@ const GamePreview = memo(() => {
                 setShowExitDialog(false);
                 // INSTANT navigation - don't wait for async operations
                 navigate('/dashboard');
-                // Background cleanup (non-blocking)
-                finishGame().catch(console.error);
+                // Only credit coins if game was completed (15 questions answered)
+                // If game incomplete, coins are lost (frontend-only, no DB credit)
+                if (gameCompleted) {
+                  finishGame().catch(console.error);
+                }
               }}
               gameCompleted={gameCompleted}
             />
