@@ -126,7 +126,7 @@ const AdminCreatorVideoDetail = () => {
 
   if (isLoading) {
     return (
-      <AdminLayout title={t('admin.videos.detail') || 'Videó részletek'}>
+      <AdminLayout>
         <div className="space-y-4">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-64 w-full" />
@@ -137,7 +137,7 @@ const AdminCreatorVideoDetail = () => {
 
   if (!video) {
     return (
-      <AdminLayout title={t('admin.videos.detail') || 'Videó részletek'}>
+      <AdminLayout>
         <p className="text-muted-foreground">{t('admin.videos.not_found') || 'Videó nem található'}</p>
       </AdminLayout>
     );
@@ -148,7 +148,7 @@ const AdminCreatorVideoDetail = () => {
     : 0;
 
   return (
-    <AdminLayout title={video.title || t('admin.videos.detail') || 'Videó részletek'}>
+    <AdminLayout>
       <div className="space-y-6">
         {/* Back button */}
         <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">

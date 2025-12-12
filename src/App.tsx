@@ -68,6 +68,12 @@ import AdminQuestionPools from "./pages/AdminQuestionPools";
 import AdminManualCredit from "./pages/AdminManualCredit";
 import AdminPlayerBehaviors from "./pages/AdminPlayerBehaviors";
 import AdminProfile from "./pages/AdminProfile";
+import AdminCreators from "./pages/AdminCreators";
+import AdminCreatorDetail from "./pages/AdminCreatorDetail";
+import AdminCreatorChannels from "./pages/AdminCreatorChannels";
+import AdminCreatorVideos from "./pages/AdminCreatorVideos";
+import AdminCreatorAnalytics from "./pages/AdminCreatorAnalytics";
+import AdminCreatorVideoDetail from "./pages/AdminCreatorVideoDetail";
 import NotFound from "./pages/NotFound";
 
 // Loading fallback component - uses fixed positioning to not affect layout
@@ -187,6 +193,12 @@ const AppCore = () => {
               <Route path="/admin/age-statistics" element={<ErrorBoundary><AdminAgeStatistics /></ErrorBoundary>} />
               <Route path="/admin/legal-documents" element={<ErrorBoundary><AdminLegalDocuments /></ErrorBoundary>} />
               <Route path="/admin/profile" element={<ErrorBoundary><AdminProfile /></ErrorBoundary>} />
+              <Route path="/admin/creators" element={<ErrorBoundary><AdminCreators /></ErrorBoundary>} />
+              <Route path="/admin/creators/:creatorId" element={<ErrorBoundary><AdminCreatorDetail /></ErrorBoundary>} />
+              <Route path="/admin/creator-channels" element={<ErrorBoundary><AdminCreatorChannels /></ErrorBoundary>} />
+              <Route path="/admin/creator-videos" element={<ErrorBoundary><AdminCreatorVideos /></ErrorBoundary>} />
+              <Route path="/admin/creator-videos/:videoId" element={<ErrorBoundary><AdminCreatorVideoDetail /></ErrorBoundary>} />
+              <Route path="/admin/creator-analytics" element={<ErrorBoundary><AdminCreatorAnalytics /></ErrorBoundary>} />
               
               {/* Legal pages */}
               <Route path="/aszf" element={<ASZF />} />

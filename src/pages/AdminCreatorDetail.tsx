@@ -207,7 +207,7 @@ const AdminCreatorDetail = () => {
 
   if (loadingCreator) {
     return (
-      <AdminLayout title={t('admin.creators.detail') || 'Tartalomgyártó részletek'}>
+      <AdminLayout>
         <div className="space-y-4">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-64 w-full" />
@@ -217,7 +217,7 @@ const AdminCreatorDetail = () => {
   }
 
   return (
-    <AdminLayout title={creator?.username || t('admin.creators.detail') || 'Tartalomgyártó részletek'}>
+    <AdminLayout>
       <div className="space-y-6">
         {/* Back button */}
         <Button variant="ghost" onClick={() => navigate('/admin/creators')} className="gap-2">

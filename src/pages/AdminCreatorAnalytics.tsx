@@ -159,7 +159,7 @@ const AdminCreatorAnalytics = () => {
   };
 
   return (
-    <AdminLayout title={t('admin.creator_analytics.title') || 'Tartalomgyártó analitika'}>
+    <AdminLayout>
       <div className="space-y-6">
         {/* Filters */}
         <div className="flex flex-wrap gap-4">
