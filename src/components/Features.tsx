@@ -66,14 +66,14 @@ const Features = () => {
         </div>
 
         {/* Main Features with Images */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
+        <div className="grid md:grid-cols-3 gap-8 mb-16 items-stretch">
           {features.map((feature, index) => (
             <div 
               key={index}
               className="group relative animate-fade-in"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <div className="relative bg-gradient-to-br from-purple-600/20 to-pink-600/20 backdrop-blur-sm rounded-3xl border-2 border-white/10 overflow-hidden hover:border-yellow-400/50 transition-all duration-500 transform hover:scale-105 shadow-2xl">
+              <div className="relative h-full flex flex-col bg-gradient-to-br from-purple-600/20 to-pink-600/20 backdrop-blur-sm rounded-3xl border-2 border-white/10 overflow-hidden hover:border-yellow-400/50 transition-all duration-500 transform hover:scale-105 shadow-2xl">
                 {/* Image */}
                 <div className="relative h-48 overflow-hidden">
                   <img 
@@ -85,14 +85,14 @@ const Features = () => {
                 </div>
                 
                 {/* Content */}
-                <div className="relative p-4 xs:p-6 bg-gradient-to-br from-purple-900/40 to-blue-900/40 backdrop-blur-md">
+                <div className="relative p-4 xs:p-6 bg-gradient-to-br from-purple-900/40 to-blue-900/40 backdrop-blur-md flex-1 flex flex-col">
                   <div className="flex items-center gap-2 xs:gap-3 mb-3 xs:mb-4">
                     <div className="w-10 h-10 xs:w-12 xs:h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center shadow-lg shadow-yellow-500/50 flex-shrink-0">
                       <feature.icon className="w-5 h-5 xs:w-6 xs:h-6 text-white" />
                     </div>
                     <h3 className="text-base xs:text-lg sm:text-xl font-black text-white drop-shadow-lg break-words hyphens-auto line-clamp-2">{feature.title}</h3>
                   </div>
-                  <p className="text-xs xs:text-sm sm:text-base text-white/90 leading-relaxed drop-shadow break-words line-clamp-4">
+                  <p className="text-xs xs:text-sm sm:text-base text-white/90 leading-relaxed drop-shadow break-words flex-1">
                     {feature.description}
                   </p>
                 </div>
