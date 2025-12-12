@@ -41,33 +41,77 @@ function detectPlatform(url: string): string | null {
   return null;
 }
 
-// Resolve shortlinks to full URL (TikTok vm.tiktok.com, vt.tiktok.com)
+// Resolve shortlinks to full URL (TikTok, YouTube, Instagram)
 async function resolveShortlink(url: string): Promise<string> {
-  // Check if it's a TikTok shortlink
-  if (url.includes('vm.tiktok.com') || url.includes('vt.tiktok.com')) {
-    console.log("[RESOLVE] Resolving TikTok shortlink:", url);
-    try {
-      // Follow redirects to get the full URL
+  const isShortlink = 
+    url.includes('vm.tiktok.com') || 
+    url.includes('vt.tiktok.com') ||
+    url.includes('youtu.be') ||
+    url.includes('instagr.am') ||
+    url.includes('fb.watch');
+    
+  if (!isShortlink) {
+    return url;
+  }
+  
+  console.log("[RESOLVE] Resolving shortlink:", url);
+  
+  // Try multiple methods to resolve
+  const methods = [
+    // Method 1: HEAD request with redirect follow
+    async () => {
       const response = await fetch(url, { 
         method: 'HEAD',
-        redirect: 'follow'
+        redirect: 'follow',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'
+        }
       });
-      
-      if (response.url && response.url !== url) {
-        console.log("[RESOLVE] Resolved to:", response.url);
-        return response.url;
+      return response.url;
+    },
+    // Method 2: GET request with redirect follow
+    async () => {
+      const response = await fetch(url, { 
+        redirect: 'follow',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'
+        }
+      });
+      return response.url;
+    },
+    // Method 3: Manual redirect following
+    async () => {
+      let currentUrl = url;
+      for (let i = 0; i < 5; i++) {
+        const response = await fetch(currentUrl, { 
+          redirect: 'manual',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'
+          }
+        });
+        const location = response.headers.get('location');
+        if (!location || response.status < 300 || response.status >= 400) {
+          break;
+        }
+        currentUrl = location.startsWith('http') ? location : new URL(location, currentUrl).href;
       }
-      
-      // Alternative: Try GET request which may redirect
-      const getResponse = await fetch(url, { redirect: 'follow' });
-      if (getResponse.url && getResponse.url !== url) {
-        console.log("[RESOLVE] Resolved via GET to:", getResponse.url);
-        return getResponse.url;
+      return currentUrl;
+    }
+  ];
+  
+  for (const method of methods) {
+    try {
+      const resolved = await method();
+      if (resolved && resolved !== url && resolved.includes('/video/')) {
+        console.log("[RESOLVE] Resolved to:", resolved);
+        return resolved;
       }
     } catch (e) {
-      console.error("[RESOLVE] Failed to resolve shortlink:", e);
+      console.log("[RESOLVE] Method failed:", e);
     }
   }
+  
+  console.log("[RESOLVE] Could not resolve shortlink, returning original");
   return url;
 }
 
@@ -350,6 +394,19 @@ serve(async (req) => {
     // Generate embed URL (async - resolves shortlinks)
     const embedUrl = await buildEmbedUrl(video_url, platform);
     console.log("[SUBMIT-VIDEO] Generated embed URL:", embedUrl);
+    
+    // CRITICAL: If no embed URL could be generated, reject the video
+    if (!embedUrl) {
+      console.error("[SUBMIT-VIDEO] Failed to generate embed URL for:", video_url);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "EMBED_GENERATION_FAILED",
+          message: "Nem sikerült feldolgozni a videó linket. Kérjük próbáld meg a teljes videó URL-t (nem rövidített linket)."
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
 
     // Extract thumbnail URL - use custom if provided, otherwise try to extract
     let thumbnailUrl = custom_thumbnail_url || null;
