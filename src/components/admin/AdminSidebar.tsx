@@ -123,6 +123,16 @@ export function AdminSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
+                  onClick={() => navigate('/admin/subscribers')}
+                  isActive={isActive('/admin/subscribers')}
+                  className={isActive('/admin/subscribers') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
+                >
+                  <Mail className="text-purple-400" />
+                  <span>{lang === 'hu' ? 'Feliratkozások' : 'Subscriptions'}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
                   onClick={() => navigate('/admin/dashboard?tab=invitations')}
                   isActive={isActive('/admin/dashboard?tab=invitations')}
                   className={isActive('/admin/dashboard?tab=invitations') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
