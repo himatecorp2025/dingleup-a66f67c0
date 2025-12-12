@@ -172,7 +172,6 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
           
           await refetchWallet();
           await broadcast('wallet:update', { source: 'game_start', livesDelta: -1 });
-          await creditStartReward();
           await refreshProfile();
         })();
 
@@ -269,7 +268,6 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
       }
       
         await Promise.all([
-        creditStartReward(),
          (async () => {
            try {
              // CRITICAL: Always send CURRENT UI language to backend for correct question language
