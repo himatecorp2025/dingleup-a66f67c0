@@ -3,14 +3,16 @@ import { getCorsHeaders, handleCorsPreflight } from '../_shared/cors.ts';
 
 const corsHeaders = getCorsHeaders('*');
 
-// Tables in STRICT foreign key dependency order - updated 2025-12
+// COMPLETE Tables list in STRICT foreign key dependency order - updated 2025-12-12
+// Based on actual database query: SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'
 const TABLES = [
-  // Level 0: No foreign keys - base tables
+  // Level 0: No foreign keys - base/config tables
   'topics', 'booster_types', 'legal_documents', 'translations', 'daily_prize_table',
   'weekly_prize_table', 'weekly_login_rewards', 'data_collection_metadata', 
   'engagement_analytics', 'performance_summary', 'rpc_rate_limits',
   'daily_winner_processing_log', 'app_download_links', 'retention_analytics', 
   'tips_tricks_videos', 'subscription_promo_events', 'creator_plans',
+  'performance_by_page', 'error_rate_by_page',
   
   // Level 1: Depends on Level 0
   'profiles', 'questions', 'question_pools',
@@ -24,11 +26,13 @@ const TABLES = [
   'user_activity_daily', 'user_activity_pings',
   'question_seen_history', 'subscribers', 'welcome_bonus_attempts', 'typing_status',
   'creator_subscriptions', 'creator_channels', 'creator_admin_notes', 'creator_audit_log',
+  'reward_sessions',
   
   // Level 3: Depends on Level 2
   'game_results', 'game_sessions', 'game_session_pools', 'friendships', 'invitations',
-  'daily_rankings', 'weekly_rankings', 'global_leaderboard', 'leaderboard_cache',
-  'leaderboard_public_cache', 'daily_leaderboard_snapshot', 'weekly_leaderboard_snapshot',
+  'daily_rankings', 'weekly_rankings', 'weekly_rankings_public', 'global_leaderboard', 
+  'leaderboard_cache', 'leaderboard_public', 'leaderboard_public_cache', 
+  'daily_leaderboard_snapshot', 'weekly_leaderboard_snapshot',
   'daily_winner_awarded', 'weekly_winner_awarded', 'daily_winners_popup_views',
   'daily_winner_popup_shown', 'weekly_winner_popup_shown', 'weekly_login_state',
   'booster_purchases', 'friend_request_rate_limit', 'admin_audit_log',
@@ -52,6 +56,9 @@ const TABLES = [
   'bonus_claim_events', 'chat_interaction_events', 'conversion_events', 
   'error_logs', 'performance_metrics', 'device_geo_analytics', 
   'session_details', 'reports',
+  
+  // Views (read-only, skip if view)
+  'public_profiles',
 ];
 
 // Map PostgreSQL data_type to SQL DDL type
