@@ -57,7 +57,7 @@ const Features = () => {
             <Zap className="w-4 h-4 xs:w-5 xs:h-5 text-pink-400 animate-pulse flex-shrink-0" />
             <span className="text-xs xs:text-sm sm:text-base font-bold text-pink-300 truncate">{t('landing.features.section_badge')}</span>
           </div>
-          <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] break-words hyphens-auto px-4">
+          <h2 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-6 text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] break-words hyphens-auto px-4">
             {t('landing.features.section_title_part1')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500">{t('landing.features.section_title_part2')}</span>
           </h2>
           <p className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 max-w-2xl mx-auto drop-shadow-lg break-words px-4">
