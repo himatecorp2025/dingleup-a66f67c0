@@ -43,6 +43,14 @@ const DialogContent = React.forwardRef<
           "duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           className
         )}
+        onOpenAutoFocus={(e) => {
+          // CRITICAL: Prevent Radix from stealing focus - this causes iframe issues in Lovable preview
+          e.preventDefault();
+        }}
+        onCloseAutoFocus={(e) => {
+          // CRITICAL: Prevent focus restoration on close - this also causes iframe focus loss
+          e.preventDefault();
+        }}
         onEscapeKeyDown={(e) => {
           e.preventDefault();
           const target = e.currentTarget as HTMLElement;
