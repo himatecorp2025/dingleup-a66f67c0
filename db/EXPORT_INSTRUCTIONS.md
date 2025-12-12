@@ -1,5 +1,23 @@
 # Teljes Adatbázis Export Útmutató
 
+**Frissítve:** 2025-12-12  
+**Táblák száma:** 104 tábla
+
+## Admin Felületi Export (AJÁNLOTT)
+
+Az admin dashboard oldalon (`/admin`) három gomb található az adatbázis exportáláshoz:
+
+1. **Teljes adatbázis export** – Schema + Data egy fájlban (ajánlott)
+2. **Schema Export (CREATE TABLE)** – Csak a séma struktúra
+3. **Data Export (INSERT)** – Csak az adatok INSERT formában
+
+### Exportálás lépései
+
+1. Jelentkezz be admin jogosultsággal
+2. Menj a `/admin` oldalra
+3. Kattints a megfelelő export gombra
+4. A fájl automatikusan letöltődik
+
 ## Automatikus Export (Node.js script használatával)
 
 ### 1. Függőségek telepítése
@@ -16,7 +34,7 @@ Győződj meg róla, hogy a projekt gyökér `.env` fájlban a következők be v
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key  # Opcionális, de ajánlott
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key  # Kötelező a teljes exporthoz
 ```
 
 ### 3. Teljes export futtatása
@@ -26,27 +44,9 @@ cd scripts
 npm run export:full
 ```
 
-Ez létrehozza a `db/full_data_export.sql` fájlt az összes jelenlegi adattal (INSERT statementekkel).
+Ez létrehozza a `db/full_data_export.sql` fájlt az összes jelenlegi adattal.
 
 ## Manuális Export (pg_dump használatával)
-
-Ha közvetlen hozzáférésed van a PostgreSQL adatbázishoz:
-
-### Schema + Data export
-
-```bash
-pg_dump -h db.your-project.supabase.co \
-  -U postgres \
-  -d postgres \
-  -f db/full_data_export.sql \
-  --data-only \
-  --inserts \
-  --no-owner \
-  --no-acl \
-  --schema=public
-```
-
-### Csak séma export
 
 ```bash
 pg_dump -h db.your-project.supabase.co \

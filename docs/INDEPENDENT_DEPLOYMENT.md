@@ -101,19 +101,26 @@ npm install -g @capacitor/cli
 ### 3.1 Adatbázis Export Admin Felületről
 
 1. **Jelentkezz be az admin felületre:** `/admin`
-2. **Dashboard oldalon** két gomb található:
-   - `Schema Export (CREATE TABLE)` – letölti a séma SQL-t
-   - `Data Export (INSERT)` – letölti az összes adatot SQL INSERT formában
+2. **Dashboard oldalon** három gomb található:
+   - `Teljes adatbázis export` – letölti a sémát ÉS az összes adatot egyben
+   - `Schema Export (CREATE TABLE)` – csak a séma SQL-t tölti le
+   - `Data Export (INSERT)` – csak az adatokat tölti le SQL INSERT formában
 
-3. **Exportálás sorrendje:**
+3. **Exportálás módjai:**
    ```
-   1. Kattints "Schema Export" → dingleup_schema_YYYY-MM-DD.sql
-   2. Kattints "Data Export" → dingleup_data_YYYY-MM-DD.sql
+   A) Teljes export (AJÁNLOTT):
+      Kattints "Teljes adatbázis export" → dingleup_full_export_YYYY-MM-DD.sql
+      
+   B) Külön fájlok:
+      1. Kattints "Schema Export" → dingleup_schema_YYYY-MM-DD.sql
+      2. Kattints "Data Export" → dingleup_data_YYYY-MM-DD.sql
    ```
 
 ### 3.2 Export Fájlok Tartalma
 
-**Schema fájl (`dingleup_schema_*.sql`):**
+**104 tábla kerül exportálásra a jelenlegi adatbázisból.**
+
+**Teljes export fájl (`dingleup_full_export_*.sql`):**
 ```sql
 -- Extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -122,10 +129,19 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 -- Enum Types
 DO $$ BEGIN CREATE TYPE app_role AS ENUM ('admin', 'user'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- Tables (110+ tábla)
+-- Tables (104 tábla)
+DROP TABLE IF EXISTS public.topics CASCADE;
 CREATE TABLE public.topics (...);
-CREATE TABLE public.profiles (...);
+INSERT INTO public.topics (...) VALUES (...);
+
 -- stb.
+```
+
+**Schema fájl (`dingleup_schema_*.sql`):**
+```sql
+-- CREATE TABLE statements only (no data)
+DROP TABLE IF EXISTS public.topics CASCADE;
+CREATE TABLE public.topics (...);
 ```
 
 **Data fájl (`dingleup_data_*.sql`):**
@@ -134,8 +150,8 @@ BEGIN;
 SET session_replication_role = 'replica';
 SET CONSTRAINTS ALL DEFERRED;
 
+TRUNCATE TABLE public.topics CASCADE;
 INSERT INTO public.topics (...) VALUES (...);
-INSERT INTO public.profiles (...) VALUES (...);
 -- stb.
 
 COMMIT;
