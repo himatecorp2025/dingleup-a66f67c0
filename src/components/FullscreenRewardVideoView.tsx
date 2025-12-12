@@ -333,8 +333,8 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
               src={embedSrc}
               className="absolute left-1/2 border-0 pointer-events-none"
               style={{
-                width: '180vw',
-                height: '220vh',
+                width: '175vw',
+                height: '250vh',
                 top: '75%',
                 transform: 'translateX(-50%) translateY(-50%)',
                 zIndex: 10,
