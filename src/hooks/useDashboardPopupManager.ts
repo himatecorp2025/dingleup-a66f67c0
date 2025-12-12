@@ -40,8 +40,18 @@ export const useDashboardPopupManager = (params: PopupManagerParams) => {
   const welcomeBonus = useWelcomeBonus(userId);
   const rankReward = useDailyRankReward(userId);
   
-  // Daily Winners depends on whether user has pending reward
-  const hasPendingReward = !!rankReward.pendingReward;
+  // Track if user WAS a winner at initial check (prevents Daily Winners after claiming Personal Winner)
+  const [wasWinnerAtStart, setWasWinnerAtStart] = useState<boolean | null>(null);
+  
+  // Set wasWinnerAtStart ONCE when first loaded
+  useEffect(() => {
+    if (wasWinnerAtStart === null && !rankReward.isLoading && userId) {
+      setWasWinnerAtStart(!!rankReward.pendingReward);
+    }
+  }, [rankReward.isLoading, rankReward.pendingReward, userId, wasWinnerAtStart]);
+  
+  // Daily Winners depends on whether user WAS a winner at start (not current state)
+  const hasPendingReward = wasWinnerAtStart === true;
   const dailyWinners = useDailyWinnersPopup(userId, hasPendingReward);
 
   const [popupState, setPopupState] = useState<PopupState>({
