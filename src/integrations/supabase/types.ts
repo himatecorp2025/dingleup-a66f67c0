@@ -14,6 +14,64 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_events: {
+        Row: {
+          created_at: string
+          creator_id: string
+          event_type: string
+          id: string
+          occurred_at: string
+          platform: string
+          player_segment: string | null
+          topic_tag: string | null
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          event_type: string
+          id?: string
+          occurred_at?: string
+          platform: string
+          player_segment?: string | null
+          topic_tag?: string | null
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          event_type?: string
+          id?: string
+          occurred_at?: string
+          platform?: string
+          player_segment?: string | null
+          topic_tag?: string | null
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_events_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_events_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_events_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "creator_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_audit_log: {
         Row: {
           action: string
@@ -459,6 +517,45 @@ export type Database = {
           },
         ]
       }
+      creator_admin_notes: {
+        Row: {
+          admin_id: string
+          created_at: string
+          creator_id: string
+          id: string
+          note: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          creator_id: string
+          id?: string
+          note: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          creator_id?: string
+          id?: string
+          note?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_admin_notes_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_admin_notes_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_analytics_daily: {
         Row: {
           clickthroughs: number
@@ -505,6 +602,105 @@ export type Database = {
             columns: ["video_id"]
             isOneToOne: false
             referencedRelation: "creator_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      creator_audit_log: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          creator_id: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          creator_id: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          creator_id?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_audit_log_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_audit_log_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      creator_channels: {
+        Row: {
+          channel_handle: string | null
+          channel_url: string | null
+          created_at: string
+          creator_id: string
+          id: string
+          is_active: boolean
+          is_verified: boolean
+          last_seen_at: string | null
+          platform: string
+          updated_at: string
+        }
+        Insert: {
+          channel_handle?: string | null
+          channel_url?: string | null
+          created_at?: string
+          creator_id: string
+          id?: string
+          is_active?: boolean
+          is_verified?: boolean
+          last_seen_at?: string | null
+          platform: string
+          updated_at?: string
+        }
+        Update: {
+          channel_handle?: string | null
+          channel_url?: string | null
+          created_at?: string
+          creator_id?: string
+          id?: string
+          is_active?: boolean
+          is_verified?: boolean
+          last_seen_at?: string | null
+          platform?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_channels_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_channels_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2420,6 +2616,7 @@ export type Database = {
           country_code: string
           created_at: string | null
           creator_plan_id: string | null
+          creator_status: string | null
           creator_subscription_status: string
           creator_trial_ends_at: string | null
           daily_gift_last_claimed: string | null
@@ -2475,6 +2672,7 @@ export type Database = {
           country_code?: string
           created_at?: string | null
           creator_plan_id?: string | null
+          creator_status?: string | null
           creator_subscription_status?: string
           creator_trial_ends_at?: string | null
           daily_gift_last_claimed?: string | null
@@ -2530,6 +2728,7 @@ export type Database = {
           country_code?: string
           created_at?: string | null
           creator_plan_id?: string | null
+          creator_status?: string | null
           creator_subscription_status?: string
           creator_trial_ends_at?: string | null
           daily_gift_last_claimed?: string | null

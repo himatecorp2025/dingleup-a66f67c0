@@ -186,6 +186,57 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* TARTALOMGYÁRTÓK */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-white/50 text-xs font-bold uppercase tracking-wider">
+            {!isCollapsed && (lang === 'hu' ? 'Tartalomgyártók' : 'Creators')}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => navigate('/admin/creators')}
+                  isActive={isActive('/admin/creators')}
+                  className={isActive('/admin/creators') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
+                >
+                  <Users className="text-purple-400" />
+                  <span>{lang === 'hu' ? 'Összes tartalomgyártó' : 'All Creators'}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => navigate('/admin/creator-channels')}
+                  isActive={isActive('/admin/creator-channels')}
+                  className={isActive('/admin/creator-channels') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
+                >
+                  <TrendingUp className="text-purple-400" />
+                  <span>{lang === 'hu' ? 'Csatornák' : 'Channels'}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => navigate('/admin/creator-videos')}
+                  isActive={isActive('/admin/creator-videos')}
+                  className={isActive('/admin/creator-videos') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
+                >
+                  <Gamepad2 className="text-purple-400" />
+                  <span>{lang === 'hu' ? 'Videók' : 'Videos'}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => navigate('/admin/creator-analytics')}
+                  isActive={isActive('/admin/creator-analytics')}
+                  className={isActive('/admin/creator-analytics') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
+                >
+                  <BarChart3 className="text-purple-400" />
+                  <span>{lang === 'hu' ? 'Analitika' : 'Analytics'}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         {/* CONTENT CENTER */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-white/50 text-xs font-bold uppercase tracking-wider">
