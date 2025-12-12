@@ -2,15 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { getCorsHeaders, handleCorsPreflight } from '../_shared/cors.ts';
 
 /**
- * OPTIMIZED: Admin Engagement Analytics
- * 
- * PERFORMANCE IMPROVEMENTS:
- * - Uses materialized views where possible (mv_daily_engagement_metrics, mv_hourly_engagement, mv_feature_usage_summary)
- * - Indexed queries on large tables
- * - Specific column selection instead of SELECT *
- * - Reduced query time from ~200ms to ~40ms
- * 
- * BEHAVIOR: Identical external API - same JSON structure
+ * Admin Engagement Analytics - Uses raw tables for reliable data
  */
 
 Deno.serve(async (req) => {
@@ -52,150 +44,81 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Use service role for data fetch (bypass RLS, access materialized views)
+    // Use service role for data fetch (bypass RLS)
     const service = createClient(supabaseUrl, supabaseServiceKey);
 
-    // OPTIMIZED: Try materialized views first (fast path), fallback to raw tables
-    let usedMaterializedViews = true;
-    let engagementMetrics: any[] = [];
-    let hourlyMetrics: any[] = [];
-    let featureMetrics: any[] = [];
-
-    try {
-      const [engRes, hourlyRes, featRes] = await Promise.all([
-        service
-          .from('mv_daily_engagement_metrics')
-          .select('total_sessions, active_users, avg_session_duration_seconds')
-          .gte('metric_date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]),
-        
-        service
-          .from('mv_hourly_engagement')
-          .select('hour, event_count')
-          .eq('metric_date', new Date().toISOString().split('T')[0]),
-        
-        service
-          .from('mv_feature_usage_summary')
-          .select('feature_name, usage_count, unique_users')
-          .gte('metric_date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
-      ]);
-
-      engagementMetrics = engRes.data || [];
-      hourlyMetrics = hourlyRes.data || [];
-      featureMetrics = featRes.data || [];
-    } catch (mvError) {
-      console.warn('[admin-engagement-analytics] Materialized view unavailable, using raw tables:', mvError);
-      usedMaterializedViews = false;
-    }
-
-    // FALLBACK: Use raw tables if materialized views don't exist yet
+    // Fetch raw data from tables (last 30 days for more data)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    
     const [sessionRes, profilesRes, featureRes, gameResultsRes, topicsRes] = await Promise.all([
-      usedMaterializedViews 
-        ? Promise.resolve({ data: [] })
-        : service
-            .from('app_session_events')
-            .select('event_type, session_id, user_id, session_duration_seconds, created_at')
-            .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+      service
+        .from('app_session_events')
+        .select('event_type, session_id, user_id, session_duration_seconds, created_at')
+        .gte('created_at', thirtyDaysAgo)
+        .limit(10000),
       service.from('profiles').select('id, username').limit(5000),
-      usedMaterializedViews 
-        ? Promise.resolve({ data: [] })
-        : service
-            .from('feature_usage_events')
-            .select('feature_name, user_id')
-            .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+      service
+        .from('feature_usage_events')
+        .select('feature_name, user_id')
+        .gte('created_at', thirtyDaysAgo)
+        .limit(10000),
       service
         .from('game_results')
         .select('user_id, correct_answers, category')
         .eq('completed', true)
-        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+        .gte('created_at', thirtyDaysAgo)
+        .limit(10000),
       service.from('topics').select('id, name')
     ]);
 
+    const sessionEvents = sessionRes.data || [];
     const profiles = profilesRes.data || [];
+    const featureEvents = featureRes.data || [];
     const gameResults = gameResultsRes.data || [];
     const topicsData = topicsRes.data || [];
 
-    let totalSessions = 0;
-    let avgSessionDuration = 0;
-    let avgSessionsPerUser = 0;
-    let featureUsage: any[] = [];
-    let engagementByTime: any[] = [];
+    // Calculate session metrics
+    const sessionMap = new Map<string, number[]>();
+    sessionEvents.forEach((event: any) => {
+      if (event.session_duration_seconds) {
+        if (!sessionMap.has(event.user_id)) sessionMap.set(event.user_id, []);
+        sessionMap.get(event.user_id)!.push(event.session_duration_seconds);
+      }
+    });
 
-    if (usedMaterializedViews) {
-      // FAST PATH: Calculate from materialized views
-      totalSessions = engagementMetrics.reduce((sum, m: any) => sum + (m.total_sessions || 0), 0);
-      avgSessionDuration = engagementMetrics.length > 0
-        ? Math.round(engagementMetrics.reduce((sum, m: any) => sum + (m.avg_session_duration_seconds || 0), 0) / engagementMetrics.length)
-        : 0;
-      avgSessionsPerUser = profiles.length > 0 ? Math.round(totalSessions / profiles.length) : 0;
+    const totalSessions = Array.from(sessionMap.values()).reduce((sum, arr) => sum + arr.length, 0);
+    const totalDuration = Array.from(sessionMap.values()).reduce((sum, arr) => sum + arr.reduce((s, d) => s + d, 0), 0);
+    const avgSessionDuration = totalSessions > 0 ? Math.round(totalDuration / totalSessions) : 0;
+    const avgSessionsPerUser = sessionMap.size > 0 ? Math.round(totalSessions / sessionMap.size) : 0;
 
-      // Feature usage from summary
-      const featureMap = new Map<string, { count: number; users: number }>();
-      featureMetrics.forEach((f: any) => {
-        const existing = featureMap.get(f.feature_name) || { count: 0, users: 0 };
-        featureMap.set(f.feature_name, {
-          count: existing.count + (f.usage_count || 0),
-          users: Math.max(existing.users, f.unique_users || 0)
-        });
-      });
-      featureUsage = Array.from(featureMap.entries())
-        .map(([feature_name, data]) => ({ 
-          feature_name, 
-          usage_count: data.count, 
-          unique_users: data.users
-        }))
-        .sort((a, b) => b.usage_count - a.usage_count)
-        .slice(0, 10);
+    // Feature usage
+    const featureUsageMap = new Map<string, { count: number; users: Set<string> }>();
+    featureEvents.forEach((e: any) => {
+      if (!featureUsageMap.has(e.feature_name)) {
+        featureUsageMap.set(e.feature_name, { count: 0, users: new Set() });
+      }
+      const feature = featureUsageMap.get(e.feature_name)!;
+      feature.count++;
+      feature.users.add(e.user_id);
+    });
+    const featureUsage = Array.from(featureUsageMap.entries())
+      .map(([feature_name, data]) => ({ 
+        feature_name, 
+        usage_count: data.count, 
+        unique_users: data.users.size 
+      }))
+      .sort((a, b) => b.usage_count - a.usage_count)
+      .slice(0, 10);
 
-      // Hourly engagement from view
-      engagementByTime = Array.from({ length: 24 }, (_, hour) => {
-        const metric = hourlyMetrics.find((m: any) => m.hour === hour);
-        return { hour, sessions: metric?.event_count || 0 };
-      });
-    } else {
-      // FALLBACK: Raw table aggregation
-      const sessionEvents = sessionRes.data || [];
-      const featureEvents = featureRes.data || [];
+    // Hourly engagement
+    const hourlyEngagement = new Array(24).fill(0);
+    sessionEvents.forEach((event: any) => {
+      const hour = new Date(event.created_at).getHours();
+      hourlyEngagement[hour]++;
+    });
+    const engagementByTime = hourlyEngagement.map((sessions, hour) => ({ hour, sessions }));
 
-      const sessionMap = new Map<string, number[]>();
-      sessionEvents.forEach((event: any) => {
-        if (event.session_duration_seconds) {
-          if (!sessionMap.has(event.user_id)) sessionMap.set(event.user_id, []);
-          sessionMap.get(event.user_id)!.push(event.session_duration_seconds);
-        }
-      });
-
-      totalSessions = Array.from(sessionMap.values()).reduce((sum, arr) => sum + arr.length, 0);
-      const totalDuration = Array.from(sessionMap.values()).reduce((sum, arr) => sum + arr.reduce((s, d) => s + d, 0), 0);
-      avgSessionDuration = totalSessions > 0 ? Math.round(totalDuration / totalSessions) : 0;
-      avgSessionsPerUser = sessionMap.size > 0 ? Math.round(totalSessions / sessionMap.size) : 0;
-
-      const featureUsageMap = new Map<string, { count: number; users: Set<string> }>();
-      featureEvents.forEach((e: any) => {
-        if (!featureUsageMap.has(e.feature_name)) {
-          featureUsageMap.set(e.feature_name, { count: 0, users: new Set() });
-        }
-        const feature = featureUsageMap.get(e.feature_name)!;
-        feature.count++;
-        feature.users.add(e.user_id);
-      });
-      featureUsage = Array.from(featureUsageMap.entries())
-        .map(([feature_name, data]) => ({ 
-          feature_name, 
-          usage_count: data.count, 
-          unique_users: data.users.size 
-        }))
-        .sort((a, b) => b.usage_count - a.usage_count)
-        .slice(0, 10);
-
-      const hourlyEngagement = new Array(24).fill(0);
-      sessionEvents.forEach((event: any) => {
-        const hour = new Date(event.created_at).getHours();
-        hourlyEngagement[hour]++;
-      });
-      engagementByTime = hourlyEngagement.map((sessions, hour) => ({ hour, sessions }));
-    }
-
-    // Most active users (lightweight - recent sessions only)
+    // Most active users (last 24 hours)
     const recentSessionRes = await service
       .from('app_session_events')
       .select('user_id, session_id, session_duration_seconds')
@@ -242,14 +165,14 @@ Deno.serve(async (req) => {
       ? Math.round((totalCorrectAnswers / gameResults.length) * 10) / 10
       : 0;
 
-    // Topic popularity (calculated from game_results category data)
-    const categoryCountMap = new Map<string, number>();
+    // Topic popularity (from game_results category + correct_answers)
+    const categoryScoreMap = new Map<string, number>();
     gameResults.forEach((g: any) => {
       const category = g.category || 'unknown';
-      categoryCountMap.set(category, (categoryCountMap.get(category) || 0) + 1);
+      categoryScoreMap.set(category, (categoryScoreMap.get(category) || 0) + (g.correct_answers || 0));
     });
     
-    const topicPopularity = Array.from(categoryCountMap.entries())
+    const topicPopularity = Array.from(categoryScoreMap.entries())
       .map(([category, count]) => {
         // Try to find matching topic name for better display
         const topic = topicsData.find((t: any) => 
@@ -263,6 +186,13 @@ Deno.serve(async (req) => {
       })
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
+
+    console.log('[admin-engagement-analytics] Data fetched:', {
+      sessionCount: sessionEvents.length,
+      featureCount: featureEvents.length,
+      gameResultsCount: gameResults.length,
+      topicsCount: topicsData.length
+    });
 
     return new Response(JSON.stringify({
       avgSessionDuration,
@@ -278,6 +208,7 @@ Deno.serve(async (req) => {
       },
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error: any) {
+    console.error('[admin-engagement-analytics] Error:', error);
     return new Response(JSON.stringify({ error: error?.message || 'Unknown error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -44,22 +44,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch booster purchases
+    // Fetch booster purchases (only real-money purchases with usd_cents_spent > 0)
     const { data: boosterPurchases, error: boosterPurchasesError } = await supabase
       .from('booster_purchases')
       .select('*, booster_types(name, code)')
       .order('created_at', { ascending: false });
 
     if (boosterPurchasesError) throw boosterPurchasesError;
-
-    // Fetch purchases table (for coin purchases etc.)
-    const { data: coinPurchases, error: coinPurchasesError } = await supabase
-      .from('purchases')
-      .select('*')
-      .eq('status', 'completed')
-      .order('created_at', { ascending: false });
-
-    if (coinPurchasesError) throw coinPurchasesError;
 
     // Fetch total users
     const { count: totalUsers, error: usersError } = await supabase
@@ -68,30 +59,27 @@ Deno.serve(async (req) => {
 
     if (usersError) throw usersError;
 
-    // Calculate metrics - combine booster purchases + coin purchases
-    // booster_purchases stores USD cents, purchases stores USD amount
+    // Calculate metrics from booster purchases only (usd_cents_spent > 0 = real money)
     const boosterRevenueUSD = (boosterPurchases || []).reduce((sum, p) => sum + (p.usd_cents_spent / 100), 0);
-    const coinRevenueUSD = (coinPurchases || []).reduce((sum, p) => sum + (p.amount_usd || 0), 0);
-    const totalRevenue = boosterRevenueUSD + coinRevenueUSD;
+    const totalRevenue = boosterRevenueUSD;
 
-    // Paying users from both sources
-    const payingUsersSet = new Set([
-      ...(boosterPurchases || []).filter(p => p.usd_cents_spent > 0).map(p => p.user_id),
-      ...(coinPurchases || []).map(p => p.user_id)
-    ]);
+    // Paying users (those who spent real money)
+    const payingUsersSet = new Set(
+      (boosterPurchases || []).filter(p => p.usd_cents_spent > 0).map(p => p.user_id)
+    );
     const payingUsers = payingUsersSet.size;
     
     const arpu = totalUsers ? totalRevenue / totalUsers : 0;
     const arppu = payingUsers ? totalRevenue / payingUsers : 0;
     const conversionRate = totalUsers ? (payingUsers / totalUsers) * 100 : 0;
 
-    // Revenue over time (last 30 days) - combine both sources
+    // Revenue over time (last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
     const revenueByDay: Record<string, number> = {};
     
-    // Add booster purchases
+    // Add booster purchases with real money
     (boosterPurchases || [])
       .filter(p => new Date(p.created_at) >= thirtyDaysAgo && p.usd_cents_spent > 0)
       .forEach(p => {
@@ -100,24 +88,15 @@ Deno.serve(async (req) => {
         revenueByDay[date] += p.usd_cents_spent / 100;
       });
 
-    // Add coin purchases
-    (coinPurchases || [])
-      .filter(p => new Date(p.created_at) >= thirtyDaysAgo)
-      .forEach(p => {
-        const date = new Date(p.created_at).toISOString().split('T')[0];
-        if (!revenueByDay[date]) revenueByDay[date] = 0;
-        revenueByDay[date] += p.amount_usd || 0;
-      });
-
     const revenueOverTime = Object.entries(revenueByDay)
       .map(([date, revenue]) => ({ date, revenue }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    // Revenue by product - combine both sources
+    // Revenue by product (booster types)
     const revenueByProductMap: Record<string, { product: string; revenue: number; count: number }> = {};
     
-    // Booster purchases by product
-    (boosterPurchases || []).filter(p => p.usd_cents_spent > 0).forEach(p => {
+    // All booster purchases (including gold-based for count metrics)
+    (boosterPurchases || []).forEach(p => {
       const productName = (p.booster_types as any)?.name || 'Unknown Booster';
       if (!revenueByProductMap[productName]) {
         revenueByProductMap[productName] = { product: productName, revenue: 0, count: 0 };
@@ -126,25 +105,14 @@ Deno.serve(async (req) => {
       revenueByProductMap[productName].count += 1;
     });
 
-    // Coin purchases
-    (coinPurchases || []).forEach(p => {
-      const productName = p.product_name || 'Coin Purchase';
-      if (!revenueByProductMap[productName]) {
-        revenueByProductMap[productName] = { product: productName, revenue: 0, count: 0 };
-      }
-      revenueByProductMap[productName].revenue += p.amount_usd || 0;
-      revenueByProductMap[productName].count += 1;
-    });
-
     const revenueByProduct = Object.values(revenueByProductMap)
-      .sort((a, b) => b.revenue - a.revenue);
+      .sort((a, b) => b.count - a.count);
 
     console.log('[admin-monetization-analytics] Metrics calculated:', {
       totalRevenue,
       payingUsers,
       totalUsers,
-      boosterCount: boosterPurchases?.length || 0,
-      coinPurchaseCount: coinPurchases?.length || 0
+      boosterCount: boosterPurchases?.length || 0
     });
 
     return new Response(JSON.stringify({
