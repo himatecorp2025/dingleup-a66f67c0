@@ -72,17 +72,26 @@ const PlatformEmbedFullscreen = memo(({ platform, originalUrl, embedUrl, videoId
     };
 
     if (platform === "tiktok") {
-      const vid = videoId || extractTikTokVideoId(originalUrl);
-      if (vid) {
-        // TikTok embed v2 – fullscreen iframe
-        // Autoplay iOS miatt: mute=1 erősen ajánlott
-        const src = `https://www.tiktok.com/embed/v2/${vid}?autoplay=1&mute=1`;
-        container.appendChild(makeIframe(src));
+      // Use pre-generated embed URL from database first
+      let src = embedUrl;
+      if (!src) {
+        const vid = videoId || extractTikTokVideoId(originalUrl);
+        if (vid) {
+          src = `https://www.tiktok.com/embed/v2/${vid}?autoplay=1&mute=1`;
+        }
+      }
+      if (src) {
+        // Ensure autoplay params are present
+        const u = new URL(src);
+        u.searchParams.set("autoplay", "1");
+        u.searchParams.set("mute", "1");
+        container.appendChild(makeIframe(u.toString()));
       }
     }
 
     if (platform === "instagram") {
-      const src = toInstagramEmbedUrl(originalUrl);
+      // Use pre-generated embed URL from database first
+      const src = embedUrl || toInstagramEmbedUrl(originalUrl);
       container.appendChild(makeIframe(src));
     }
 
