@@ -292,7 +292,8 @@ export const VideoAdModal = ({
     <div 
       style={{ 
         position: 'fixed',
-        inset: 0,
+        top: 0,
+        left: 0,
         width: '100dvw', 
         height: '100dvh',
         backgroundColor: '#000000',

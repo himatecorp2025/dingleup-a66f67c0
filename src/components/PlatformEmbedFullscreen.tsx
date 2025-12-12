@@ -138,7 +138,12 @@ const PlatformEmbedFullscreen = memo(({ platform, originalUrl, embedUrl, videoId
   return (
     <div 
       ref={containerRef} 
-      className="platform-embed-root w-full h-full bg-black"
+      className="platform-embed-root"
+      style={{
+        width: '100dvw',
+        height: '100dvh',
+        backgroundColor: '#000',
+      }}
     />
   );
 });
