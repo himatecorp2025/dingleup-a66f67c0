@@ -20,7 +20,7 @@ export const useSessionMonitor = () => {
       return;
     }
 
-    // Check session validity every 5 minutes for protected pages
+    // Only validate on visibility change (when user returns to app), not periodically
     const validateSession = async () => {
       if (isValidating) return;
       
@@ -28,8 +28,9 @@ export const useSessionMonitor = () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (error || !session) {
-          console.log('[SessionMonitor] Session invalid, redirecting to login');
+        // Only logout if there's a definitive auth error, not just missing session
+        if (error && error.message?.includes('refresh_token')) {
+          console.log('[SessionMonitor] Session expired, redirecting to login');
           toast({
             description: t('profile.logout'),
             variant: "destructive",
@@ -40,18 +41,24 @@ export const useSessionMonitor = () => {
           navigate('/auth/login', { replace: true });
         }
       } catch (err) {
+        // Don't logout on network errors - just log them
         console.error('[SessionMonitor] Error validating session:', err);
       } finally {
         setIsValidating(false);
       }
     };
 
-    // Initial validation
-    validateSession();
+    // Only validate when page becomes visible again (user returns from another tab/app)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        validateSession();
+      }
+    };
 
-    // Periodic validation every 2 minutes
-    const interval = setInterval(validateSession, 2 * 60 * 1000);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    return () => clearInterval(interval);
-  }, [navigate, location.pathname, isValidating]);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [navigate, location.pathname, isValidating, t]);
 };
