@@ -134,6 +134,60 @@ export type Database = {
         }
         Relationships: []
       }
+      app_session_events_archive: {
+        Row: {
+          archived_at: string | null
+          browser: string | null
+          city: string | null
+          country_code: string | null
+          created_at: string
+          device_info: Json | null
+          device_type: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          os_version: string | null
+          screen_size: string | null
+          session_duration_seconds: number | null
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          browser?: string | null
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          device_info?: Json | null
+          device_type?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          os_version?: string | null
+          screen_size?: string | null
+          session_duration_seconds?: number | null
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          browser?: string | null
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          device_info?: Json | null
+          device_type?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          os_version?: string | null
+          screen_size?: string | null
+          session_duration_seconds?: number | null
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bonus_claim_events: {
         Row: {
           bonus_type: string
@@ -1275,6 +1329,51 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_usage_events_archive: {
+        Row: {
+          action: string | null
+          archived_at: string | null
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          event_type: string
+          feature_name: string
+          id: string
+          metadata: Json | null
+          session_id: string
+          success: boolean | null
+          user_id: string
+        }
+        Insert: {
+          action?: string | null
+          archived_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          event_type: string
+          feature_name: string
+          id?: string
+          metadata?: Json | null
+          session_id: string
+          success?: boolean | null
+          user_id: string
+        }
+        Update: {
+          action?: string | null
+          archived_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          event_type?: string
+          feature_name?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string
+          success?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       friend_request_rate_limit: {
         Row: {
           last_request_at: string
@@ -1478,6 +1577,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      game_question_analytics_archive: {
+        Row: {
+          archived_at: string | null
+          category: string
+          created_at: string
+          difficulty_level: string | null
+          game_result_id: string | null
+          help_used: string | null
+          id: string
+          question_id: string | null
+          question_index: number
+          response_time_seconds: number
+          session_id: string
+          user_id: string
+          was_correct: boolean
+        }
+        Insert: {
+          archived_at?: string | null
+          category: string
+          created_at?: string
+          difficulty_level?: string | null
+          game_result_id?: string | null
+          help_used?: string | null
+          id?: string
+          question_id?: string | null
+          question_index: number
+          response_time_seconds: number
+          session_id: string
+          user_id: string
+          was_correct: boolean
+        }
+        Update: {
+          archived_at?: string | null
+          category?: string
+          created_at?: string
+          difficulty_level?: string | null
+          game_result_id?: string | null
+          help_used?: string | null
+          id?: string
+          question_id?: string | null
+          question_index?: number
+          response_time_seconds?: number
+          session_id?: string
+          user_id?: string
+          was_correct?: boolean
+        }
+        Relationships: []
       }
       game_results: {
         Row: {
@@ -3959,6 +4106,7 @@ export type Database = {
       activate_creator_trial: { Args: { p_plan_id: string }; Returns: Json }
       activate_creator_video: { Args: { p_video_id: string }; Returns: Json }
       aggregate_creator_video_stats: { Args: never; Returns: undefined }
+      archive_old_analytics_data: { Args: never; Returns: Json }
       archive_old_lives_ledger: { Args: never; Returns: Json }
       archive_old_wallet_ledger: { Args: never; Returns: Json }
       archive_thread_for_user: { Args: { p_thread_id: string }; Returns: Json }

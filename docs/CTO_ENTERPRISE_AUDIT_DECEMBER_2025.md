@@ -234,15 +234,24 @@ export const logger = {
 |---|---------|-------|---------|
 | 7 | 38 unused index törlése | -4.5 MB, +15% write perf | ✅ DONE |
 | 8 | 14 tábla ANALYZE | Jobb query planning | ✅ DONE |
+| 9 | 90 napos analytics archiválás | -50% storage | ✅ DONE |
+
+**Archival System Implemented:**
+- `app_session_events_archive` tábla (RLS + service_role policy)
+- `feature_usage_events_archive` tábla (RLS + service_role policy)
+- `game_question_analytics_archive` tábla (RLS + service_role policy)
+- `archive_old_analytics_data()` PostgreSQL function
+- `archive-analytics` edge function (monthly execution)
 
 ### 🔧 JAVASOLT (Opcionális - MŰKÖDÉST NEM VÁLTOZTATJA)
 
 | # | Javítás | Hatás | Prioritás | Kockázat |
 |---|---------|-------|-----------|----------|
 | 1 | VACUUM translations | -14% bloat | LOW | Nincs |
-| 2 | Analytics archival 90 day | -50% storage | LOW | Nincs |
-| 3 | Console.log cleanup | Prod security | LOW | Nincs |
-| 4 | Sentry integration | Error monitoring | LOW | Nincs |
+| 2 | Console.log cleanup | Prod security | LOW | Nincs |
+| 3 | Sentry integration | Error monitoring | LOW | Nincs |
+
+**MEGJEGYZÉS:** VACUUM csak Supabase Dashboard SQL Editor-ból futtatható, migrations-ből nem.
 
 ### ⚠️ NEM JAVÍTHATÓ (Platform limitation)
 
