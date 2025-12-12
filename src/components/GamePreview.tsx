@@ -33,6 +33,7 @@ import { FullscreenRewardVideoView } from "./FullscreenRewardVideoView";
 import { VideoAdPrompt } from "./VideoAdPrompt";
 import { useVideoAdFlow } from "@/hooks/useVideoAdFlow";
 import { useRewardVideoStore } from "@/stores/rewardVideoStore";
+import { logger } from "@/lib/logger";
 
 type GameState = 'playing' | 'finished' | 'out-of-lives';
 
@@ -395,7 +396,7 @@ const GamePreview = memo(() => {
           // OPTIMIZED: Use direct edge function for faster prefetch (no translations needed here)
           if (!prefetchTriggeredRef.current) {
             prefetchTriggeredRef.current = true;
-            console.log('[GamePreview] 🚀 Triggering prefetch for next game (background)');
+            logger.log('[GamePreview] 🚀 Triggering prefetch for next game (background)');
             
             // Non-blocking prefetch in background
             (async () => {
@@ -409,15 +410,15 @@ const GamePreview = memo(() => {
                 });
                 
                 if (error || !data?.questions) {
-                  console.warn('[GamePreview] Prefetch failed:', error);
+                  logger.warn('[GamePreview] Prefetch failed:', error);
                   return;
                 }
                 
                 // OPTIMIZATION: Questions already translated by backend, no need for extra DB query
                 setPrefetchedQuestions(data.questions);
-                console.log('[GamePreview] ✓ Prefetch complete - next game ready (instant restart)');
+                logger.log('[GamePreview] ✓ Prefetch complete - next game ready (instant restart)');
               } catch (error) {
-                console.error('[GamePreview] Prefetch exception:', error);
+                logger.error('[GamePreview] Prefetch exception:', error);
               }
             })();
           }

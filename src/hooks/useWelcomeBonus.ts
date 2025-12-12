@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useI18n } from '@/i18n';
+import { logger } from '@/lib/logger';
 
 export const useWelcomeBonus = (userId: string | undefined) => {
   const { t } = useI18n();
@@ -125,7 +126,5 @@ const trackEvent = (event: string, type: string, action?: string) => {
     });
   }
   
-  if (import.meta.env.DEV) {
-    console.log(`[Analytics] ${event}`, { type, action });
-  }
+  logger.log(`[Analytics] ${event}`, { type, action });
 };

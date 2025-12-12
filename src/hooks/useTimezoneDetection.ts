@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getCountryFromTimezone } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 /**
  * Automatically detects and saves user's device timezone to profile
@@ -18,15 +19,15 @@ export function useTimezoneDetection() {
         const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         
         if (!detectedTimezone) {
-          console.warn('[TIMEZONE] Could not detect timezone, using default');
+          logger.warn('[TIMEZONE] Could not detect timezone, using default');
           return;
         }
 
-        console.log('[TIMEZONE] Detected timezone:', detectedTimezone);
+        logger.log('[TIMEZONE] Detected timezone:', detectedTimezone);
 
         // Derive country from timezone
         const derivedCountry = getCountryFromTimezone(detectedTimezone);
-        console.log('[TIMEZONE] Derived country from timezone:', derivedCountry);
+        logger.log('[TIMEZONE] Derived country from timezone:', derivedCountry);
 
         // Get current profile timezone and country
         const { data: profile, error: fetchError } = await supabase
@@ -58,18 +59,18 @@ export function useTimezoneDetection() {
             .eq('id', user.id);
 
           if (updateError) {
-            console.error('[TIMEZONE] Error updating timezone/country:', updateError);
+            logger.error('[TIMEZONE] Error updating timezone/country:', updateError);
           } else {
-            console.log('[TIMEZONE] Timezone and country saved successfully:', {
+            logger.log('[TIMEZONE] Timezone and country saved successfully:', {
               timezone: detectedTimezone,
               country: derivedCountry
             });
           }
         } else {
-          console.log('[TIMEZONE] Timezone and country already up to date');
+          logger.log('[TIMEZONE] Timezone and country already up to date');
         }
       } catch (error) {
-        console.error('[TIMEZONE] Error in timezone detection:', error);
+        logger.error('[TIMEZONE] Error in timezone detection:', error);
       }
     };
 

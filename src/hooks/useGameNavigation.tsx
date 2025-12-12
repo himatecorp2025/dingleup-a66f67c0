@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Question, CONTINUE_AFTER_WRONG_COST, TIMEOUT_CONTINUE_COST } from '@/types/game';
 import { useI18n } from '@/i18n';
 import { Film } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 interface UseGameNavigationOptions {
   profile: any;
@@ -101,7 +102,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
   const handleNextQuestion = useCallback(async () => {
     // Guard against multiple rapid calls
     if (isAnimating || isNavigatingRef.current) {
-      console.log('[useGameNavigation] Blocked: already animating or navigating');
+      logger.log('[useGameNavigation] Blocked: already animating or navigating');
       return;
     }
     
@@ -119,7 +120,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     
     // Safety timeout: Reset animation state after 2 seconds max (prevents stuck state)
     safetyTimeoutRef.current = setTimeout(() => {
-      console.log('[useGameNavigation] Safety timeout triggered - resetting animation state');
+      logger.log('[useGameNavigation] Safety timeout triggered - resetting animation state');
       setIsAnimating(false);
       setCanSwipe(true);
       setQuestionVisible(true);
@@ -242,7 +243,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
         setCanSwipe(true);
         isNavigatingRef.current = false;
         
-        console.log(`[useGameNavigation] Transition complete to question ${currentQuestionIndex + 2}`);
+        logger.log(`[useGameNavigation] Transition complete to question ${currentQuestionIndex + 2}`);
       }, 100);
     }, 400);
   }, [
