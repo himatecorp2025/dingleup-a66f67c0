@@ -77,8 +77,8 @@ export interface WeeklyRanking {
   username?: string;
 }
 
-// Játék indítási jutalom (amikor egy élet levonódik)
-export const START_GAME_REWARD = 1;
+// Játék indításkor nincs jutalom (korábban 1 volt)
+export const START_GAME_REWARD = 0;
 
 // Progresszív arany jutalom rendszer (0-indexed kérdések)
 // 1-4. kérdés (index 0-3): 1-1-1-1 = 4 érme
