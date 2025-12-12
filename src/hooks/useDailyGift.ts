@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useI18n } from '@/i18n';
-
+import { logger } from '@/lib/logger';
 export const useDailyGift = (userId: string | undefined, isPremium: boolean = false) => {
   const { t } = useI18n();
   const [canClaim, setCanClaim] = useState(false);
@@ -19,7 +19,7 @@ export const useDailyGift = (userId: string | undefined, isPremium: boolean = fa
       const { data, error } = await supabase.functions.invoke('get-daily-gift-status');
 
       if (error) {
-        console.error('Daily gift status error:', error);
+        logger.error('Daily gift status error:', error);
         return;
       }
 
@@ -34,7 +34,7 @@ export const useDailyGift = (userId: string | undefined, isPremium: boolean = fa
         setShowPopup(false);
       }
     } catch (error) {
-      console.error('Daily gift check error:', error);
+      logger.error('Daily gift check error:', error);
     }
   };
 
@@ -123,7 +123,7 @@ export const useDailyGift = (userId: string | undefined, isPremium: boolean = fa
       const { error } = await supabase.functions.invoke('dismiss-daily-gift');
       
       if (error) {
-        console.error('Dismiss error:', error);
+        logger.error('Dismiss error:', error);
       }
       
       setShowPopup(false);
@@ -135,7 +135,7 @@ export const useDailyGift = (userId: string | undefined, isPremium: boolean = fa
         });
       }
     } catch (error) {
-      console.error('Dismiss catch error:', error);
+      logger.error('Dismiss catch error:', error);
       setShowPopup(false);
     }
   };

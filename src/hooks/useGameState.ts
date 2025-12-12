@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { GameCategory, Question } from '@/types/game';
-
+import { logger } from '@/lib/logger';
 type GameState = 'playing' | 'finished' | 'out-of-lives';
 
 export const useGameState = () => {
@@ -33,7 +33,7 @@ export const useGameState = () => {
 
   const addResponseTime = useCallback((time: number) => {
     if (time < 0 || time > 60) {
-      console.warn('[useGameState] Invalid response time:', time);
+      logger.warn('[useGameState] Invalid response time:', time);
       return;
     }
     setResponseTimes(prev => [...prev, time]);
@@ -41,12 +41,12 @@ export const useGameState = () => {
 
   const addCoins = useCallback((amount: number) => {
     if (amount < 0 || amount > 10000) {
-      console.warn('[useGameState] Invalid coin amount:', amount);
+      logger.warn('[useGameState] Invalid coin amount:', amount);
       return;
     }
     setCoinsEarned(prev => {
       const newValue = prev + amount;
-      console.log(`[useGameState] Coins earned updated: ${prev} + ${amount} = ${newValue}`);
+      logger.log(`[useGameState] Coins earned updated: ${prev} + ${amount} = ${newValue}`);
       return newValue;
     });
   }, []);
@@ -54,13 +54,13 @@ export const useGameState = () => {
   const nextQuestion = useCallback(() => {
     setCurrentQuestionIndex(prev => {
       const newIndex = prev + 1;
-      console.log(`[useGameState] Next question: ${prev} -> ${newIndex}`);
+      logger.log(`[useGameState] Next question: ${prev} -> ${newIndex}`);
       return newIndex;
     });
   }, []);
 
   const resetGameState = useCallback(() => {
-    console.log('[useGameState] Resetting game state');
+    logger.log('[useGameState] Resetting game state');
     isUpdatingRef.current = false;
     setGameState('playing');
     setCurrentQuestionIndex(0);

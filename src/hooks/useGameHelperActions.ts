@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Question, getSkipCost } from '@/types/game';
 import { useI18n } from '@/i18n';
-
+import { logger } from '@/lib/logger';
 interface UseGameHelperActionsOptions {
   profile: any;
   refreshProfile: () => Promise<void>;
@@ -109,7 +109,7 @@ export const useGameHelperActions = (options: UseGameHelperActionsOptions) => {
         }
       }
     } catch (error) {
-      console.error('[useGameHelperActions] Error in useHelp5050:', error);
+      logger.error('[useGameHelperActions] Error in useHelp5050:', error);
       toast.error(t('game.help_activation_error'));
     }
   }, [
@@ -155,7 +155,7 @@ export const useGameHelperActions = (options: UseGameHelperActionsOptions) => {
         }
       }
     } catch (error) {
-      console.error('[useGameHelperActions] Error in useHelp2xAnswer:', error);
+      logger.error('[useGameHelperActions] Error in useHelp2xAnswer:', error);
       toast.error(t('game.help_activation_error'));
     }
   }, [
@@ -216,7 +216,7 @@ export const useGameHelperActions = (options: UseGameHelperActionsOptions) => {
         }
       }
     } catch (error) {
-      console.error('[useGameHelperActions] Error in useHelpAudience:', error);
+      logger.error('[useGameHelperActions] Error in useHelpAudience:', error);
       toast.error(t('game.help_activation_error'));
     }
   }, [
@@ -229,7 +229,7 @@ export const useGameHelperActions = (options: UseGameHelperActionsOptions) => {
   const useQuestionSwap = useCallback(async () => {
     if (usedQuestionSwap || selectedAnswer) return;
     
-    console.log('[useQuestionSwap] Starting question skip');
+    logger.log('[useQuestionSwap] Starting question skip');
     
     const skipCost = getSkipCost(currentQuestionIndex);
     
@@ -238,15 +238,15 @@ export const useGameHelperActions = (options: UseGameHelperActionsOptions) => {
       return;
     }
     
-    console.log('[useQuestionSwap] Spending coins:', skipCost);
+    logger.log('[useQuestionSwap] Spending coins:', skipCost);
     const { data: success } = await supabase.rpc('spend_coins', { amount: skipCost });
     if (!success) {
-      console.error('[useQuestionSwap] Failed to spend coins');
+      logger.error('[useQuestionSwap] Failed to spend coins');
       toast.error(t('game.help_activation_error'));
       return;
     }
     
-    console.log('[useQuestionSwap] Skip successful, marking as used');
+    logger.log('[useQuestionSwap] Skip successful, marking as used');
     
     // Mark skip as used and reset helpers for this question
     setUsedQuestionSwap(true);
@@ -260,7 +260,7 @@ export const useGameHelperActions = (options: UseGameHelperActionsOptions) => {
     const currentQuestion = questions[currentQuestionIndex];
     const correctAnswer = currentQuestion.answers.find(a => a.correct);
     if (correctAnswer) {
-      console.log('[useQuestionSwap] Setting correct answer to skip to next question');
+      logger.log('[useQuestionSwap] Setting correct answer to skip to next question');
       // Don't actually set the answer, just trigger the next question
       // by calling the skip callback if provided
     }

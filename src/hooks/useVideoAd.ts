@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-
+import { logger } from '@/lib/logger';
 export interface VideoData {
   id: string;
   video_url: string;
@@ -62,7 +62,7 @@ export const useVideoAd = () => {
 
       return { available: true, video, isRelevant };
     } catch (err) {
-      console.error('[useVideoAd] Error checking availability:', err);
+      logger.error('[useVideoAd] Error checking availability:', err);
       setState(prev => ({ ...prev, isLoading: false, isAvailable: false }));
       return { available: false };
     }
@@ -124,7 +124,7 @@ export const useVideoAd = () => {
 
       return videos;
     } catch (err) {
-      console.error('[useVideoAd] Error fetching refill videos:', err);
+      logger.error('[useVideoAd] Error fetching refill videos:', err);
       setState(prev => ({ ...prev, isLoading: false }));
       return [];
     }
@@ -153,7 +153,7 @@ export const useVideoAd = () => {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
     } catch (err) {
-      console.error('[useVideoAd] Error logging impression:', err);
+      logger.error('[useVideoAd] Error logging impression:', err);
     }
   }, []);
 
@@ -179,7 +179,7 @@ export const useVideoAd = () => {
       });
 
       if (error || !data?.success) {
-        console.error('[useVideoAd] Error claiming reward:', error);
+        logger.error('[useVideoAd] Error claiming reward:', error);
         return { success: false };
       }
 
@@ -189,7 +189,7 @@ export const useVideoAd = () => {
         livesCredited: data.lives_credited,
       };
     } catch (err) {
-      console.error('[useVideoAd] Error claiming reward:', err);
+      logger.error('[useVideoAd] Error claiming reward:', err);
       return { success: false };
     }
   }, []);

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-
+import { logger } from '@/lib/logger';
 interface ErrorDetails {
   message: string;
   stack?: string;
@@ -103,10 +103,10 @@ const logError = async (errorDetails: ErrorDetails) => {
     });
 
     // Console log for development
-    console.error('[ErrorTracking]', errorDetails);
+    logger.error('[ErrorTracking]', errorDetails);
   } catch (err) {
     // Fail silently to avoid recursive errors
-    console.error('[ErrorTracking] Failed to log error:', err);
+    logger.error('[ErrorTracking] Failed to log error:', err);
   }
 };
 

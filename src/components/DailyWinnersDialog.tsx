@@ -8,7 +8,7 @@ import { useI18n } from '@/i18n/useI18n';
 import { toast } from 'sonner';
 import laurelWreathGold from '@/assets/laurel_wreath_gold.svg';
 import { useDailyRankReward } from '@/hooks/useDailyRankReward';
-
+import { logger } from '@/lib/logger';
 interface DailyWinnersDialogProps {
   open: boolean;
   onClose: () => void;
@@ -116,7 +116,7 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
       // Step 1: Get authenticated user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !isMountedRef.current) {
-        console.error('[DAILY-WINNERS] No authenticated user');
+        logger.error('[DAILY-WINNERS] No authenticated user');
         setTopPlayers([]);
         return;
       }
@@ -131,7 +131,7 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
       if (!isMountedRef.current) return;
 
       if (profileError || !profileData?.country_code) {
-        console.error('[DAILY-WINNERS] Error fetching user profile:', profileError);
+        logger.error('[DAILY-WINNERS] Error fetching user profile:', profileError);
         setTopPlayers([]);
         return;
       }
@@ -143,7 +143,7 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
       const { getYesterdayDateInUserTimezone } = await import('@/lib/dateHelpers');
       const yesterdayDate = getYesterdayDateInUserTimezone(userTimezone);
 
-      console.log('[DAILY-WINNERS] Fetching winners for country:', userCountry, 'timezone:', userTimezone, 'yesterday:', yesterdayDate);
+      logger.log('[DAILY-WINNERS] Fetching winners for country:', userCountry, 'timezone:', userTimezone, 'yesterday:', yesterdayDate);
 
       // Step 4: Fetch TOP 10 winners from daily_winner_awarded (truth source)
       const { data: players, error } = await supabase
@@ -157,18 +157,18 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
       if (!isMountedRef.current) return;
 
       if (error) {
-        console.error('[DAILY-WINNERS] Error fetching winners:', error);
+        logger.error('[DAILY-WINNERS] Error fetching winners:', error);
         setTopPlayers([]);
         return;
       }
 
       // Step 5: If no data, trigger on-demand processing
       if (!players || players.length === 0) {
-        console.log('[DAILY-WINNERS] No data found - triggering process-daily-winners');
+        logger.log('[DAILY-WINNERS] No data found - triggering process-daily-winners');
         
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
-          console.error('[DAILY-WINNERS] No session for processing');
+          logger.error('[DAILY-WINNERS] No session for processing');
           setTopPlayers([]);
           setTotalRewards({ totalGold: 0, totalLives: 0 });
           return;
@@ -182,7 +182,7 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
           });
           
           if (processError) {
-            console.error('[DAILY-WINNERS] Processing error:', processError);
+            logger.error('[DAILY-WINNERS] Processing error:', processError);
             setTopPlayers([]);
             setTotalRewards({ totalGold: 0, totalLives: 0 });
             return;
@@ -203,7 +203,7 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
               .limit(10);
             
             if (!refetchError && refetchedPlayers && refetchedPlayers.length > 0) {
-              console.log(`[DAILY-WINNERS] Data appeared after poll ${i + 1}`);
+              logger.log(`[DAILY-WINNERS] Data appeared after poll ${i + 1}`);
               setTopPlayers(refetchedPlayers as TopPlayer[]);
               
               // Calculate total rewards with country_code filter
@@ -224,14 +224,14 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
           }
           
           // After 3 fast polls, no data - gracefully handle
-          console.log('[DAILY-WINNERS] No data after 3 fast polls');
+          logger.log('[DAILY-WINNERS] No data after 3 fast polls');
           if (isMountedRef.current) {
             setTopPlayers([]);
             setTotalRewards({ totalGold: 0, totalLives: 0 });
           }
           
         } catch (processError) {
-          console.error('[DAILY-WINNERS] Processing exception:', processError);
+          logger.error('[DAILY-WINNERS] Processing exception:', processError);
           if (isMountedRef.current) {
             setTopPlayers([]);
             setTotalRewards({ totalGold: 0, totalLives: 0 });
@@ -259,7 +259,7 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
       
     } catch (error) {
       if (isMountedRef.current) {
-        console.error('[DAILY-WINNERS] Exception:', error);
+        logger.error('[DAILY-WINNERS] Exception:', error);
         setTopPlayers([]);
       }
     } finally {
@@ -297,7 +297,7 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
       }
       onClose();
     } catch (error) {
-      console.error('[DAILY-WINNERS] Accept error:', error);
+      logger.error('[DAILY-WINNERS] Accept error:', error);
       toast.error(t('dailyWinners.claimError') || 'Failed to claim reward');
       onClose();
     }

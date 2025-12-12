@@ -5,7 +5,7 @@ import { LangCode, TranslationMap, I18nContextValue } from './types';
 import { VALID_LANGUAGES, DEFAULT_LANG, SOURCE_LANG, STORAGE_KEY } from './constants';
 import { ALLOWED_LANGS } from '@/lib/i18n/langMapping';
 import { resolveInitialLang } from '@/lib/i18n/resolveInitialLang';
-
+import { logger } from '@/lib/logger';
 const I18nContext = createContext<I18nContextValue | undefined>(undefined);
 
 interface I18nProviderProps {
@@ -60,7 +60,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
 
       return data.translations;
     } catch (error) {
-      console.error('[I18n] Cache read error:', error);
+      logger.error('[I18n] Cache read error:', error);
       return null;
     }
   };
@@ -74,7 +74,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
       };
       localStorage.setItem(getCacheKey(targetLang), JSON.stringify(data));
     } catch (error) {
-      console.error('[I18n] Cache write error:', error);
+      logger.error('[I18n] Cache write error:', error);
     }
   };
 
@@ -84,7 +84,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       
       if (!supabaseUrl) {
-        console.error('[I18n] VITE_SUPABASE_URL not configured');
+        logger.error('[I18n] VITE_SUPABASE_URL not configured');
         return {};
       }
 
@@ -99,21 +99,21 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
       );
 
       if (!response.ok) {
-        console.error('[I18n] Fetch failed:', response.status, response.statusText);
+        logger.error('[I18n] Fetch failed:', response.status, response.statusText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
       const fetchedTranslations = data?.translations || {};
       
-      console.log('[I18n] Fetched', Object.keys(fetchedTranslations).length, 'translations for', targetLang);
+      logger.log('[I18n] Fetched', Object.keys(fetchedTranslations).length, 'translations for', targetLang);
       
       // Cache the fetched translations
       setCachedTranslations(targetLang, fetchedTranslations);
       
       return fetchedTranslations;
     } catch (error) {
-      console.error('[I18n] Failed to fetch translations:', error);
+      logger.error('[I18n] Failed to fetch translations:', error);
       return {};
     }
   };
@@ -138,7 +138,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
       if (storedLang && ALLOWED_LANGS.includes(storedLang as LangCode)) {
         // Use stored language from localStorage (immediate, no database query needed)
         targetLang = storedLang as LangCode;
-        console.log('[I18n] Using stored language from localStorage:', targetLang);
+        logger.log('[I18n] Using stored language from localStorage:', targetLang);
       }
 
       setLangState(targetLang);
@@ -181,18 +181,18 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
         }
       } else {
         // Cache miss - fetch translations (still fast with edge function cache)
-        console.log('[I18n] Cache miss, fetching translations for:', targetLang);
+        logger.log('[I18n] Cache miss, fetching translations for:', targetLang);
         const trans = await fetchTranslations(targetLang);
         if (Object.keys(trans).length > 0) {
           setTranslations(trans);
-          console.log('[I18n] Translations loaded:', Object.keys(trans).length, 'keys');
+          logger.log('[I18n] Translations loaded:', Object.keys(trans).length, 'keys');
         } else {
-          console.error('[I18n] No translations returned from edge function!');
+          logger.error('[I18n] No translations returned from edge function!');
         }
         setIsLoading(false);
       }
     } catch (error) {
-      console.error('[I18n] Language initialization failed:', error);
+      logger.error('[I18n] Language initialization failed:', error);
       // Fallback to default (en) with cache check
       setLangState(DEFAULT_LANG);
       const cachedTranslations = getCachedTranslations(DEFAULT_LANG);
@@ -231,7 +231,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
                   setTranslations(trans);
                 }
               });
-              console.log('[I18n] Restored user preferred language from database:', dbLang);
+              logger.log('[I18n] Restored user preferred language from database:', dbLang);
             }
           });
       }
@@ -246,12 +246,12 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
 
   const setLang = async (newLang: LangCode, skipDbUpdate = false) => {
     if (!ALLOWED_LANGS.includes(newLang)) {
-      console.warn(`[I18n] Invalid language code: ${newLang}`);
+      logger.warn(`[I18n] Invalid language code: ${newLang}`);
       return;
     }
 
     try {
-      console.log(`[I18n] Language change initiated: ${lang} -> ${newLang}`);
+      logger.log(`[I18n] Language change initiated: ${lang} -> ${newLang}`);
       
       // Update state and localStorage immediately
       setLangState(newLang);
@@ -280,7 +280,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
       // CRITICAL: Invalidate all language-dependent queries
       // This forces React Query to refetch all cached data with the new language
       if (queryClient) {
-        console.log('[I18n] Invalidating language-dependent query cache...');
+        logger.log('[I18n] Invalidating language-dependent query cache...');
         await queryClient.invalidateQueries({ 
           predicate: (query) => {
             // Invalidate queries that might contain language-dependent data
@@ -292,7 +292,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
                    key === 'leaderboard';
           }
         });
-        console.log('[I18n] Query cache invalidated');
+        logger.log('[I18n] Query cache invalidated');
       }
 
       // Update database (await to ensure consistency)
@@ -303,11 +303,11 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
             .from('profiles')
             .update({ preferred_language: newLang })
             .eq('id', user.id);
-          console.log(`[I18n] Database updated with preferred_language: ${newLang}`);
+          logger.log(`[I18n] Database updated with preferred_language: ${newLang}`);
         }
       }
       
-      console.log(`[I18n] ✓ Language change complete: ${newLang}`);
+      logger.log(`[I18n] ✓ Language change complete: ${newLang}`);
     } catch (error) {
       console.error('[I18n] Failed to change language:', error);
       setIsLoading(false);
@@ -330,7 +330,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
 
     // Log missing translation in development (only if translations loaded)
     if (import.meta.env.DEV && Object.keys(translations).length > 0) {
-      console.warn(`[I18n] Missing translation for key: ${key} (lang: ${lang})`);
+      logger.warn(`[I18n] Missing translation for key: ${key} (lang: ${lang})`);
     }
 
     // Return key itself as last resort (debug mode)

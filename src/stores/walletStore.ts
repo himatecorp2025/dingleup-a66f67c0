@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 interface WalletData {
   livesCurrent: number;
@@ -75,7 +76,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !sessionData?.session) {
-        console.error('[WalletStore] No valid session');
+        logger.error('[WalletStore] No valid session');
         set({ loading: false });
         return;
       }
@@ -91,7 +92,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       });
 
       if (error) {
-        console.error('[WalletStore] Error fetching wallet:', error);
+        logger.error('[WalletStore] Error fetching wallet:', error);
         set({ loading: false });
         return;
       }
@@ -107,7 +108,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
         loading: false
       });
     } catch (err) {
-      console.error('[WalletStore] Exception fetching wallet:', err);
+      logger.error('[WalletStore] Exception fetching wallet:', err);
       set({ loading: false });
     }
   },
