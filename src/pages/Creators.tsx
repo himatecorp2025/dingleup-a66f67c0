@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { LogOut, Plus, Menu, X, Video, Info, Eye, Users, MousePointerClick, Hash, Film, Trophy, Clock, BarChart3 } from 'lucide-react';
+import { LogOut, Plus, Menu, X, Video, Info, Eye, Users, MousePointerClick, Hash, Film, Trophy, Clock, BarChart3, Lightbulb } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
@@ -478,6 +478,34 @@ const Creators = () => {
                     </p>
                   </div>
                 ))}
+              </div>
+            </section>
+          )}
+
+          {/* Pro Tip - 15 second videos - Only shows when no videos */}
+          {!hasVideos && (
+            <section className="mt-4 pt-4 border-t border-white/10">
+              <div className="bg-gradient-to-r from-amber-900/40 to-yellow-900/40 backdrop-blur-sm rounded-xl p-4 border border-yellow-500/30">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <Lightbulb className="w-5 h-5 text-white" strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-yellow-300 text-sm mb-1">
+                      {lang === 'hu' ? 'Titkos tipp!' : 'Pro tip!'}
+                    </h3>
+                    <p className="text-white/90 text-xs leading-relaxed">
+                      {lang === 'hu' 
+                        ? 'Készíts pontosan 15 másodperces videókat! A YouTube, TikTok és Facebook esetén minden megtekintés számít az eredeti platformodon is.'
+                        : 'Create exactly 15-second videos! For YouTube, TikTok, and Facebook, every view counts towards your original platform stats too.'}
+                    </p>
+                    <p className="text-white/50 text-[10px] mt-1">
+                      {lang === 'hu' 
+                        ? '(Instagram esetén sajnos ez még nem megoldható! 😢)'
+                        : '(Unfortunately, this is not yet possible for Instagram! 😢)'}
+                    </p>
+                  </div>
+                </div>
               </div>
             </section>
           )}
