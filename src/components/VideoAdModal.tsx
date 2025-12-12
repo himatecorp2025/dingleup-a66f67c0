@@ -30,9 +30,9 @@ const BOX_WIDTH_VW = 100;  // box width (vw) - fullscreen
 const BOX_HEIGHT_VH = 100; // box height (vh) - fullscreen
 
 // === TUNING CONSTANTS - iframe oversize relative to BOX ===
-const IFRAME_W_PERCENT = 110;  // iframe width as % of box width
-const IFRAME_H_PERCENT = 135;  // iframe height as % of box height
-const SHIFT_DOWN_PERCENT = 12; // shift DOWN as % of box height (to hide bottom platform bar)
+const IFRAME_W_PERCENT = 115;  // iframe width as % of box width
+const IFRAME_H_PERCENT = 150;  // iframe height as % of box height (more oversize)
+const SHIFT_DOWN_PERCENT = 25; // shift DOWN as % of box height (to hide bottom platform bar)
 
 const SEGMENT_DURATION = 15;   // seconds per video segment
 const LOAD_TIMEOUT_MS = 2500;  // show fallback if iframe doesn't load in this time
