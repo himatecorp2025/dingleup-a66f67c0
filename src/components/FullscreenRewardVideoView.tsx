@@ -333,10 +333,9 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
               src={embedSrc}
               className="absolute left-1/2 border-0 pointer-events-none"
               style={{
-                width: '120vw',
-                height: '140vh',
-                // Video nagyobb és lejjebb tolva, hogy az alkotó profilját elrejtsük
-                top: '60%',
+                width: '180vw',
+                height: '220vh',
+                top: '75%',
                 transform: 'translateX(-50%) translateY(-50%)',
                 zIndex: 10,
                 backgroundColor: '#000000',
