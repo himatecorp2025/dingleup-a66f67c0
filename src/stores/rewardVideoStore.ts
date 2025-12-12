@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletStore } from './walletStore';
+import { logger } from '@/lib/logger';
 
 export interface RewardVideo {
   id: string;
@@ -85,14 +86,14 @@ export const useRewardVideoStore = create<RewardVideoStore>((set, get) => ({
       });
 
       if (error) {
-        console.error('[RewardVideoStore] Preload error:', error);
+        logger.error('[RewardVideoStore] Preload error:', error);
         set({ isPreloading: false, isPreloaded: true, videoQueue: [] });
         return;
       }
 
       const videos: RewardVideo[] = data?.videos || [];
       
-      console.log(`[RewardVideoStore] Preloaded ${videos.length} videos`);
+      logger.log(`[RewardVideoStore] Preloaded ${videos.length} videos`);
       
       set({ 
         videoQueue: videos, 
@@ -101,7 +102,7 @@ export const useRewardVideoStore = create<RewardVideoStore>((set, get) => ({
         lastPreloadAt: Date.now(),
       });
     } catch (err) {
-      console.error('[RewardVideoStore] Preload error:', err);
+      logger.error('[RewardVideoStore] Preload error:', err);
       set({ isPreloading: false, isPreloaded: true, videoQueue: [] });
     }
   },
@@ -112,7 +113,7 @@ export const useRewardVideoStore = create<RewardVideoStore>((set, get) => ({
     // Only refill if below threshold and not already loading
     if (videoQueue.length > REFILL_THRESHOLD || isPreloading) return;
     
-    console.log(`[RewardVideoStore] Queue at ${videoQueue.length}, refilling...`);
+    logger.log(`[RewardVideoStore] Queue at ${videoQueue.length}, refilling...`);
     
     set({ isPreloading: true });
     
@@ -142,9 +143,9 @@ export const useRewardVideoStore = create<RewardVideoStore>((set, get) => ({
         lastPreloadAt: Date.now(),
       }));
       
-      console.log(`[RewardVideoStore] Refilled, queue now has ${get().videoQueue.length} videos`);
+      logger.log(`[RewardVideoStore] Refilled, queue now has ${get().videoQueue.length} videos`);
     } catch (err) {
-      console.error('[RewardVideoStore] Refill error:', err);
+      logger.error('[RewardVideoStore] Refill error:', err);
       set({ isPreloading: false });
     }
   },
@@ -186,7 +187,7 @@ export const useRewardVideoStore = create<RewardVideoStore>((set, get) => ({
       
       // If queue is empty, try to refill synchronously
       if (videosToUse.length < requiredVideos) {
-        console.log(`[RewardVideoStore] Queue empty, forcing sync refill...`);
+        logger.log(`[RewardVideoStore] Queue empty, forcing sync refill...`);
         
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
@@ -210,7 +211,7 @@ export const useRewardVideoStore = create<RewardVideoStore>((set, get) => ({
 
       // If still no videos, fail gracefully
       if (videosToUse.length === 0) {
-        console.warn('[RewardVideoStore] No videos available for session');
+        logger.warn('[RewardVideoStore] No videos available for session');
         set({ isStartingSession: false });
         return null;
       }
@@ -237,11 +238,11 @@ export const useRewardVideoStore = create<RewardVideoStore>((set, get) => ({
       // Trigger refill check in background (non-blocking)
       get().refillQueueIfNeeded(userId);
 
-      console.log(`[RewardVideoStore] Session started INSTANTLY: ${rewardSession.id} with ${rewardSession.videos.length} videos`);
+      logger.log(`[RewardVideoStore] Session started INSTANTLY: ${rewardSession.id} with ${rewardSession.videos.length} videos`);
       
       return rewardSession;
     } catch (err) {
-      console.error('[RewardVideoStore] Start session error:', err);
+      logger.error('[RewardVideoStore] Start session error:', err);
       set({ isStartingSession: false });
       return null;
     }
@@ -251,7 +252,7 @@ export const useRewardVideoStore = create<RewardVideoStore>((set, get) => ({
     const { activeSession } = get();
     
     if (!activeSession) {
-      console.warn('[RewardVideoStore] No active session to complete');
+      logger.warn('[RewardVideoStore] No active session to complete');
       return { success: false, coinsDelta: 0, livesDelta: 0 };
     }
 
@@ -276,11 +277,11 @@ export const useRewardVideoStore = create<RewardVideoStore>((set, get) => ({
       set({ activeSession: null });
 
       if (error || !data?.success) {
-        console.error('[RewardVideoStore] Complete session error:', error || data?.error);
+        logger.error('[RewardVideoStore] Complete session error:', error || data?.error);
         return { success: false, coinsDelta: 0, livesDelta: 0 };
       }
 
-      console.log(`[RewardVideoStore] Session completed, reward: ${data.reward?.coinsDelta} coins, ${data.reward?.livesDelta} lives`);
+      logger.log(`[RewardVideoStore] Session completed, reward: ${data.reward?.coinsDelta} coins, ${data.reward?.livesDelta} lives`);
       
       // CRITICAL: Force immediate wallet refresh after reward credited
       // This ensures frontend shows updated coins/lives instantly
@@ -293,7 +294,7 @@ export const useRewardVideoStore = create<RewardVideoStore>((set, get) => ({
         livesDelta: data.reward?.livesDelta || 0,
       };
     } catch (err) {
-      console.error('[RewardVideoStore] Complete session error:', err);
+      logger.error('[RewardVideoStore] Complete session error:', err);
       set({ activeSession: null });
       return { success: false, coinsDelta: 0, livesDelta: 0 };
     }

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 interface VideoAdStore {
   isAvailable: boolean;
@@ -45,9 +46,9 @@ export const useVideoAdStore = create<VideoAdStore>((set, get) => ({
         lastChecked: Date.now()
       });
       
-      console.log('[VideoAdStore] Preloaded availability:', available);
+      logger.log('[VideoAdStore] Preloaded availability:', available);
     } catch (err) {
-      console.error('[VideoAdStore] Error preloading:', err);
+      logger.error('[VideoAdStore] Error preloading:', err);
       set({ isAvailable: false, isLoading: false, isPreloaded: true });
     }
   },
@@ -91,7 +92,7 @@ export const useVideoAdStore = create<VideoAdStore>((set, get) => ({
 
       return available;
     } catch (err) {
-      console.error('[VideoAdStore] Error checking availability:', err);
+      logger.error('[VideoAdStore] Error checking availability:', err);
       set({ isAvailable: false, isLoading: false });
       return false;
     }
