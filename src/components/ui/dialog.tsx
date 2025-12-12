@@ -33,26 +33,13 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
 >(({ className, children, overlayClassName, ...props }, ref) => {
+  // Prevent body scroll when dialog is open - simplified to avoid Lovable editor issues
   React.useEffect(() => {
-    const { style } = document.body;
-    const prev = {
-      overflow: style.overflow,
-      position: style.position,
-      width: style.width,
-      top: style.top,
-    };
-    const y = window.scrollY;
-    style.overflow = "hidden";
-    style.position = "fixed";
-    style.top = `-${y}px`;
-    style.width = "100%";
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
     return () => {
-      style.overflow = prev.overflow;
-      style.position = prev.position;
-      style.width = prev.width;
-      style.top = prev.top;
-      window.scrollTo(0, y);
+      document.body.style.overflow = originalOverflow;
     };
   }, []);
 
