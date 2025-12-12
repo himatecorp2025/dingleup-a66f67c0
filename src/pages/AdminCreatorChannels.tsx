@@ -111,7 +111,7 @@ const AdminCreatorChannels = () => {
   };
 
   return (
-    <AdminLayout title={t('admin.channels.title') || 'Csatornák'}>
+    <AdminLayout>
       <div className="space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4">

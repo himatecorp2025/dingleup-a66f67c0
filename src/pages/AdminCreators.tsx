@@ -152,7 +152,7 @@ const AdminCreators = () => {
   };
 
   return (
-    <AdminLayout title={t('admin.creators.title') || 'Tartalomgyártók'}>
+    <AdminLayout>
       <div className="space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
