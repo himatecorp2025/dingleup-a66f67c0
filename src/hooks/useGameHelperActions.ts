@@ -76,11 +76,26 @@ export const useGameHelperActions = (options: UseGameHelperActionsOptions) => {
     const cost = help5050UsageCount === 0 ? 0 : 15;
     
     try {
+      const currentQuestion = questions[currentQuestionIndex];
+      
+      // CRITICAL: Always calculate dynamically - NEVER remove the correct answer
+      // Find all incorrect answers and pick one randomly
+      const incorrectAnswers = currentQuestion.answers.filter(a => !a.correct);
+      
+      if (incorrectAnswers.length === 0) {
+        logger.error('[useHelp5050] No incorrect answers found - this should never happen');
+        return;
+      }
+      
+      // Pick a random incorrect answer to remove
+      const randomIndex = Math.floor(Math.random() * incorrectAnswers.length);
+      const answerToRemove = incorrectAnswers[randomIndex].key;
+      
+      logger.log('[useHelp5050] Removing incorrect answer:', answerToRemove, 
+        'Correct answer is:', currentQuestion.answers.find(a => a.correct)?.key);
+      
       if (help5050UsageCount === 0 && profile?.help_third_active) {
-        const currentQuestion = questions[currentQuestionIndex];
-        const thirdAnswerKey = currentQuestion.third;
-        
-        setRemovedAnswer(thirdAnswerKey);
+        setRemovedAnswer(answerToRemove);
         setIsHelp5050ActiveThisQuestion(true);
         setHelp5050UsageCount(1);
         
@@ -99,10 +114,7 @@ export const useGameHelperActions = (options: UseGameHelperActionsOptions) => {
         const { data: success } = await supabase.rpc('spend_coins', { amount: cost });
         if (success) {
           await refreshProfile();
-          const currentQuestion = questions[currentQuestionIndex];
-          const thirdAnswerKey = currentQuestion.third;
-          
-          setRemovedAnswer(thirdAnswerKey);
+          setRemovedAnswer(answerToRemove);
           setIsHelp5050ActiveThisQuestion(true);
           setHelp5050UsageCount(2);
           await logHelpUsage('third');
@@ -115,7 +127,7 @@ export const useGameHelperActions = (options: UseGameHelperActionsOptions) => {
   }, [
     selectedAnswer, isHelp5050ActiveThisQuestion, help5050UsageCount, profile,
     questions, currentQuestionIndex, setRemovedAnswer, setIsHelp5050ActiveThisQuestion,
-    setHelp5050UsageCount, refreshProfile, logHelpUsage
+    setHelp5050UsageCount, refreshProfile, logHelpUsage, t
   ]);
 
   const useHelp2xAnswer = useCallback(async () => {
