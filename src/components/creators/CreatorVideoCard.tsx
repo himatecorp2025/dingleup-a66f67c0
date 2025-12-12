@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { RefreshCw, Clock } from 'lucide-react';
+import { RefreshCw, Clock, Play } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import PlatformEmbedFullscreen from '@/components/PlatformEmbedFullscreen';
 import type { CreatorVideo } from '@/hooks/useCreatorVideos';
 
 // Platform Icons
@@ -77,6 +79,7 @@ export const CreatorVideoCard = ({
   showDaysRemaining = false
 }: CreatorVideoCardProps) => {
   const [isReactivating, setIsReactivating] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const handleReactivate = async () => {
     setIsReactivating(true);
@@ -202,7 +205,10 @@ export const CreatorVideoCard = ({
             {/* Reactivate Button */}
             {shouldShowReactivate && (
               <button
-                onClick={handleReactivate}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleReactivate();
+                }}
                 disabled={isReactivating}
                 className="flex flex-col items-center gap-0.5 p-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 transition-all disabled:opacity-50"
               >
@@ -214,12 +220,45 @@ export const CreatorVideoCard = ({
             )}
           </div>
 
+          {/* Play Preview Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowPreview(true);
+            }}
+            className="w-full mt-2 flex items-center justify-center gap-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all"
+          >
+            <Play className="w-4 h-4 text-white" />
+            <span className="text-xs font-medium text-white">
+              {lang === 'hu' ? 'Előnézet' : 'Preview'}
+            </span>
+          </button>
+
           {/* Video title if available */}
           {video.title && (
             <p className="text-xs text-white/70 mt-2 truncate">{video.title}</p>
           )}
         </div>
       )}
+
+      {/* Video Preview Modal */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-md p-0 bg-black border-none overflow-hidden">
+          <div className="relative aspect-[9/16] w-full">
+            <PlatformEmbedFullscreen
+              platform={video.platform as 'tiktok' | 'youtube' | 'instagram' | 'facebook'}
+              originalUrl={video.video_url}
+              embedUrl={video.embed_url || undefined}
+            />
+          </div>
+          <button
+            onClick={() => setShowPreview(false)}
+            className="absolute top-2 right-2 z-50 w-8 h-8 flex items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
+          >
+            ✕
+          </button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
