@@ -360,9 +360,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
         // Show error message
         toast.error(t('game.loading_timeout'));
         
-        // Wait 2 seconds before navigating (5s timeout + 2s = 7s total)
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
+        // INSTANT navigation on error - no artificial delay
         setIsStarting(false);
         navigate('/dashboard');
         return;

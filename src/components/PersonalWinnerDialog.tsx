@@ -86,9 +86,9 @@ export const PersonalWinnerDialog = ({
 
   useEffect(() => {
     if (open) {
-      const t = setTimeout(() => setContentVisible(true), 10);
+      // INSTANT visibility - no delay
+      setContentVisible(true);
       return () => {
-        clearTimeout(t);
         setContentVisible(false);
       };
     } else {

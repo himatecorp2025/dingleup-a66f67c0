@@ -499,11 +499,11 @@ const GamePreview = memo(() => {
             // Nincs toast - a felhasználó látja az eredményt
             await refreshProfile();
             
-            // Continue game automatically
+            // Continue game automatically - INSTANT
             if (gameState === 'playing') {
               timeoutIdRef.current = setTimeout(() => {
                 handleNextQuestion();
-              }, 1500);
+              }, 300);
             }
           }
         } catch (error: any) {

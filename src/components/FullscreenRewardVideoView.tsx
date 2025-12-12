@@ -256,10 +256,9 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
             setShowIntroVideo(true);
           }
           
-          setTimeout(() => {
-            setIsTransitioning(false);
-          }, 100);
-        }, 50);
+          // INSTANT transition clear
+          setIsTransitioning(false);
+        }, 16); // Single frame - 16ms
       }
     }, 100);
 

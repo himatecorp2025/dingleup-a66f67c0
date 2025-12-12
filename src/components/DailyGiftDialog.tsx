@@ -139,10 +139,10 @@ const DailyGiftDialog = ({
       // CRITICAL: Show success state on button
       setClaimed(true);
       
-      // Auto-close after 1.5 seconds - double option is already visible on shield
+      // Auto-close after 600ms - FAST response
       setTimeout(() => {
         onLater();
-      }, 1500);
+      }, 600);
     }
   };
 

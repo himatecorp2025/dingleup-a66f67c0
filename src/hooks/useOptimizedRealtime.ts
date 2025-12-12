@@ -64,7 +64,7 @@ export const useOptimizedRealtime = (configs: RealtimeConfig[], channelName: str
         const newTimer = setTimeout(() => {
           onUpdate(payload);
           updateTimersRef.current.delete(timerId);
-        }, 50); // 50ms debounce
+        }, 5); // INSTANT - 5ms micro-debounce (prevents UI thrashing)
 
         updateTimersRef.current.set(timerId, newTimer);
       });

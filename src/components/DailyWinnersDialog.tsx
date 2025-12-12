@@ -188,9 +188,9 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
             return;
           }
           
-          // Poll for data up to 5 times with 1 second intervals
-          for (let i = 0; i < 5; i++) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+          // FAST poll - 3 times with 200ms intervals (600ms total max)
+          for (let i = 0; i < 3; i++) {
+            await new Promise(resolve => setTimeout(resolve, 200));
             
             if (!isMountedRef.current) return;
             
@@ -223,8 +223,8 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
             }
           }
           
-          // After 5 polls, no data - gracefully handle
-          console.log('[DAILY-WINNERS] No data after 5 polls');
+          // After 3 fast polls, no data - gracefully handle
+          console.log('[DAILY-WINNERS] No data after 3 fast polls');
           if (isMountedRef.current) {
             setTopPlayers([]);
             setTotalRewards({ totalGold: 0, totalLives: 0 });
@@ -271,10 +271,10 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
 
   useEffect(() => {
     if (open) {
-      const t = setTimeout(() => setContentVisible(true), 10);
+      // INSTANT visibility - no delay
+      setContentVisible(true);
       fetchYesterdayTopPlayers();
       return () => {
-        clearTimeout(t);
         setContentVisible(false);
       };
     } else {
@@ -339,7 +339,7 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
                   height: '100%',
                   transform: contentVisible ? `scale(${scale})` : 'scale(0)',
                   opacity: contentVisible ? 1 : 0,
-                  transition: 'transform 1.125s cubic-bezier(0.34, 1.56, 0.64, 1) 0ms, opacity 1.125s ease-in-out 0ms',
+                  transition: 'transform 150ms ease-out, opacity 100ms ease-out',
                   transformOrigin: 'center center',
                   willChange: contentVisible ? 'transform, opacity' : 'auto'
                 }}

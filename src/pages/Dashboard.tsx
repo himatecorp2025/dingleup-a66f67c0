@@ -181,12 +181,11 @@ const Dashboard = () => {
 
   // PERFORMANCE OPTIMIZATION: Prefetch game assets AFTER critical UI renders
   // Loads /game route chunks + intro video in background for instant navigation
-  // Delayed to avoid blocking initial Dashboard render
+  // INSTANT prefetch - no artificial delay
   useEffect(() => {
     if (!profileLoading && walletData) {
-      // Delay prefetch to ensure Dashboard is fully interactive first
-      const timer = setTimeout(prefetchGameAssets, 200);
-      return () => clearTimeout(timer);
+      // Immediate prefetch - uses requestIdleCallback for non-blocking
+      requestIdleCallback(() => prefetchGameAssets(), { timeout: 100 });
     }
   }, [profileLoading, walletData]);
 
