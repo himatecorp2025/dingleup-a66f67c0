@@ -53,14 +53,6 @@ const MonetizationDashboard = () => {
         {/* Header */}
         <div className="flex items-center justify-between gap-[clamp(0.75rem,2vw,1rem)] flex-wrap">
           <div className="flex items-center gap-[clamp(0.75rem,2vw,1rem)]">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/admin/advanced-analytics')}
-              className="text-white/60 hover:text-white hover:bg-white/10"
-            >
-              <ArrowLeft className="w-[clamp(1.25rem,3vw,1.5rem)] h-[clamp(1.25rem,3vw,1.5rem)]" />
-            </Button>
             <div>
               <h1 className="text-[clamp(2rem,5vw,2.5rem)] font-black bg-gradient-to-r from-green-400 via-emerald-400 to-green-400 bg-clip-text text-transparent">
                 {t('admin.monetization.title')}

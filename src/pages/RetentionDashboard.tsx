@@ -1,5 +1,4 @@
-import { RefreshCw, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,7 +8,6 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import { useI18n } from '@/i18n';
 
 const RetentionDashboard = () => {
-  const navigate = useNavigate();
   const { analytics, loading, error, refetch } = useRetentionAnalytics();
   const { t } = useI18n();
 
@@ -41,14 +39,6 @@ const RetentionDashboard = () => {
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/admin/advanced-analytics')}
-              className="text-white/60 hover:text-white hover:bg-white/10"
-            >
-              <ArrowLeft className="w-6 h-6" />
-            </Button>
             <h1 className="text-4xl font-black bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
               {t('admin.retention.title')}
             </h1>

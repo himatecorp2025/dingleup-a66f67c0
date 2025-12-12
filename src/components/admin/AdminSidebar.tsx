@@ -9,15 +9,15 @@ import {
   Database,
   TrendingUp,
   Languages,
-  Heart,
   Zap,
   ShoppingBag,
   BarChart3,
   Calendar,
   Settings,
-  ChevronRight,
   Coins,
   FileText,
+  Map as MapIcon,
+  Activity,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -28,19 +28,15 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useI18n } from '@/i18n';
 
 export function AdminSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { state } = useSidebar();
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   
   const isCollapsed = state === 'collapsed';
 
@@ -51,18 +47,6 @@ export function AdminSidebar() {
       return location.pathname === basePath && location.search.includes(query);
     }
     return location.pathname === path;
-  };
-
-  // Check if any analytics route is active
-  const isAnalyticsActive = () => {
-    return [
-      '/admin/advanced-analytics',
-      '/admin/retention',
-      '/admin/monetization',
-      '/admin/performance',
-      '/admin/engagement',
-      '/admin/user-journey',
-    ].some(path => location.pathname === path);
   };
 
   return (
@@ -190,6 +174,28 @@ export function AdminSidebar() {
                 >
                   <Target className="text-purple-400" />
                   <span>{t('admin.sidebar.ad_interests')}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {/* User Journey - moved here */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => navigate('/admin/user-journey')}
+                  isActive={isActive('/admin/user-journey')}
+                  className={isActive('/admin/user-journey') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
+                >
+                  <MapIcon className="text-purple-400" />
+                  <span>{t('admin.sidebar.user_journey')}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {/* Retention - moved here, last item */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => navigate('/admin/retention')}
+                  isActive={isActive('/admin/retention')}
+                  className={isActive('/admin/retention') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
+                >
+                  <Activity className="text-purple-400" />
+                  <span>{t('admin.sidebar.retention')}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -325,82 +331,17 @@ export function AdminSidebar() {
                   <span>{t('admin.sidebar.manual_credit')}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* ADVANCED ANALYTICS HUB with submenu */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-white/50 text-xs font-bold uppercase tracking-wider">
-            {!isCollapsed && t('admin.sidebar.analytics_hub')}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
+              {/* Monetization - moved here */}
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => navigate('/admin/advanced-analytics')}
-                  isActive={isActive('/admin/advanced-analytics')}
-                  className={isActive('/admin/advanced-analytics') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
+                  onClick={() => navigate('/admin/monetization')}
+                  isActive={isActive('/admin/monetization')}
+                  className={isActive('/admin/monetization') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
                 >
                   <BarChart3 className="text-purple-400" />
-                  <span>{t('admin.sidebar.overview')}</span>
+                  <span>{t('admin.sidebar.monetization')}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              
-              {/* Submenu always visible when any analytics page is active */}
-              <Collapsible open={isAnalyticsActive()} className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton
-                          onClick={() => navigate('/admin/retention')}
-                          isActive={isActive('/admin/retention')}
-                          className={isActive('/admin/retention') ? 'bg-white/10 text-white' : 'text-white/60'}
-                        >
-                          <span>{t('admin.sidebar.retention')}</span>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton
-                          onClick={() => navigate('/admin/monetization')}
-                          isActive={isActive('/admin/monetization')}
-                          className={isActive('/admin/monetization') ? 'bg-white/10 text-white' : 'text-white/60'}
-                        >
-                          <span>{t('admin.sidebar.monetization')}</span>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton
-                          onClick={() => navigate('/admin/performance')}
-                          isActive={isActive('/admin/performance')}
-                          className={isActive('/admin/performance') ? 'bg-white/10 text-white' : 'text-white/60'}
-                        >
-                          <span>{t('admin.sidebar.performance')}</span>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton
-                          onClick={() => navigate('/admin/engagement')}
-                          isActive={isActive('/admin/engagement')}
-                          className={isActive('/admin/engagement') ? 'bg-white/10 text-white' : 'text-white/60'}
-                        >
-                          <span>{t('admin.sidebar.engagement')}</span>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton
-                          onClick={() => navigate('/admin/user-journey')}
-                          isActive={isActive('/admin/user-journey')}
-                          className={isActive('/admin/user-journey') ? 'bg-white/10 text-white' : 'text-white/60'}
-                        >
-                          <span>{t('admin.sidebar.user_journey')}</span>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -412,6 +353,17 @@ export function AdminSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              {/* Performance - moved here, above age statistics */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => navigate('/admin/performance')}
+                  isActive={isActive('/admin/performance')}
+                  className={isActive('/admin/performance') ? 'bg-gradient-to-r from-purple-600/30 to-blue-600/30 text-white' : 'text-white/60'}
+                >
+                  <Zap className="text-purple-400" />
+                  <span>{t('admin.sidebar.performance')}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => navigate('/admin/age-statistics')}
