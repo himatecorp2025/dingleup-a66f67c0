@@ -424,16 +424,23 @@ export const PersonalWinnerDialog = ({
                     </div>
                   </div>
 
-                  {/* Bottom button */}
-                  <div 
-                    className="absolute bottom-0 left-0 right-0 flex justify-center pb-10"
-                    style={{ zIndex: 30 }}
-                  >
-                    <HexAcceptButton onClick={onClose} disabled={isClaiming}>
-                      Köszönöm
-                    </HexAcceptButton>
-                  </div>
                 </HexShieldFrame>
+                
+                {/* Bottom button - Fixed at shield bottom, OUTSIDE HexShieldFrame */}
+                <div 
+                  className="absolute left-1/2 flex justify-center"
+                  style={{ 
+                    bottom: '8%',
+                    transform: 'translateX(-50%)',
+                    zIndex: 50,
+                    width: '80%',
+                    maxWidth: '280px'
+                  }}
+                >
+                  <HexAcceptButton onClick={onClose} disabled={isClaiming} className="w-full">
+                    Köszönöm
+                  </HexAcceptButton>
+                </div>
               </div>
               </div>
             </div>

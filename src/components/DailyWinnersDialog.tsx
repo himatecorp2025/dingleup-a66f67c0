@@ -1019,28 +1019,35 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
                         )}
                       </div>
 
-                      {/* CONGRATULATIONS BUTTON - Fixed at bottom */}
-                      <div 
-                        className="absolute bottom-0 left-0 right-0 flex justify-center pb-10"
-                        style={{ zIndex: 30 }}
-                      >
-                        <HexAcceptButton 
-                          onClick={handleAccept}
-                          className="w-full max-w-[280px]"
-                          disabled={isClaiming}
-                        >
-                          <span className="font-bold leading-tight flex items-center justify-center w-full" style={{ fontSize: 'clamp(0.875rem, 3.5vw, 1.125rem)' }}>
-                            {pendingReward 
-                              ? t('dailyWinners.claimReward')
-                              : t('dailyWinners.congratulate')
-                            }
-                          </span>
-                        </HexAcceptButton>
-                      </div>
                     </>
                   )}
                 </div>
               </HexShieldFrame>
+              
+              {/* CONGRATULATIONS BUTTON - Fixed at shield bottom, OUTSIDE HexShieldFrame */}
+              <div 
+                className="absolute left-1/2 flex justify-center"
+                style={{ 
+                  bottom: '8%', // Position at shield's bottom area
+                  transform: 'translateX(-50%)',
+                  zIndex: 50,
+                  width: '80%',
+                  maxWidth: '280px'
+                }}
+              >
+                <HexAcceptButton 
+                  onClick={handleAccept}
+                  className="w-full"
+                  disabled={isClaiming}
+                >
+                  <span className="font-bold leading-tight flex items-center justify-center w-full" style={{ fontSize: 'clamp(0.875rem, 3.5vw, 1.125rem)' }}>
+                    {pendingReward 
+                      ? t('dailyWinners.claimReward')
+                      : t('dailyWinners.congratulate')
+                    }
+                  </span>
+                </HexAcceptButton>
+              </div>
               </div>
               </div>
             </div>
