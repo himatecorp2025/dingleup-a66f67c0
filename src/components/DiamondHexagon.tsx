@@ -8,13 +8,14 @@ interface DiamondHexagonProps {
   className?: string;
   avatarUrl?: string | null;
   onClick?: () => void;
+  compact?: boolean;
 }
 
 /**
  * 3D Diamond Hexagon with SVG icons
  * Responsive design with diamond cross pattern
  */
-export const DiamondHexagon: React.FC<DiamondHexagonProps> = ({ type, value, className = '', avatarUrl, onClick }) => {
+export const DiamondHexagon: React.FC<DiamondHexagonProps> = ({ type, value, className = '', avatarUrl, onClick, compact = false }) => {
   const { t } = useI18n();
   // Color schemes per type
   const colorSchemes = {
@@ -247,10 +248,20 @@ export const DiamondHexagon: React.FC<DiamondHexagonProps> = ({ type, value, cla
             />
           </div>
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center z-10" style={{ transform: 'translateY(-4px)', gap: 'clamp(2px, 0.5vh, 4px)' }}>
+          <div 
+            className="absolute inset-0 flex flex-col items-center justify-center z-10" 
+            style={compact 
+              ? { gap: '2px' } 
+              : { transform: 'translateY(-4px)', gap: 'clamp(2px, 0.5vh, 4px)' }
+            }
+          >
             {renderIcon()}
-            <span className="text-white font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
-              style={{ fontSize: 'clamp(0.625rem, 1.5vh, 1rem)', marginTop: 'clamp(4px, 1vh, 8px)' }}
+            <span 
+              className="text-white font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+              style={compact 
+                ? { fontSize: 'clamp(0.625rem, 1.5vh, 1rem)' }
+                : { fontSize: 'clamp(0.625rem, 1.5vh, 1rem)', marginTop: 'clamp(4px, 1vh, 8px)' }
+              }
             >
               {value}
             </span>
