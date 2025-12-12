@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useI18n } from "@/i18n";
 import loadingLogo from '@/assets/dingleup-loading-logo.png';
 
 interface AppRouteGuardProps {
@@ -8,6 +9,7 @@ interface AppRouteGuardProps {
 }
 
 export const AppRouteGuard = ({ children }: AppRouteGuardProps) => {
+  const { t } = useI18n();
   const [isMobileOrTablet, setIsMobileOrTablet] = useState<boolean | null>(null);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
   const [isPWAOrNative, setIsPWAOrNative] = useState(false);
@@ -114,16 +116,17 @@ export const AppRouteGuard = ({ children }: AppRouteGuardProps) => {
       return (
         <div className="h-dvh h-svh w-screen flex items-center justify-center bg-gradient-to-br from-primary-darker via-primary-dark to-primary-darker">
           <div className="text-center px-6 max-w-md">
-            <h1 className="text-3xl font-black text-foreground mb-4">📱 Csak mobilon és táblagépen elérhető</h1>
+            <h1 className="text-3xl font-black text-foreground mb-4">
+              📱 {t('app.mobile_only.title')}
+            </h1>
             <p className="text-foreground/80 mb-6">
-              Ez az alkalmazás csak telefonon és táblagépen használható. 
-              Kérjük, nyisd meg mobil eszközön!
+              {t('app.mobile_only.description')}
             </p>
             <button
               onClick={() => window.location.href = '/'}
               className="px-8 py-3 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold rounded-lg hover:brightness-110 transition-all"
             >
-              Vissza a főoldalra
+              {t('app.mobile_only.back_button')}
             </button>
           </div>
         </div>
