@@ -218,9 +218,11 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
         }
       );
       
-      // Mark game as completed and save results to backend
+      // Mark game as completed - DO NOT save to backend yet
+      // Backend credit happens either:
+      // 1. When user swipes for new game → finishGame() called in handleSwipeUp
+      // 2. When user watches video for 2× → claim-video-reward credits 2× amount
       setGameCompleted(true);
-      await finishGame();
       return;
     }
     
@@ -308,9 +310,10 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
   }, [profile, continueType, refreshProfile, handleNextQuestion, finishGame]);
 
   const handleSwipeUp = useCallback(async () => {
-    // If game completed, restart new game
+    // If game completed, FIRST save results to backend THEN restart new game
     if (gameCompleted) {
       toast.dismiss(); // Dismiss game results toast before new game
+      await finishGame(); // Credit coins to DB before restart
       await restartGameImmediately();
       return;
     }
@@ -350,6 +353,7 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     isAnimating,
     questions,
     currentQuestionIndex,
+    finishGame,
     restartGameImmediately,
     setErrorBannerVisible,
     setRescueReason,
@@ -363,8 +367,12 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     if (errorBannerVisible) {
       setErrorBannerVisible(false);
     }
+    // If game completed, credit coins before restart
+    if (gameCompleted) {
+      await finishGame();
+    }
     await restartGameImmediately();
-  }, [errorBannerVisible, setErrorBannerVisible, restartGameImmediately]);
+  }, [errorBannerVisible, gameCompleted, setErrorBannerVisible, finishGame, restartGameImmediately]);
 
   return {
     handleNextQuestion,

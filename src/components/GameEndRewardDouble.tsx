@@ -86,8 +86,8 @@ export const GameEndRewardDouble = ({
       onRewardDoubled(result.coinsDelta);
       toast.success(
         lang === 'hu' 
-          ? `Megszerzett jutalmad: ${result.coinsDelta} arany! Gratulálok!` 
-          : `Your reward: ${result.coinsDelta} gold! Congratulations!`,
+          ? 'Gratulálunk! Jutalmad jóváírásra került!' 
+          : 'Congratulations! Your reward has been credited!',
         { position: 'top-center', duration: 3000 }
       );
       onClose();

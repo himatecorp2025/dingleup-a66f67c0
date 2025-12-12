@@ -82,11 +82,13 @@ serve(async (req) => {
         coinsToCredit = 500;
         livesToCredit = 5;
       }
-    } else if (reward_type === 'daily_gift_double' || reward_type === 'game_end_double') {
-      // DOUBLING: Credit the ADDITIONAL amount (same as original)
-      // Base reward was already credited, so we only add originalReward again
-      // Result: total = original + original = 2× original
+    } else if (reward_type === 'daily_gift_double') {
+      // Daily gift: credit the ADDITIONAL amount (base was already claimed)
       coinsToCredit = original_reward;
+    } else if (reward_type === 'game_end_double') {
+      // Game end 2×: Credit the FULL 2× amount (base NOT yet credited to DB)
+      // Frontend shows base amount visually, but DB credit only happens here
+      coinsToCredit = original_reward * 2;
     }
 
     console.log(`[claim-video-reward] Crediting ${coinsToCredit} coins, ${livesToCredit} lives`);

@@ -473,7 +473,8 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
           correctAnswers: correctAnswers,
           totalQuestions: questions.length,
           averageResponseTime: avgResponseTime,
-          questionAnalytics: questionAnalytics, // NEW: Send per-question data
+          coinsEarned: coinsEarned, // NEW: Send frontend-calculated coins for DB credit
+          questionAnalytics: questionAnalytics,
         }
       });
 

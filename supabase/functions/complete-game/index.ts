@@ -17,6 +17,7 @@ interface GameCompletion {
   correctAnswers: number;
   totalQuestions: number;
   averageResponseTime: number;
+  coinsEarned: number; // NEW: Frontend-calculated coins to credit
   questionAnalytics?: QuestionAnalytic[];
 }
 
@@ -123,16 +124,11 @@ Deno.serve(async (req) => {
     // If 0 (no questions answered), set to NULL
     const sanitizedAvgResponseTime = body.averageResponseTime === 0 ? null : body.averageResponseTime;
 
-    // Calculate total coins (already credited after each correct answer)
-    // This is only for statistics in game_results table
-    let totalCoinsEarned = 1; // Start jutalom
-    for (let i = 0; i < body.correctAnswers; i++) {
-      if (i >= 0 && i <= 3) totalCoinsEarned += 1;      // 1-4. kérdés
-      else if (i >= 4 && i <= 8) totalCoinsEarned += 3; // 5-9. kérdés
-      else if (i >= 9 && i <= 13) totalCoinsEarned += 5; // 10-14. kérdés
-      else if (i === 14) totalCoinsEarned += 55;         // 15. kérdés
-    }
-    const coinsEarned = totalCoinsEarned;
+    // NEW: Use frontend-provided coinsEarned (single source of truth)
+    // Validate it's a reasonable number
+    const coinsEarned = typeof body.coinsEarned === 'number' && body.coinsEarned >= 0 && body.coinsEarned <= 200
+      ? body.coinsEarned
+      : 0;
 
     // Idempotency check: prevent duplicate game result insertion
     const idempotencyKey = `game_complete:${user.id}:${Date.now()}`;
@@ -295,8 +291,53 @@ Deno.serve(async (req) => {
       });
     }
 
-    // NOTE: Rewards were already credited after each correct answer
-    // by the credit-gameplay-reward edge function, so we do NOT credit again here
+    // NEW: Credit coins to wallet (single credit at game end)
+    if (coinsEarned > 0) {
+      await measureStage(ctx, 'credit_wallet', async () => {
+        try {
+          const idempotencyKey = `game_complete:${user.id}:${gameResult?.id || Date.now()}`;
+          
+          // Insert wallet ledger entry
+          incDbQuery(ctx);
+          await supabaseAdmin
+            .from('wallet_ledger')
+            .insert({
+              user_id: user.id,
+              delta_coins: coinsEarned,
+              delta_lives: 0,
+              source: 'game_complete',
+              idempotency_key: idempotencyKey,
+              metadata: {
+                correct_answers: body.correctAnswers,
+                game_result_id: gameResult?.id,
+              },
+            });
+
+          // Update profile coins
+          incDbQuery(ctx);
+          const { data: profile } = await supabaseAdmin
+            .from('profiles')
+            .select('coins')
+            .eq('id', user.id)
+            .single();
+
+          if (profile) {
+            incDbQuery(ctx);
+            await supabaseAdmin
+              .from('profiles')
+              .update({
+                coins: (profile.coins || 0) + coinsEarned,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', user.id);
+          }
+
+          console.log(`[complete-game] Credited ${coinsEarned} coins to user ${user.id}`);
+        } catch (walletErr) {
+          console.error('[complete-game] Wallet credit error:', walletErr);
+        }
+      });
+    }
 
     // Get user profile for leaderboard display
     const { data: userProfile, error: profileError } = await measureStage(ctx, 'profile_fetch', async () => {

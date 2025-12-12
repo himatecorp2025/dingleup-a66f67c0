@@ -86,12 +86,16 @@ serve(async (req) => {
       // Refill: fixed 500 coins + 5 lives
       coinsToCredit = 500;
       livesToCredit = 5;
-    } else if (eventType === 'daily_gift' || eventType === 'end_game') {
-      // DOUBLING: Credit the ADDITIONAL amount (same as original)
-      // Base reward was already credited during gameplay (credit-gameplay-reward)
-      // or during daily gift claim, so we only add originalReward again
-      // Result: total = originalReward + originalReward = 2× original
+    } else if (eventType === 'daily_gift') {
+      // Daily gift doubling: Credit the ADDITIONAL amount
+      // Base was already credited during daily gift claim
       coinsToCredit = originalReward;
+      livesToCredit = 0;
+    } else if (eventType === 'end_game') {
+      // Game end 2×: Credit the FULL 2× amount
+      // Base was NOT credited to DB (only shown visually in frontend)
+      // So we credit originalReward × 2 here as the complete reward
+      coinsToCredit = originalReward * 2;
       livesToCredit = 0;
     }
 
