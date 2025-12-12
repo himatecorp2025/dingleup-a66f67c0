@@ -674,7 +674,7 @@ const GamePreview = memo(() => {
                 onUseHelp5050={useHelp5050}
                 onUseHelp2xAnswer={useHelp2xAnswer}
                 onUseHelpAudience={useHelpAudience}
-                onUseQuestionSwap={useQuestionSwap}
+                onUseQuestionSwap={handleSkipQuestion}
                 onExit={() => setShowExitDialog(true)}
               />
             </GameQuestionContainer>

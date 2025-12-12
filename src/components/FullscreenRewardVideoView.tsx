@@ -202,21 +202,10 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         
         // rewardAmount is the ORIGINAL coins earned during gameplay
         // Video ad reward gives +originalReward bonus (so total becomes 2× original)
-        const bonusAmount = rewardAmount || 0;
-        let toastMessage: string;
-        if (context === 'refill') {
-          toastMessage = lang === 'hu' 
-            ? 'Zárd be a videót a jutalom jóváírásához! +500 arany és 5 élet' 
-            : 'Close the video to claim your reward! +500 gold and 5 lives';
-        } else if (bonusAmount > 0) {
-          toastMessage = lang === 'hu' 
-            ? `Zárd be a videót a jutalom jóváírásához! +${bonusAmount} arany bónusz` 
-            : `Close the video to claim your reward! +${bonusAmount} gold bonus`;
-        } else {
-          toastMessage = lang === 'hu' 
-            ? 'Zárd be a videót a jutalom jóváírásához!' 
-            : 'Close the video to claim your reward!';
-        }
+        // Show simple "close to claim" toast without amount (amount shown after close)
+        const toastMessage = lang === 'hu' 
+          ? 'Zárd be a videót a jutalom jóváírásához!' 
+          : 'Close the video to claim your reward!';
         toast.success(toastMessage, { position: 'top-center', duration: 2000 });
         return;
       }
@@ -337,15 +326,15 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
             style={{ backgroundColor: '#000000', zIndex: 5 }}
           />
           
-          {/* Creator video iframe - HIDDEN during transition */}
+          {/* Creator video iframe - HIDDEN during transition, CENTERED vertically */}
           {!isTransitioning && (
             <iframe
               key={`${currentVideo?.id}-${currentVideoIndex}-${videoKey}`}
               src={embedSrc}
-              className="absolute top-0 left-1/2 -translate-x-1/2 translate-y-[8vh] border-0 pointer-events-none"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0 pointer-events-none"
               style={{
                 width: '100vw',
-                height: '120vh',
+                height: '100vh',
                 zIndex: 10,
                 backgroundColor: '#000000',
               }}
