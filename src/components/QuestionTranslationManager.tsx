@@ -7,6 +7,7 @@ import { Languages, Loader2, CheckCircle, XCircle, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { useI18n } from '@/i18n';
+import { logger } from '@/lib/logger';
 
 interface LanguageStats {
   total: number;
@@ -53,7 +54,7 @@ export const QuestionTranslationManager = () => {
           .select('*', { count: 'exact', head: true });
 
         if (questionsError || !totalQuestions) {
-          console.error('[QuestionTranslationManager] Error fetching questions:', questionsError);
+          logger.error('[QuestionTranslationManager] Error fetching questions:', questionsError);
           return;
         }
 
@@ -70,7 +71,7 @@ export const QuestionTranslationManager = () => {
             .eq('lang', lang);
 
           if (error) {
-            console.error(`[QuestionTranslationManager] Error fetching ${lang} stats:`, error);
+            logger.error(`[QuestionTranslationManager] Error fetching ${lang} stats:`, error);
             continue;
           }
 
@@ -92,7 +93,7 @@ export const QuestionTranslationManager = () => {
         });
 
       } catch (error) {
-        console.error('[QuestionTranslationManager] Exception loading stats:', error);
+        logger.error('[QuestionTranslationManager] Exception loading stats:', error);
       } finally {
         setIsCheckingContent(false);
       }
@@ -114,20 +115,20 @@ export const QuestionTranslationManager = () => {
       // CRITICAL: Refresh session to ensure valid JWT token
       let { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
       if (sessionError || !session) {
-        console.error('[QuestionTranslationManager] Session refresh failed:', sessionError);
+        logger.error('[QuestionTranslationManager] Session refresh failed:', sessionError);
         toast.error(t('admin.session_expired'));
         setIsTranslating(false);
         return;
       }
 
-      console.log('[QuestionTranslationManager] Starting truncated translations scan and re-translation');
+      logger.log('[QuestionTranslationManager] Starting truncated translations scan and re-translation');
 
       // Subscribe to real-time progress updates
       const progressChannel = supabase.channel('question-translation-progress');
       
       progressChannel.on('broadcast', { event: 'translation-progress' }, (payload: any) => {
         const data = payload.payload;
-        console.log('[QuestionTranslationManager] Progress update:', data);
+        logger.log('[QuestionTranslationManager] Progress update:', data);
         
         if (data.phase === 'language-start') {
           setCurrentLanguage(data.languageName);
@@ -156,14 +157,14 @@ export const QuestionTranslationManager = () => {
       });
 
       if (error) {
-        console.error('[QuestionTranslationManager] Translation error:', error);
+        logger.error('[QuestionTranslationManager] Translation error:', error);
         toast.error(t('admin.translation_error'));
         setStatus(t('admin.error_occurred'));
         setIsTranslating(false);
         return;
       }
 
-      console.log('[QuestionTranslationManager] Translation response:', data);
+      logger.log('[QuestionTranslationManager] Translation response:', data);
 
       if (data?.phase === 'scan' && data?.stats?.totalTruncated === 0) {
         setProgress(100);
@@ -207,7 +208,7 @@ export const QuestionTranslationManager = () => {
       }
 
     } catch (error) {
-      console.error('[QuestionTranslationManager] Exception:', error);
+      logger.error('[QuestionTranslationManager] Exception:', error);
       toast.error(t('admin.unexpected_error'));
       setStatus(t('admin.unexpected_error'));
     } finally {

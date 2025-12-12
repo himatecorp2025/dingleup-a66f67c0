@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 export interface LeaderboardEntry {
   rank: number;
@@ -62,7 +63,7 @@ export function useLeaderboardQuery(countryCode: string | undefined) {
   useEffect(() => {
     if (!countryCode) return;
 
-    console.log('[useLeaderboardQuery] Setting up realtime subscription for country:', countryCode);
+    logger.log('[useLeaderboardQuery] Setting up realtime subscription for country:', countryCode);
 
     const channel = supabase
       .channel(`leaderboard-realtime-${countryCode}`)
@@ -75,7 +76,7 @@ export function useLeaderboardQuery(countryCode: string | undefined) {
           filter: `country_code=eq.${countryCode}`,
         },
         (payload) => {
-          console.log('[useLeaderboardQuery] Realtime update received:', payload);
+          logger.log('[useLeaderboardQuery] Realtime update received:', payload);
           // Immediately refetch with zero delay
           queryClient.refetchQueries({ 
             queryKey: LEADERBOARD_QUERY_KEY(countryCode),
@@ -91,7 +92,7 @@ export function useLeaderboardQuery(countryCode: string | undefined) {
           table: 'daily_rankings',
         },
         (payload) => {
-          console.log('[useLeaderboardQuery] Daily rankings update received:', payload);
+          logger.log('[useLeaderboardQuery] Daily rankings update received:', payload);
           // Also refetch when daily_rankings changes
           queryClient.refetchQueries({ 
             queryKey: LEADERBOARD_QUERY_KEY(countryCode),
@@ -100,11 +101,11 @@ export function useLeaderboardQuery(countryCode: string | undefined) {
         }
       )
       .subscribe((status) => {
-        console.log('[useLeaderboardQuery] Subscription status:', status);
+        logger.log('[useLeaderboardQuery] Subscription status:', status);
       });
 
     return () => {
-      console.log('[useLeaderboardQuery] Cleaning up realtime subscription');
+      logger.log('[useLeaderboardQuery] Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [countryCode, queryClient]);

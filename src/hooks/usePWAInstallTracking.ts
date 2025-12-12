@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export const usePWAInstallTracking = () => {
   useEffect(() => {
@@ -50,8 +51,8 @@ const trackPWAEvent = async (eventType: string) => {
       }
     });
 
-    console.log('[PWAInstallTracking]', eventType);
+    logger.log('[PWAInstallTracking]', eventType);
   } catch (err) {
-    console.error('[PWAInstallTracking] Failed to track event:', err);
+    logger.error('[PWAInstallTracking] Failed to track event:', err);
   }
 };

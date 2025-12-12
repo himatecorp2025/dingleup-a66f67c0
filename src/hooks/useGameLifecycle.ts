@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Question } from '@/types/game';
 import { trackFeatureUsage, trackGameMilestone } from '@/lib/analytics';
 import { useI18n } from '@/i18n';
+import { logger } from '@/lib/logger';
 
 
 interface UseGameLifecycleOptions {
@@ -138,7 +139,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
     
     // INSTANT MODE: Use prefetched questions if available
     if (usePrefetched && prefetchedQuestions && prefetchedQuestions.length > 0) {
-      console.log('[useGameLifecycle] ⚡ INSTANT RESTART - Using prefetched questions (<5ms)');
+      logger.log('[useGameLifecycle] ⚡ INSTANT RESTART - Using prefetched questions (<5ms)');
       
       setIsStarting(true);
       setShowLoadingVideo(false);
@@ -151,7 +152,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
           try {
             await supabase.rpc('reset_game_helps');
           } catch (error) {
-            console.error('Error resetting helps:', error);
+            logger.error('Error resetting helps:', error);
           }
           
           // If coming from rescue, refresh wallet first to ensure DB is synced
@@ -196,10 +197,10 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
         // Wait for backend ops to complete
         await backendOps;
         
-        console.log('[useGameLifecycle] ✓ Instant restart complete');
+        logger.log('[useGameLifecycle] ✓ Instant restart complete');
         return;
       } catch (error) {
-        console.error('[useGameLifecycle] Instant restart error:', error);
+        logger.error('[useGameLifecycle] Instant restart error:', error);
         setIsStarting(false);
         return;
       }
@@ -231,13 +232,13 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
     }
     
     const backendStartTime = performance.now();
-    console.log('[useGameLifecycle] Backend loading started');
+    logger.log('[useGameLifecycle] Backend loading started');
     
     gameInitPromiseRef.current = (async () => {
       try {
         await supabase.rpc('reset_game_helps');
       } catch (error) {
-        console.error('Error resetting helps:', error);
+        logger.error('Error resetting helps:', error);
       }
       
       // If coming from rescue, refresh wallet first to ensure DB is synced
@@ -261,7 +262,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
       
       const { data: { session: authSession }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !authSession) {
-        console.error('[useGameLifecycle] Session error:', sessionError);
+        logger.error('[useGameLifecycle] Session error:', sessionError);
         toast.error(t('game.session_expired'));
         navigate('/auth/login');
         throw new Error('Session error');
@@ -291,7 +292,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
             // Prefetch for upcoming games is handled separately (e.g. at question 10)
             // to ensure each new game always uses the NEXT pool in the global rotation.
           } catch (error) {
-            console.error('[useGameLifecycle] Failed to load questions:', error);
+            logger.error('[useGameLifecycle] Failed to load questions:', error);
             toast.error(t('game.error_loading_questions'));
             setIsStarting(false);
             navigate('/dashboard');
@@ -318,7 +319,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
       
       const backendEndTime = performance.now();
       const backendDuration = backendEndTime - backendStartTime;
-      console.log(`[useGameLifecycle] Backend loading completed in ${backendDuration.toFixed(0)}ms`);
+      logger.log(`[useGameLifecycle] Backend loading completed in ${backendDuration.toFixed(0)}ms`);
       
     })();
    }, [
@@ -341,7 +342,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
           )
         ]);
       } catch (error) {
-        console.error('[useGameLifecycle] Init timeout or error:', error);
+        logger.error('[useGameLifecycle] Init timeout or error:', error);
         
         // CRITICAL FIX: Refund the spent life since game didn't start
         try {
@@ -354,7 +355,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
           await refetchWallet();
           await broadcast('wallet:update', { source: 'game_timeout_refund', livesDelta: 1 });
         } catch (refundError) {
-          console.error('[useGameLifecycle] Failed to refund life:', refundError);
+          logger.error('[useGameLifecycle] Failed to refund life:', refundError);
         }
         
         // Show error message
@@ -375,7 +376,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
   const restartGameImmediately = useCallback(async () => {
     if (!profile || isStarting) return;
 
-    console.log('[useGameLifecycle] ⚡ INSTANT RESTART initiated');
+    logger.log('[useGameLifecycle] ⚡ INSTANT RESTART initiated');
     toast.dismiss();
     
     // ATOMIC STATE RESET
@@ -415,7 +416,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
     
     // CRITICAL: ALWAYS use prefetch mode if available for instant restart
     const usePrefetch = prefetchedQuestions && prefetchedQuestions.length > 0;
-    console.log(`[useGameLifecycle] Restart mode: ${usePrefetch ? 'PREFETCH (instant <5ms)' : 'FULL BACKEND'}`);
+    logger.log(`[useGameLifecycle] Restart mode: ${usePrefetch ? 'PREFETCH (instant <5ms)' : 'FULL BACKEND'}`);
     await startGame(true, usePrefetch);
     
     // Instant transition to new game
@@ -423,7 +424,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
       resetTimer(10);
       setQuestionVisible(true);
       setCanSwipe(true);
-      console.log('[useGameLifecycle] ✓ Instant restart complete');
+      logger.log('[useGameLifecycle] ✓ Instant restart complete');
     }, 50);
   }, [
     profile, isStarting, gameCompleted, prefetchedQuestions, resetGameStateHook, setCoinsEarned,

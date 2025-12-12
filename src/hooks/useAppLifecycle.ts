@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { logger } from '@/lib/logger';
 
 interface AppLifecycleCallbacks {
   onBackground?: () => void;
@@ -19,7 +20,7 @@ export const useAppLifecycle = (callbacks: AppLifecycleCallbacks) => {
         // App came to foreground
         if (backgroundTimeRef.current) {
           const timeInBackground = Date.now() - backgroundTimeRef.current;
-          console.log(`[AppLifecycle] Was in background for ${timeInBackground}ms`);
+          logger.log(`[AppLifecycle] Was in background for ${timeInBackground}ms`);
           backgroundTimeRef.current = null;
         }
         callbacks.onForeground?.();

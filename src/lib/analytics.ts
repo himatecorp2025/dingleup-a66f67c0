@@ -1,5 +1,6 @@
 // Analytics tracking utilities for comprehensive user behavior
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 // Legacy analytics events for Google Analytics
 export type AnalyticsEvent = 
@@ -111,7 +112,7 @@ export const trackPromoEvent = async (
       metadata: promoData?.metadata || {},
     });
   } catch (error) {
-    console.error('[Analytics] Failed to track promo event:', error);
+    logger.error('[Analytics] Failed to track promo event:', error);
   }
 };
 
@@ -142,7 +143,7 @@ export const trackBonusEvent = async (
       metadata: bonusData?.metadata || {}
     });
   } catch (error) {
-    console.error('[Analytics] Failed to track bonus event:', error);
+    logger.error('[Analytics] Failed to track bonus event:', error);
   }
 };
 
@@ -192,7 +193,7 @@ export const trackGameExit = async (
       metadata: gameData.metadata || {},
     });
   } catch (error) {
-    console.error('[Analytics] Failed to track game exit:', error);
+    logger.error('[Analytics] Failed to track game exit:', error);
   }
 };
 
@@ -219,7 +220,7 @@ export const trackChatInteraction = async (
       metadata: chatData?.metadata || {},
     });
   } catch (error) {
-    console.error('[Analytics] Failed to track chat interaction:', error);
+    logger.error('[Analytics] Failed to track chat interaction:', error);
   }
 };
 
@@ -244,7 +245,7 @@ export const trackFeatureUsage = async (
       metadata: metadata || {},
     });
   } catch (error) {
-    console.error('[Analytics] Failed to track feature usage:', error);
+    logger.error('[Analytics] Failed to track feature usage:', error);
   }
 };
 
@@ -269,7 +270,7 @@ export const trackConversionEvent = async (
       metadata: metadata || {},
     });
   } catch (error) {
-    console.error('[Analytics] Failed to track conversion event:', error);
+    logger.error('[Analytics] Failed to track conversion event:', error);
   }
 };
 
@@ -300,7 +301,7 @@ export const trackGameMilestone = async (
       metadata: gameData.metadata || {},
     });
   } catch (error) {
-    console.error('[Analytics] Failed to track game milestone:', error);
+    logger.error('[Analytics] Failed to track game milestone:', error);
   }
 };
 
@@ -341,7 +342,7 @@ export const trackPerformanceMetric = async (
       connection_type: connectionInfo?.effectiveType || null,
     });
   } catch (error) {
-    console.error('[Analytics] Failed to track performance metric:', error);
+    logger.error('[Analytics] Failed to track performance metric:', error);
   }
 };
 
@@ -382,7 +383,7 @@ export const trackError = async (
       metadata: error.metadata || null,
     });
   } catch (err) {
-    console.error('[Analytics] Failed to track error:', err);
+    logger.error('[Analytics] Failed to track error:', err);
   }
 };
 
@@ -410,7 +411,7 @@ export const trackEvent = (event: AnalyticsEvent, data?: AnalyticsData) => {
 
   // Log in development
   if (import.meta.env.DEV) {
-    console.log('[Analytics]', eventData);
+    logger.log('[Analytics]', eventData);
   }
 
   // Send to Google Analytics if available

@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCallback, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 export interface TopicProfile {
   topicId: string;
@@ -61,7 +62,7 @@ export function useUserGameProfileQuery(userId: string | undefined) {
   useEffect(() => {
     if (!userId) return;
 
-    console.log('[useUserGameProfileQuery] Setting up realtime subscription for user:', userId);
+    logger.log('[useUserGameProfileQuery] Setting up realtime subscription for user:', userId);
 
     const channel = supabase
       .channel(`user-game-profile-realtime-${userId}`)
@@ -74,7 +75,7 @@ export function useUserGameProfileQuery(userId: string | undefined) {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.log('[useUserGameProfileQuery] Game results update received:', payload);
+          logger.log('[useUserGameProfileQuery] Game results update received:', payload);
           queryClient.refetchQueries({
             queryKey: USER_GAME_PROFILE_KEY(userId),
             exact: true,
@@ -82,11 +83,11 @@ export function useUserGameProfileQuery(userId: string | undefined) {
         }
       )
       .subscribe((status) => {
-        console.log('[useUserGameProfileQuery] Subscription status:', status);
+        logger.log('[useUserGameProfileQuery] Subscription status:', status);
       });
 
     return () => {
-      console.log('[useUserGameProfileQuery] Cleaning up realtime subscription');
+      logger.log('[useUserGameProfileQuery] Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [userId, queryClient]);

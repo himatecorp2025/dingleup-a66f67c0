@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 
 interface UseDynamicVerticalCenterReturn {
   svgRef: React.RefObject<SVGSVGElement>;
@@ -33,7 +34,7 @@ export const useDynamicVerticalCenter = (): UseDynamicVerticalCenterReturn => {
       const blackOverlay = svgRef.current.querySelector('use[href="#HEX_Q"][fill="black"]') as SVGUseElement;
       
       if (!blackOverlay) {
-        console.error('[useDynamicVerticalCenter] Black overlay not found');
+        logger.error('[useDynamicVerticalCenter] Black overlay not found');
         return;
       }
 
@@ -42,7 +43,7 @@ export const useDynamicVerticalCenter = (): UseDynamicVerticalCenterReturn => {
       const ctm = blackOverlay.getCTM();
       
       if (!ctm) {
-        console.error('[useDynamicVerticalCenter] CTM not available');
+        logger.error('[useDynamicVerticalCenter] CTM not available');
         return;
       }
 
@@ -73,7 +74,7 @@ export const useDynamicVerticalCenter = (): UseDynamicVerticalCenterReturn => {
       lastContentHeightRef.current = contentRect.height;
       
       if (import.meta.env.DEV) {
-        console.log('[useDynamicVerticalCenter] BLACK overlay centering:', {
+        logger.log('[useDynamicVerticalCenter] BLACK overlay centering:', {
           blackTop,
           blackBottom,
           blackHeight,
@@ -84,7 +85,7 @@ export const useDynamicVerticalCenter = (): UseDynamicVerticalCenterReturn => {
         });
       }
     } catch (error) {
-      console.error('[useDynamicVerticalCenter] Error:', error);
+      logger.error('[useDynamicVerticalCenter] Error:', error);
     }
   }, []);
 

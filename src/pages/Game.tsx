@@ -7,6 +7,7 @@ import { GameErrorBoundary } from "@/components/GameErrorBoundary";
 import AudioManager from "@/lib/audioManager";
 import { useFullscreen } from "@/hooks/useFullscreen";
 import { useNativeFullscreen } from "@/hooks/useNativeFullscreen";
+import { logger } from "@/lib/logger";
 
 const Game = () => {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ const Game = () => {
   useEffect(() => {
     if (!loaded) return;
 
-    console.log('[Game Page] Mounted - forcing game music to play', {
+    logger.log('[Game Page] Mounted - forcing game music to play', {
       musicEnabled,
       volume
     });

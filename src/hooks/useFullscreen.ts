@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 interface UseFullscreenOptions {
   enabled?: boolean;
@@ -25,10 +26,10 @@ export const useFullscreen = (options: UseFullscreenOptions = {}) => {
         // Request fullscreen on document element
         if (document.documentElement.requestFullscreen) {
           await document.documentElement.requestFullscreen();
-          console.log('[Web Fullscreen] Fullscreen mode enabled');
+          logger.log('[Web Fullscreen] Fullscreen mode enabled');
         }
       } catch (error) {
-        console.error('[Web Fullscreen] Error entering fullscreen:', error);
+        logger.error('[Web Fullscreen] Error entering fullscreen:', error);
       }
     };
 
@@ -38,7 +39,7 @@ export const useFullscreen = (options: UseFullscreenOptions = {}) => {
     // Handle fullscreen change events (for autoReenter)
     const handleFullscreenChange = () => {
       if (autoReenter && !document.fullscreenElement) {
-        console.log('[Web Fullscreen] User exited fullscreen, re-entering...');
+        logger.log('[Web Fullscreen] User exited fullscreen, re-entering...');
         enterFullscreen();
       }
     };

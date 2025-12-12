@@ -7,6 +7,7 @@ import { Languages, Loader2, CheckCircle, XCircle, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { useI18n } from '@/i18n';
+import { logger } from '@/lib/logger';
 
 interface LanguageStats {
   total: number;
@@ -50,7 +51,7 @@ export const TranslationSeeder = () => {
           .select('*', { count: 'exact', head: true });
 
         if (countError) {
-          console.error('[TranslationSeeder] Error fetching total keys:', countError);
+          logger.error('[TranslationSeeder] Error fetching total keys:', countError);
           return;
         }
 
@@ -65,7 +66,7 @@ export const TranslationSeeder = () => {
             .not(lang, 'is', null);
 
           if (error) {
-            console.error(`[TranslationSeeder] Error fetching ${lang} stats:`, error);
+            logger.error(`[TranslationSeeder] Error fetching ${lang} stats:`, error);
             continue;
           }
 
@@ -92,7 +93,7 @@ export const TranslationSeeder = () => {
         setHasUntranslated(hasAnyUntranslated);
 
       } catch (error) {
-        console.error('[TranslationSeeder] Exception loading stats:', error);
+        logger.error('[TranslationSeeder] Exception loading stats:', error);
         setHasUntranslated(false);
       } finally {
         setIsCheckingContent(false);
@@ -111,7 +112,7 @@ export const TranslationSeeder = () => {
 
     channel
       .on('broadcast', { event: 'progress' }, (payload: any) => {
-        console.log('[TranslationSeeder] Progress update:', payload);
+        logger.log('[TranslationSeeder] Progress update:', payload);
         const newProgress = payload.payload.progress || 0;
         const newStatus = payload.payload.status || '';
         setProgress(newProgress);
@@ -144,7 +145,7 @@ export const TranslationSeeder = () => {
         return;
       }
 
-      console.log('[TranslationSeeder] Starting chunked translation process');
+      logger.log('[TranslationSeeder] Starting chunked translation process');
 
       let offset = 0;
       let hasMore = true;
@@ -161,7 +162,7 @@ export const TranslationSeeder = () => {
         });
 
         if (error) {
-          console.error('[TranslationSeeder] Translation error:', error);
+          logger.error('[TranslationSeeder] Translation error:', error);
           toast.error(t('admin.translation_error_generic'));
           setStatus(t('admin.error_occurred'));
           setIsTranslating(false);
@@ -181,7 +182,7 @@ export const TranslationSeeder = () => {
         hasMore = data?.hasMore || false;
         offset = data?.nextOffset || (offset + 300);
 
-        console.log(`[TranslationSeeder] Chunk complete - hasMore: ${hasMore}, nextOffset: ${offset}`);
+        logger.log(`[TranslationSeeder] Chunk complete - hasMore: ${hasMore}, nextOffset: ${offset}`);
       }
 
       setProgress(100);
@@ -199,7 +200,7 @@ export const TranslationSeeder = () => {
       }
 
     } catch (error) {
-      console.error('[TranslationSeeder] Exception:', error);
+      logger.error('[TranslationSeeder] Exception:', error);
       toast.error(t('admin.unexpected_error'));
       setStatus(t('admin.unexpected_error'));
     } finally {

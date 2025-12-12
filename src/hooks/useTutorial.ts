@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export type TutorialRoute = 
   | 'dashboard' 
@@ -28,7 +29,7 @@ export const useTutorial = (route: TutorialRoute) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.log('[TUTORIAL] No user logged in, using localStorage only');
+        logger.log('[TUTORIAL] No user logged in, using localStorage only');
         return;
       }
 
@@ -36,15 +37,15 @@ export const useTutorial = (route: TutorialRoute) => {
       const lastSyncTime = localStorage.getItem(TUTORIAL_SYNC_FLAG);
       const now = Date.now();
       if (lastSyncTime && (now - parseInt(lastSyncTime)) < 5 * 60 * 1000) {
-        console.log('[TUTORIAL] Recently synced, skipping backend fetch');
+        logger.log('[TUTORIAL] Recently synced, skipping backend fetch');
         return;
       }
 
-      console.log('[TUTORIAL] Syncing tutorial progress from backend...');
+      logger.log('[TUTORIAL] Syncing tutorial progress from backend...');
       const { data, error } = await supabase.functions.invoke('get-tutorial-progress');
 
       if (error) {
-        console.error('[TUTORIAL] Failed to fetch from backend:', error);
+        logger.error('[TUTORIAL] Failed to fetch from backend:', error);
         return;
       }
 
@@ -53,10 +54,10 @@ export const useTutorial = (route: TutorialRoute) => {
         const backendProgress = data.progress;
         localStorage.setItem(TUTORIAL_STORAGE_KEY, JSON.stringify(backendProgress));
         localStorage.setItem(TUTORIAL_SYNC_FLAG, now.toString());
-        console.log('[TUTORIAL] ✓ Synced from backend:', backendProgress);
+        logger.log('[TUTORIAL] ✓ Synced from backend:', backendProgress);
       }
     } catch (error) {
-      console.error('[TUTORIAL] Error syncing from backend:', error);
+      logger.error('[TUTORIAL] Error syncing from backend:', error);
     }
   };
 
@@ -108,29 +109,29 @@ export const useTutorial = (route: TutorialRoute) => {
       // CRITICAL: Double-check that it was actually saved
       const verification = localStorage.getItem(TUTORIAL_STORAGE_KEY);
       if (!verification || !JSON.parse(verification)[route]) {
-        console.error('[TUTORIAL] Failed to save tutorial state, retrying...');
+        logger.error('[TUTORIAL] Failed to save tutorial state, retrying...');
         localStorage.setItem(TUTORIAL_STORAGE_KEY, JSON.stringify(tutorialState));
       }
 
       // STEP 2: Save to backend (async, don't block UI)
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        console.log(`[TUTORIAL] Saving tutorial '${route}' to backend for user ${user.id}`);
+        logger.log(`[TUTORIAL] Saving tutorial '${route}' to backend for user ${user.id}`);
         const { error } = await supabase.functions.invoke('mark-tutorial-completed', {
           body: { route }
         });
 
         if (error) {
-          console.error('[TUTORIAL] Failed to save to backend:', error);
+          logger.error('[TUTORIAL] Failed to save to backend:', error);
           // Don't throw - localStorage is already saved, backend is just for sync
         } else {
-          console.log(`[TUTORIAL] ✓ Tutorial '${route}' saved to backend`);
+          logger.log(`[TUTORIAL] ✓ Tutorial '${route}' saved to backend`);
           // Invalidate sync flag so next page load will fetch fresh data
           localStorage.removeItem(TUTORIAL_SYNC_FLAG);
         }
       }
     } catch (error) {
-      console.error('[TUTORIAL] Error saving tutorial state:', error);
+      logger.error('[TUTORIAL] Error saving tutorial state:', error);
     }
   };
 

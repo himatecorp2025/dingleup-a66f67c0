@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, AlertTriangle, ExternalLink, Play } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 interface VideoAdModalProps {
   isOpen: boolean;
@@ -105,8 +106,8 @@ export const VideoAdModal = ({
       
       // Log for debugging
       if (currentVideo) {
-        console.log('[VideoAdModal] Platform:', currentVideo.platform);
-        console.log('[VideoAdModal] Using embed_url:', currentVideo.embed_url);
+        logger.log('[VideoAdModal] Platform:', currentVideo.platform);
+        logger.log('[VideoAdModal] Using embed_url:', currentVideo.embed_url);
       }
     }
   }, [isOpen, totalDurationSeconds, needsTapToPlay, currentVideo]);
@@ -158,7 +159,7 @@ export const VideoAdModal = ({
 
   // Handle tap to play (for Instagram)
   const handleTapToPlay = useCallback(() => {
-    console.log('[VideoAdModal] Tap to play triggered');
+    logger.log('[VideoAdModal] Tap to play triggered');
     setIsPlaying(true);
   }, []);
 

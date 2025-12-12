@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import { logger } from '@/lib/logger';
 
 /**
  * Hook to manage fullscreen mode on native iOS and Android apps via Capacitor
@@ -36,9 +37,9 @@ export const useNativeFullscreen = () => {
           await StatusBar.setBackgroundColor({ color: '#000000' });
         }
         
-        console.log('[Native Fullscreen] Fullscreen mode enabled on', Capacitor.getPlatform());
+        logger.log('[Native Fullscreen] Fullscreen mode enabled on', Capacitor.getPlatform());
       } catch (error) {
-        console.error('[Native Fullscreen] Error setting up fullscreen:', error);
+        logger.error('[Native Fullscreen] Error setting up fullscreen:', error);
       }
     };
 

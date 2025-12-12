@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 /**
  * SIMPLIFIED Hook: Show Daily Winners popup once per day
@@ -43,7 +44,7 @@ export const useDailyWinnersPopup = (userId: string | undefined, hasPendingRewar
         // Show popup
         setShowPopup(true);
       } catch (error) {
-        console.error('[DAILY-WINNERS-POPUP] Error:', error);
+        logger.error('[DAILY-WINNERS-POPUP] Error:', error);
         setShowPopup(false);
       }
     };
@@ -71,7 +72,7 @@ export const useDailyWinnersPopup = (userId: string | undefined, hasPendingRewar
 
       setShowPopup(false);
     } catch (error) {
-      console.error('[DAILY-WINNERS-POPUP] Close error:', error);
+      logger.error('[DAILY-WINNERS-POPUP] Close error:', error);
       setShowPopup(false);
     }
   };
