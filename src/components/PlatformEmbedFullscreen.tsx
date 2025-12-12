@@ -65,36 +65,25 @@ const PlatformEmbedFullscreen = memo(({ platform, originalUrl, embedUrl, videoId
     container.innerHTML = '';
 
     if (platform === 'tiktok') {
+      // Use direct iframe embed instead of blockquote (blockquote has fixed size)
       const vid = videoId || extractTikTokVideoId(originalUrl);
-      const blockquote = document.createElement('blockquote');
-      blockquote.className = 'tiktok-embed';
-      blockquote.setAttribute('cite', originalUrl);
-      if (vid) blockquote.setAttribute('data-video-id', vid);
-      blockquote.setAttribute('data-embed-from', 'embed_page');
-      blockquote.style.cssText = 'width:100%!important;height:100%!important;max-width:none!important;min-width:0!important;margin:0!important;';
-      blockquote.innerHTML = '<section></section>';
-      container.appendChild(blockquote);
-
-      loadScript('https://www.tiktok.com/embed.js', () => {
-        if (window.tiktokEmbed?.load) {
-          window.tiktokEmbed.load();
-        }
-      });
+      if (vid) {
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.tiktok.com/embed/v2/${vid}?autoplay=1`;
+        iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0;display:block;background:#000;';
+        iframe.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture';
+        iframe.allowFullscreen = true;
+        container.appendChild(iframe);
+      }
     } else if (platform === 'instagram') {
-      const blockquote = document.createElement('blockquote');
-      blockquote.className = 'instagram-media';
-      blockquote.setAttribute('data-instgrm-permalink', originalUrl);
-      blockquote.setAttribute('data-instgrm-version', '14');
-      blockquote.style.cssText = 'width:100%!important;height:100%!important;max-width:none!important;min-width:0!important;margin:0!important;background:black!important;';
-      container.appendChild(blockquote);
-
-      loadScript('https://www.instagram.com/embed.js', () => {
-        setTimeout(() => {
-          if (window.instgrm?.Embeds?.process) {
-            window.instgrm.Embeds.process();
-          }
-        }, 100);
-      });
+      // Instagram also use iframe approach for fullscreen
+      // Extract post ID from URL and use embed iframe
+      const iframe = document.createElement('iframe');
+      iframe.src = `${originalUrl}embed/`;
+      iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0;display:block;background:#000;';
+      iframe.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture';
+      iframe.allowFullscreen = true;
+      container.appendChild(iframe);
     } else if (platform === 'youtube') {
       let src = embedUrl;
       if (!src) {
