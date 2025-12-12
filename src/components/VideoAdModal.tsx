@@ -228,41 +228,38 @@ export const VideoAdModal = ({
   const hasVideo = embedUrl.length > 0;
 
   return (
-    <div 
-      className="fixed inset-0 z-[9999]"
-      style={{
-        top: 'calc(-1 * env(safe-area-inset-top, 0px))',
-        left: 'calc(-1 * env(safe-area-inset-left, 0px))',
-        right: 'calc(-1 * env(safe-area-inset-right, 0px))',
-        bottom: 'calc(-1 * env(safe-area-inset-bottom, 0px))',
-        width: 'calc(100vw + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))',
-        height: 'calc(100dvh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))',
-        backgroundColor: '#000',
-      }}
-    >
-      {/* Video iframe - FULLSCREEN with scale to fill */}
+    <div className="fixed inset-0 w-screen h-[100dvh] bg-black overflow-hidden z-[9999]">
+      {/* Video iframe - FULLSCREEN */}
       {hasVideo && !videoError ? (
         <>
           {/* Crop container - clips overflow to hide platform UI */}
-          <div 
-            className="absolute inset-0 overflow-hidden"
-            style={{ backgroundColor: '#000' }}
-          >
-            <iframe
-              src={embedUrl}
-              className="absolute border-0 pointer-events-none"
+          <div className="absolute inset-0 overflow-hidden bg-black">
+            {/* Cropping window - fullscreen */}
+            <div
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden"
               style={{
-                width: '120vw',
-                height: '120vh',
-                left: '50%',
-                top: '50%',
-                transform: 'translate(-50%, -46%)',
-                backgroundColor: '#000',
+                width: '100vw',
+                height: '100dvh',
               }}
-              allow="autoplay; encrypted-media; fullscreen"
-              allowFullScreen
-              onError={() => setVideoError(true)}
-            />
+            >
+              {/* Oversized iframe shifted DOWN to hide bottom info bar */}
+              <iframe
+                key={embedUrl}
+                src={embedUrl}
+                className="absolute left-1/2 border-0 pointer-events-none"
+                style={{
+                  width: '110vw',
+                  height: '115dvh',
+                  top: '50%',
+                  transform: 'translateX(-50%) translateY(10vh)',
+                  backgroundColor: '#000',
+                }}
+                allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                allowFullScreen
+                referrerPolicy="origin-when-cross-origin"
+                onError={() => setVideoError(true)}
+              />
+            </div>
           </div>
           
           {/* TOP MASK - hides TikTok/IG top bar with profile info */}
