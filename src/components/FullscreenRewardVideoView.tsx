@@ -277,16 +277,16 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
       {canClose && (
         <button
           onClick={handleClose}
-          className="absolute flex items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors animate-pulse"
+          className="absolute flex items-center justify-center rounded-full bg-black/80 border-2 border-white/40 text-white hover:bg-black/90 transition-colors animate-pulse"
           style={{ 
             top: 'max(env(safe-area-inset-top, 0px), 16px)', 
             right: '16px',
-            width: '48px',
-            height: '48px',
+            width: '56px',
+            height: '56px',
             zIndex: 60,
           }}
         >
-          <X className="w-6 h-6" />
+          <X className="w-7 h-7" />
         </button>
       )}
     </div>
