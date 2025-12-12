@@ -47,9 +47,9 @@ export const WelcomeBonusDialog = ({ open, onClaim, onLater, claiming }: Welcome
 
   useEffect(() => {
     if (open) {
-      const t = setTimeout(() => setContentVisible(true), 10);
+      // INSTANT - no delay
+      setContentVisible(true);
       return () => {
-        clearTimeout(t);
         setContentVisible(false);
       };
     } else {
@@ -161,7 +161,7 @@ export const WelcomeBonusDialog = ({ open, onClaim, onLater, claiming }: Welcome
               aspectRatio: '9 / 16',
               transform: contentVisible ? 'scale(1)' : 'scale(0)',
               opacity: contentVisible ? 1 : 0,
-              transition: 'transform 1.125s cubic-bezier(0.34, 1.56, 0.64, 1) 0ms, opacity 1.125s ease-in-out 0ms',
+              transition: 'transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 150ms ease-in-out',
               transformOrigin: 'center center',
               willChange: contentVisible ? 'transform, opacity' : 'auto',
             }}

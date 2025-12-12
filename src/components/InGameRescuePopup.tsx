@@ -173,18 +173,16 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
         toast.error(t('payment.error.purchase_failed'), { duration: 4000 });
         onClose();
         if (onGameEnd) onGameEnd();
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1500);
+        // INSTANT navigation - no delay
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error('Gold Saver purchase error:', error);
       toast.error(t('payment.error.purchase_failed'), { duration: 4000 });
       onClose();
       if (onGameEnd) onGameEnd();
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 1500);
+      // INSTANT navigation - no delay
+      navigate('/dashboard');
     } finally {
       setLoadingGoldSaver(false);
     }
