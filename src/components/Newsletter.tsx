@@ -58,7 +58,7 @@ const Newsletter = () => {
                 <Bell className="w-10 h-10 text-white drop-shadow-lg" />
               </div>
               
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black mb-4 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
                 {t('landing.newsletter.title')}
               </h2>
               <p className="text-base sm:text-lg text-white/90 mb-8 drop-shadow-lg">
