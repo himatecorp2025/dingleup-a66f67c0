@@ -57,7 +57,25 @@ serve(async (req) => {
     // Check rate limiting (skip for test users during load testing)
     const isTestUser = normalizedUsername.toLowerCase().startsWith('testuser');
     
-    if (!isTestUser) {
+    // Skip rate limiting for admin users (temporary - 7 days from Dec 12, 2025)
+    const { data: adminCheckProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .ilike('username', normalizedUsername)
+      .maybeSingle();
+    
+    let isAdminUser = false;
+    if (adminCheckProfile) {
+      const { data: adminRole } = await supabaseAdmin
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', adminCheckProfile.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      isAdminUser = !!adminRole;
+    }
+    
+    if (!isTestUser && !isAdminUser) {
       const { data: rateLimitData } = await supabaseAdmin
         .from('login_attempts_pin')
         .select('locked_until')
