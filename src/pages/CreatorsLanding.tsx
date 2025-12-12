@@ -191,14 +191,14 @@ const CreatorsLanding = () => {
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-6 leading-[1.5] animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <span className="text-white block mb-4">
+            <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-6 leading-[1.8] animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <span className="text-white block pb-2">
                 {lang === 'hu' ? 'Érd el, hogy' : 'Make'}
               </span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-orange-400 to-yellow-400 block">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-orange-400 to-yellow-400 block py-2">
                 {lang === 'hu' ? 'MINDENKI megnézze' : 'EVERYONE watch'}
               </span>
-              <span className="text-white block mt-4">
+              <span className="text-white block pt-2">
                 {lang === 'hu' ? 'a videóidat!' : 'your videos!'}
               </span>
             </h1>
