@@ -1,7 +1,7 @@
 # Teljes Adatbázis Export Útmutató
 
 **Frissítve:** 2025-12-12  
-**Táblák száma:** 104 tábla
+**Táblák száma:** 105 tábla
 
 ## Admin Felületi Export (AJÁNLOTT)
 

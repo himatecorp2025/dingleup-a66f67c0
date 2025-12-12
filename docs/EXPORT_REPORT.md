@@ -27,7 +27,7 @@ This repository is now **100% self-hostable** and can run independently from Lov
 ### 3. Database Schema ✅
 - **Location**: `/db/schema_latest.sql` (complete consolidated schema)
 - **Migration Files**: `/supabase/migrations` (363 migration history)
-- **Tables**: 104 tables with RLS policies
+- **Tables**: 105 tables with RLS policies
 - **Functions**: Core RPC functions (credit_wallet, check_rate_limit, has_role, etc.)
 - **Indexes**: 100+ performance indexes
 - **Initial Data**: Topics, legal documents, booster types

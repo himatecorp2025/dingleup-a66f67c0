@@ -4,7 +4,7 @@ import { getCorsHeaders, handleCorsPreflight } from '../_shared/cors.ts';
 const corsHeaders = getCorsHeaders('*');
 
 // COMPLETE Tables list in STRICT foreign key dependency order - updated 2025-12-12
-// Verified against information_schema.tables - 104 BASE TABLES in public schema
+// Verified against information_schema.tables - 105 BASE TABLES in public schema
 const TABLES = [
   // Level 0: No foreign keys - base/config tables
   'topics', 'booster_types', 'legal_documents', 'translations', 'daily_prize_table',

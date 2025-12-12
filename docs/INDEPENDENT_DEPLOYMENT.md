@@ -118,7 +118,7 @@ npm install -g @capacitor/cli
 
 ### 3.2 Export Fájlok Tartalma
 
-**104 tábla kerül exportálásra a jelenlegi adatbázisból.**
+**105 tábla kerül exportálásra a jelenlegi adatbázisból.**
 
 **Teljes export fájl (`dingleup_full_export_*.sql`):**
 ```sql

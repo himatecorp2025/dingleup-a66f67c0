@@ -29,71 +29,57 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Tables to export in order (respecting foreign key dependencies)
+// Tables to export in order (respecting foreign key dependencies) - 105 tables total
 const TABLES = [
-  // Core user tables
-  'profiles',
-  'user_roles',
-  'password_history',
-  'pin_reset_tokens',
-  'login_attempts',
-  'login_attempts_pin',
+  // Level 0: No foreign keys - base/config tables
+  'topics', 'booster_types', 'legal_documents', 'translations', 'daily_prize_table',
+  'weekly_prize_table', 'weekly_login_rewards', 'data_collection_metadata', 
+  'engagement_analytics', 'performance_summary', 'rpc_rate_limits',
+  'daily_winner_processing_log', 'app_download_links', 'retention_analytics', 
+  'tips_tricks_videos', 'subscription_promo_events', 'creator_plans',
   
-  // Content tables
-  'topics',
-  'questions',
-  'question_pools',
-  'question_translations',
-  'translations',
-  'legal_documents',
+  // Level 1: Depends on Level 0
+  'profiles', 'questions', 'question_pools',
   
-  // User data
-  'wallet_ledger',
-  'lives_ledger',
-  'game_results',
-  'game_sessions',
-  'game_session_pools',
-  'game_question_analytics',
-  'game_help_usage',
+  // Level 2: Depends on profiles (user_id references)
+  'user_roles', 'password_history', 'pin_reset_tokens', 'login_attempts', 'login_attempts_pin',
+  'question_translations', 'wallet_ledger', 'wallet_ledger_archive',
+  'lives_ledger', 'lives_ledger_archive', 'tutorial_progress', 'user_presence', 'speed_tokens',
+  'user_sessions', 'user_game_settings', 'user_topic_stats', 'user_ad_interest_candidates',
+  'user_cohorts', 'user_engagement_scores', 'user_journey_analytics',
+  'user_activity_daily', 'user_activity_pings',
+  'question_seen_history', 'subscribers', 'welcome_bonus_attempts', 'typing_status',
+  'creator_subscriptions', 'creator_channels', 'creator_admin_notes', 'creator_audit_log',
+  'reward_sessions',
   
-  // Social features
-  'friendships',
-  'invitations',
-  'dm_threads',
-  'dm_messages',
-  'message_reads',
+  // Level 3: Depends on Level 2
+  'game_results', 'game_sessions', 'game_session_pools', 'friendships', 'invitations',
+  'daily_rankings', 'weekly_rankings', 'global_leaderboard', 
+  'leaderboard_cache', 'leaderboard_public_cache', 
+  'daily_leaderboard_snapshot', 'weekly_leaderboard_snapshot',
+  'daily_winner_awarded', 'weekly_winner_awarded', 'daily_winners_popup_views',
+  'daily_winner_popup_shown', 'weekly_winner_popup_shown', 'weekly_login_state',
+  'booster_purchases', 'friend_request_rate_limit', 'admin_audit_log',
+  'creator_videos', 'video_ad_rewards',
   
-  // Leaderboards
-  'daily_rankings',
-  'global_leaderboard',
-  'leaderboard_cache',
-  'daily_leaderboard_snapshot',
-  'daily_winner_awarded',
-  'daily_winners_popup_views',
+  // Level 4: Depends on Level 3
+  'game_question_analytics', 'game_question_analytics_archive', 'game_help_usage', 
+  'game_exit_events', 'dm_threads', 'conversations',
+  'creator_video_countries', 'creator_video_topics', 'creator_video_impressions',
+  'creator_analytics_daily', 'ad_events',
   
-  // Lootbox system
-  'lootbox_instances',
-  'lootbox_daily_plan',
+  // Level 5: Depends on Level 4
+  'dm_messages', 'message_reads', 'conversation_members', 'messages', 'thread_participants',
   
-  // Monetization
-  'purchases',
-  'booster_types',
-  'booster_purchases',
+  // Level 6: Depends on Level 5
+  'message_media', 'message_reactions',
   
-  // Analytics tables
-  'app_session_events',
-  'navigation_events',
-  'feature_usage_events',
-  'game_exit_events',
-  'error_logs',
-  'performance_metrics',
-  'device_geo_analytics',
-  
-  // Other tables
-  'user_presence',
-  'tutorial_progress',
-  'question_likes',
-  'question_reactions',
+  // Analytics tables (no strict FK dependencies)
+  'app_session_events', 'app_session_events_archive', 'navigation_events', 
+  'feature_usage_events', 'feature_usage_events_archive',
+  'bonus_claim_events', 'chat_interaction_events', 'conversion_events', 
+  'error_logs', 'performance_metrics', 'device_geo_analytics', 
+  'session_details', 'reports',
 ];
 
 /**
