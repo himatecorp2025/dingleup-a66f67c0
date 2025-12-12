@@ -19,11 +19,15 @@ interface VideoAdModalProps {
 
 interface VideoData {
   id: string;
-  video_url: string;
-  embed_url: string | null;
+  video_url?: string;
+  videoUrl?: string;
+  embed_url?: string | null;
+  embedUrl?: string | null;
   platform: string;
-  duration_seconds: number | null;
+  duration_seconds?: number | null;
+  durationSeconds?: number | null;
   creator_name?: string;
+  creatorName?: string;
 }
 
 const SEGMENT_DURATION = 15; // seconds per video segment
@@ -140,9 +144,13 @@ export const VideoAdModal = ({
   const currentPlatform = currentVideo?.platform?.toLowerCase() || '';
   const needsTapToPlay = NEEDS_TAP_TO_PLAY.includes(currentPlatform);
   
+  // Handle both snake_case (from database) and camelCase (from preload-reward-videos)
+  const videoUrl = currentVideo?.video_url || currentVideo?.videoUrl || '';
+  const rawEmbedUrl = currentVideo?.embed_url || currentVideo?.embedUrl || '';
+  
   // Get embed URL with autoplay params
-  const embedUrl = currentVideo?.embed_url 
-    ? addAutoplayParams(currentVideo.embed_url, currentVideo.platform)
+  const embedUrl = rawEmbedUrl 
+    ? addAutoplayParams(rawEmbedUrl, currentVideo?.platform || '')
     : '';
 
   // Lock body scroll
@@ -276,10 +284,11 @@ export const VideoAdModal = ({
     onComplete();
   }, [secondsLeft, onComplete, context, lang, doubledAmount]);
 
-  // Handle go to creator
+  // Handle go to creator - use videoUrl (supports both formats)
   const handleGoToCreator = useCallback(() => {
-    if (currentVideo?.video_url) {
-      window.open(currentVideo.video_url, '_blank', 'noopener,noreferrer');
+    const url = currentVideo?.video_url || currentVideo?.videoUrl;
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   }, [currentVideo]);
 
@@ -306,8 +315,8 @@ export const VideoAdModal = ({
         <PlatformEmbedFullscreen
           key={`${currentVideo.id}-${activeIndex}`}
           platform={currentPlatform as 'tiktok' | 'youtube' | 'instagram' | 'facebook'}
-          originalUrl={currentVideo.video_url}
-          embedUrl={currentVideo.embed_url || undefined}
+          originalUrl={videoUrl}
+          embedUrl={rawEmbedUrl || undefined}
         />
       ) : (
         // No video - show logo
@@ -445,7 +454,7 @@ export const VideoAdModal = ({
       )}
 
       {/* Go to creator CTA - bottom left */}
-      {isPlaying && currentVideo?.video_url && (
+      {isPlaying && videoUrl && (
         <button
           onClick={handleGoToCreator}
           style={{ 
