@@ -61,15 +61,21 @@ export const useDailyRankReward = (userId: string | undefined) => {
         return;
       }
 
-      // CRITICAL: Trigger on-demand daily winners processing before checking pending reward
-      // This ensures that even if cron didn't run, the user's rewards will be processed
-      console.log('[RANK-REWARD] Triggering on-demand daily winners processing...');
+      // CRITICAL: Trigger on-demand daily winners processing via RPC (bypasses edge function auth issues)
+      console.log('[RANK-REWARD] Triggering on-demand daily winners processing via RPC...');
       try {
-        const { error: processError } = await supabase.functions.invoke('process-daily-winners');
+        // Calculate yesterday's date in user's local timezone
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayDate = yesterday.toISOString().split('T')[0];
+        
+        const { data: processResult, error: processError } = await supabase
+          .rpc('process_daily_winners_for_date', { p_target_date: yesterdayDate });
+        
         if (processError) {
-          console.warn('[RANK-REWARD] Daily winners processing returned error (non-blocking):', processError);
+          console.warn('[RANK-REWARD] Daily winners RPC error (non-blocking):', processError);
         } else {
-          console.log('[RANK-REWARD] Daily winners processing completed');
+          console.log('[RANK-REWARD] Daily winners processing completed:', processResult);
         }
       } catch (processException) {
         console.warn('[RANK-REWARD] Daily winners processing exception (non-blocking):', processException);

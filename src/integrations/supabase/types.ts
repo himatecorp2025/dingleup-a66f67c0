@@ -3976,6 +3976,10 @@ export type Database = {
         Returns: boolean
       }
       claim_daily_gift: { Args: never; Returns: Json }
+      claim_daily_winner_reward: {
+        Args: { p_country_code: string; p_day_date: string; p_user_id: string }
+        Returns: Json
+      }
       claim_welcome_bonus: { Args: never; Returns: Json }
       cleanup_completed_game_sessions: { Args: never; Returns: Json }
       cleanup_expired_game_sessions: { Args: never; Returns: undefined }
