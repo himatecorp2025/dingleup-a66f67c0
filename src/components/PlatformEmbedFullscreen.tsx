@@ -65,15 +65,21 @@ const PlatformEmbedFullscreen = memo(({ platform, originalUrl, embedUrl, videoId
     container.innerHTML = '';
 
     if (platform === 'tiktok') {
-      // Use direct iframe embed instead of blockquote (blockquote has fixed size)
+      // TikTok embed has fixed internal size - we scale it to fill screen
       const vid = videoId || extractTikTokVideoId(originalUrl);
       if (vid) {
+        // Wrapper to scale the iframe content
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(2.5);width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;';
+        
         const iframe = document.createElement('iframe');
         iframe.src = `https://www.tiktok.com/embed/v2/${vid}?autoplay=1`;
-        iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0;display:block;background:#000;';
+        iframe.style.cssText = 'width:100%;height:100%;border:0;display:block;background:#000;';
         iframe.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture';
         iframe.allowFullscreen = true;
-        container.appendChild(iframe);
+        
+        wrapper.appendChild(iframe);
+        container.appendChild(wrapper);
       }
     } else if (platform === 'instagram') {
       // Instagram also use iframe approach for fullscreen
@@ -135,6 +141,7 @@ const PlatformEmbedFullscreen = memo(({ platform, originalUrl, embedUrl, videoId
         width: '100%',
         height: '100%',
         backgroundColor: '#000',
+        overflow: 'hidden',
       }}
     />
   );
