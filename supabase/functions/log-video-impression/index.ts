@@ -10,8 +10,44 @@ interface ImpressionRequest {
   video_id: string;
   context: 'daily_gift' | 'game_end' | 'refill';
   watched_full_15s: boolean;
-  is_relevant: boolean;
   sequence_position?: number;
+}
+
+// Calculate is_relevant_viewer based on video topics intersecting user's TOP3 topics
+async function calculateIsRelevant(
+  supabase: any,
+  userId: string,
+  videoId: string
+): Promise<boolean> {
+  // Get video's topic IDs
+  const { data: videoTopics } = await supabase
+    .from('creator_video_topics')
+    .select('topic_id')
+    .eq('creator_video_id', videoId);
+
+  if (!videoTopics || videoTopics.length === 0) {
+    return false;
+  }
+
+  const videoTopicIds = (videoTopics as { topic_id: number }[]).map(t => t.topic_id);
+
+  // Get user's TOP3 topics by correct_count
+  const { data: userTopStats } = await supabase
+    .from('user_topic_stats')
+    .select('topic_id')
+    .eq('user_id', userId)
+    .order('correct_count', { ascending: false })
+    .limit(3);
+
+  if (!userTopStats || userTopStats.length === 0) {
+    return false;
+  }
+
+  const userTop3TopicIds = (userTopStats as { topic_id: number }[]).map(t => t.topic_id);
+
+  // Check intersection
+  const hasIntersection = videoTopicIds.some(vt => userTop3TopicIds.includes(vt));
+  return hasIntersection;
 }
 
 serve(async (req) => {
@@ -46,9 +82,12 @@ serve(async (req) => {
     }
 
     const body: ImpressionRequest = await req.json();
-    const { video_id, context, watched_full_15s, is_relevant, sequence_position = 1 } = body;
+    const { video_id, context, watched_full_15s, sequence_position = 1 } = body;
 
-    console.log(`[log-video-impression] User ${userId}, video ${video_id}, context: ${context}, watched: ${watched_full_15s}`);
+    // Calculate is_relevant_viewer server-side
+    const isRelevant = await calculateIsRelevant(supabaseClient, userId, video_id);
+
+    console.log(`[log-video-impression] User ${userId}, video ${video_id}, context: ${context}, watched: ${watched_full_15s}, is_relevant: ${isRelevant}`);
 
     // Insert impression log
     const { error: insertError } = await supabaseClient
@@ -58,7 +97,7 @@ serve(async (req) => {
         viewer_user_id: userId,
         context,
         watched_full_15s,
-        is_relevant_viewer: is_relevant,
+        is_relevant_viewer: isRelevant,
         sequence_position,
       });
 

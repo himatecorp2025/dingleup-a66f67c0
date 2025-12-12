@@ -14,6 +14,43 @@ interface RewardCompleteRequest {
   multiplier?: number; // 1 = declined ad, 2 = watched ad (default for backward compat)
 }
 
+// Calculate is_relevant_viewer based on video topics intersecting user's TOP3 topics
+async function calculateIsRelevant(
+  supabase: any,
+  userId: string,
+  videoId: string
+): Promise<boolean> {
+  // Get video's topic IDs
+  const { data: videoTopics } = await supabase
+    .from('creator_video_topics')
+    .select('topic_id')
+    .eq('creator_video_id', videoId);
+
+  if (!videoTopics || videoTopics.length === 0) {
+    return false;
+  }
+
+  const videoTopicIds = (videoTopics as { topic_id: number }[]).map(t => t.topic_id);
+
+  // Get user's TOP3 topics by correct_count
+  const { data: userTopStats } = await supabase
+    .from('user_topic_stats')
+    .select('topic_id')
+    .eq('user_id', userId)
+    .order('correct_count', { ascending: false })
+    .limit(3);
+
+  if (!userTopStats || userTopStats.length === 0) {
+    return false;
+  }
+
+  const userTop3TopicIds = (userTopStats as { topic_id: number }[]).map(t => t.topic_id);
+
+  // Check intersection
+  const hasIntersection = videoTopicIds.some(vt => userTop3TopicIds.includes(vt));
+  return hasIntersection;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -128,16 +165,19 @@ serve(async (req) => {
 
     console.log(`[reward-complete] Crediting ${coinsToCredit} coins, ${livesToCredit} lives`);
 
-    // Log impressions for watched videos
+    // Log impressions for watched videos with calculated is_relevant_viewer
     for (let i = 0; i < watchedVideoIds.length; i++) {
+      const videoId = watchedVideoIds[i];
+      const isRelevant = await calculateIsRelevant(supabaseClient, userId, videoId);
+      
       await supabaseClient
         .from('creator_video_impressions')
         .insert({
-          creator_video_id: watchedVideoIds[i],
+          creator_video_id: videoId,
           viewer_user_id: userId,
           context: eventType,
           watched_full_15s: true,
-          is_relevant_viewer: false,
+          is_relevant_viewer: isRelevant,
           sequence_position: i + 1,
         });
     }
