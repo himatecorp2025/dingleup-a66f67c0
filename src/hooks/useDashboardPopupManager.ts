@@ -68,20 +68,17 @@ export const useDashboardPopupManager = (params: PopupManagerParams) => {
     }
   }, [userId, needsAgeVerification, profileLoading]);
 
-  // Priority 2: Welcome Bonus
+  // Priority 2: Welcome Bonus (instant - no delay)
   useEffect(() => {
     if (!canMountModals || !userId || profileLoading) return;
     if (!popupState.ageGateCompleted || popupState.showAgeGate) return;
     
     if (welcomeBonus.canClaim && !popupState.showWelcomeBonus) {
-      const timer = setTimeout(() => {
-        setPopupState(prev => ({ ...prev, showWelcomeBonus: true }));
-      }, 500);
-      return () => clearTimeout(timer);
+      setPopupState(prev => ({ ...prev, showWelcomeBonus: true }));
     }
   }, [canMountModals, userId, profileLoading, popupState.ageGateCompleted, popupState.showAgeGate, welcomeBonus.canClaim, popupState.showWelcomeBonus]);
 
-  // Priority 3: Daily Gift
+  // Priority 3: Daily Gift (instant - no delay)
   useEffect(() => {
     if (!canMountModals || !userId || profileLoading) return;
     if (!popupState.ageGateCompleted || popupState.showAgeGate || popupState.showWelcomeBonus) return;
@@ -89,14 +86,11 @@ export const useDashboardPopupManager = (params: PopupManagerParams) => {
     if (popupState.dailyGiftCompleted) return;
     
     if (dailyGift.canClaim && !popupState.showDailyGift) {
-      const timer = setTimeout(() => {
-        setPopupState(prev => ({ ...prev, showDailyGift: true }));
-      }, 500);
-      return () => clearTimeout(timer);
+      setPopupState(prev => ({ ...prev, showDailyGift: true }));
     }
   }, [canMountModals, userId, profileLoading, popupState.ageGateCompleted, popupState.showAgeGate, popupState.showWelcomeBonus, welcomeBonus.canClaim, popupState.welcomeBonusCompleted, dailyGift.canClaim, popupState.showDailyGift, popupState.dailyGiftCompleted]);
 
-  // Priority 4: Personal Winner OR Daily Winners (3 second delay after Daily Gift completion)
+  // Priority 4: Personal Winner OR Daily Winners (instant after Daily Gift completion)
   useEffect(() => {
     if (!canMountModals || !userId || profileLoading) return;
     if (!popupState.ageGateCompleted || popupState.showAgeGate || popupState.showWelcomeBonus || popupState.showDailyGift) return;
@@ -112,20 +106,15 @@ export const useDashboardPopupManager = (params: PopupManagerParams) => {
       return;
     }
 
-    // If user has pending reward → Personal Winner (3 second delay)
+    // If user has pending reward → Personal Winner (instant)
     if (hasPendingReward && !popupState.showPersonalWinner) {
-      const timer = setTimeout(() => {
-        setPopupState(prev => ({ ...prev, showPersonalWinner: true, showDailyWinners: false }));
-      }, 3000); // 3 second delay after Daily Gift closes
-      return () => clearTimeout(timer);
+      setPopupState(prev => ({ ...prev, showPersonalWinner: true, showDailyWinners: false }));
+      return;
     }
 
-    // If no pending reward → Daily Winners (if should show) (3 second delay)
+    // If no pending reward → Daily Winners (if should show) (instant)
     if (!hasPendingReward && dailyWinners.showPopup && !popupState.showDailyWinners) {
-      const timer = setTimeout(() => {
-        setPopupState(prev => ({ ...prev, showDailyWinners: true, showPersonalWinner: false }));
-      }, 3000); // 3 second delay after Daily Gift closes
-      return () => clearTimeout(timer);
+      setPopupState(prev => ({ ...prev, showDailyWinners: true, showPersonalWinner: false }));
     }
   }, [canMountModals, userId, profileLoading, popupState.ageGateCompleted, popupState.showAgeGate, popupState.showWelcomeBonus, popupState.showDailyGift, dailyGift.canClaim, popupState.dailyGiftCompleted, hasPendingReward, dailyWinners.showPopup, popupState.showDailyWinners, popupState.showPersonalWinner]);
 
