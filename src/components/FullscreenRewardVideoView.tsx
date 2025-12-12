@@ -200,16 +200,18 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
         setShowIntroVideo(true);
         // DO NOT hide creator link - keep it visible during intro video
         
-        const doubledAmount = rewardAmount ? rewardAmount * 2 : 0;
+        // rewardAmount is the ORIGINAL coins earned during gameplay
+        // Video ad reward gives +originalReward bonus (so total becomes 2× original)
+        const bonusAmount = rewardAmount || 0;
         let toastMessage: string;
         if (context === 'refill') {
           toastMessage = lang === 'hu' 
             ? 'Zárd be a videót a jutalom jóváírásához! +500 arany és 5 élet' 
             : 'Close the video to claim your reward! +500 gold and 5 lives';
-        } else if (doubledAmount > 0) {
+        } else if (bonusAmount > 0) {
           toastMessage = lang === 'hu' 
-            ? `Zárd be a videót a jutalom jóváírásához! +${doubledAmount} arany` 
-            : `Close the video to claim your reward! +${doubledAmount} gold`;
+            ? `Zárd be a videót a jutalom jóváírásához! +${bonusAmount} arany bónusz` 
+            : `Close the video to claim your reward! +${bonusAmount} gold bonus`;
         } else {
           toastMessage = lang === 'hu' 
             ? 'Zárd be a videót a jutalom jóváírásához!' 
