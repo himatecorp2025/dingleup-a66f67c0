@@ -76,10 +76,12 @@ export const GameHeader = memo(({ lives, maxLives, coins, onExit }: GameHeaderPr
           <DiamondHexagon
             type="lives"
             value={`${lives}/${maxLives}`}
+            compact
           />
           <DiamondHexagon
             type="coins"
             value={coins}
+            compact
           />
         </div>
       </div>
