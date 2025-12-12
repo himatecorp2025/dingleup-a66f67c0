@@ -161,7 +161,8 @@ export const useVideoAd = () => {
   const claimReward = useCallback(async (
     rewardType: 'daily_gift_double' | 'game_end_double' | 'refill',
     originalReward: number = 0,
-    idempotencyKey: string
+    idempotencyKey: string,
+    multiplier: number = 2 // 1 = declined video (1× base), 2 = watched video (2× base)
   ): Promise<{ success: boolean; coinsCredited?: number; livesCredited?: number }> => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -174,6 +175,7 @@ export const useVideoAd = () => {
           reward_type: rewardType,
           original_reward: originalReward,
           idempotency_key: idempotencyKey,
+          multiplier: multiplier,
         },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });

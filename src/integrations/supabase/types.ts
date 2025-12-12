@@ -3079,6 +3079,56 @@ export type Database = {
         }
         Relationships: []
       }
+      reward_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          event_type: string
+          game_result_id: string | null
+          id: string
+          metadata: Json | null
+          multiplier: number | null
+          original_reward: number
+          status: string
+          user_id: string
+          watched_video_ids: string[] | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          event_type: string
+          game_result_id?: string | null
+          id?: string
+          metadata?: Json | null
+          multiplier?: number | null
+          original_reward?: number
+          status?: string
+          user_id: string
+          watched_video_ids?: string[] | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          event_type?: string
+          game_result_id?: string | null
+          id?: string
+          metadata?: Json | null
+          multiplier?: number | null
+          original_reward?: number
+          status?: string
+          user_id?: string
+          watched_video_ids?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_sessions_game_result_id_fkey"
+            columns: ["game_result_id"]
+            isOneToOne: false
+            referencedRelation: "game_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rpc_rate_limits: {
         Row: {
           call_count: number

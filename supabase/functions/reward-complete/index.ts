@@ -11,6 +11,7 @@ interface RewardCompleteRequest {
   watchedVideoIds: string[];
   eventType: 'daily_gift' | 'end_game' | 'refill';
   originalReward?: number;
+  multiplier?: number; // 1 = declined ad, 2 = watched ad (default for backward compat)
 }
 
 serve(async (req) => {
@@ -46,11 +47,15 @@ serve(async (req) => {
 
     const body: RewardCompleteRequest = await req.json();
     const { rewardSessionId, watchedVideoIds, eventType, originalReward = 0 } = body;
+    // FIX: multiplier determines final reward: 1 = declined ad (1×), 2 = watched ad (2×)
+    // Default to 2 for backward compatibility with existing video-watched flows
+    const multiplier = body.multiplier ?? 2;
 
-    console.log(`[reward-complete] User ${userId}, session: ${rewardSessionId}, watched: ${watchedVideoIds.length}`);
+    console.log(`[reward-complete] User ${userId}, session: ${rewardSessionId}, watched: ${watchedVideoIds.length}, multiplier: ${multiplier}`);
 
-    // Use session ID as idempotency key
-    const idempotencyKey = `reward-${rewardSessionId}`;
+    // CRITICAL: Idempotency key includes multiplier to prevent abuse
+    // e.g., claiming 1× then trying 2× with same session
+    const idempotencyKey = `reward-${rewardSessionId}:${multiplier}`;
 
     // Check idempotency - prevent double claims
     const { data: existingClaim } = await supabaseClient
@@ -60,42 +65,64 @@ serve(async (req) => {
       .single();
 
     if (existingClaim) {
-      console.log(`[reward-complete] Already claimed: ${rewardSessionId}`);
+      console.log(`[reward-complete] Already claimed: ${rewardSessionId} with multiplier ${multiplier}`);
       return new Response(
         JSON.stringify({ success: true, already_claimed: true, reward: { coinsDelta: 0, livesDelta: 0 } }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Determine required ads and validate
-    const requiredAds = eventType === 'refill' ? 2 : 1;
-    
-    if (watchedVideoIds.length < requiredAds) {
-      console.log(`[reward-complete] Insufficient videos watched: ${watchedVideoIds.length} < ${requiredAds}`);
+    // Also check if this session was already claimed with different multiplier
+    const { data: anyExistingClaim } = await supabaseClient
+      .from('wallet_ledger')
+      .select('id')
+      .like('idempotency_key', `reward-${rewardSessionId}:%`)
+      .limit(1)
+      .maybeSingle();
+
+    if (anyExistingClaim) {
+      console.log(`[reward-complete] Session ${rewardSessionId} already claimed with different multiplier`);
       return new Response(
-        JSON.stringify({ success: false, error: 'INSUFFICIENT_VIDEOS_WATCHED' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: true, already_claimed: true, reward: { coinsDelta: 0, livesDelta: 0 } }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Calculate reward based on event type
+    // For multiplier=2 (watched ad), validate videos were watched
+    if (multiplier === 2) {
+      const requiredAds = eventType === 'refill' ? 2 : 1;
+      
+      if (watchedVideoIds.length < requiredAds) {
+        console.log(`[reward-complete] Insufficient videos watched: ${watchedVideoIds.length} < ${requiredAds}`);
+        return new Response(
+          JSON.stringify({ success: false, error: 'INSUFFICIENT_VIDEOS_WATCHED' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Calculate reward based on event type and multiplier
     let coinsToCredit = 0;
     let livesToCredit = 0;
 
     if (eventType === 'refill') {
-      // Refill: fixed 500 coins + 5 lives
-      coinsToCredit = 500;
-      livesToCredit = 5;
+      // Refill: fixed 500 coins + 5 lives (only if watched ads)
+      if (multiplier === 2) {
+        coinsToCredit = 500;
+        livesToCredit = 5;
+      }
+      // multiplier=1 for refill = user declined, no reward
     } else if (eventType === 'daily_gift') {
-      // Daily gift doubling: Credit the ADDITIONAL amount
-      // Base was already credited during daily gift claim
-      coinsToCredit = originalReward;
-      livesToCredit = 0;
+      // Daily gift: base was already credited, this is the ADDITIONAL amount for doubling
+      if (multiplier === 2) {
+        coinsToCredit = originalReward; // Additional coins to double the base
+      }
+      // multiplier=1 = declined ad, base already credited, nothing more
     } else if (eventType === 'end_game') {
-      // Game end 2×: Credit the FULL 2× amount
-      // Base was NOT credited to DB (only shown visually in frontend)
-      // So we credit originalReward × 2 here as the complete reward
-      coinsToCredit = originalReward * 2;
+      // FIX: Game end - credit originalReward × multiplier
+      // multiplier=1: user declined ad → 1× base reward
+      // multiplier=2: user watched ad → 2× base reward
+      coinsToCredit = originalReward * multiplier;
       livesToCredit = 0;
     }
 
@@ -162,11 +189,12 @@ serve(async (req) => {
         .eq('id', userId);
     }
 
-    // Mark session as completed (if table exists)
+    // Mark session as completed with multiplier
     await supabaseClient
       .from('reward_sessions')
       .update({ 
         status: 'completed', 
+        multiplier: multiplier,
         completed_at: new Date().toISOString(),
         watched_video_ids: watchedVideoIds,
       })

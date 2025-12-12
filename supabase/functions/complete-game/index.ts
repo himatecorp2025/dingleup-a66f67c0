@@ -17,8 +17,9 @@ interface GameCompletion {
   correctAnswers: number;
   totalQuestions: number;
   averageResponseTime: number;
-  coinsEarned: number; // NEW: Frontend-calculated coins to credit
+  coinsEarned: number; // Frontend-calculated coins to credit
   questionAnalytics?: QuestionAnalytic[];
+  pendingReward?: boolean; // If true, don't credit coins - wait for reward-complete
 }
 
 Deno.serve(async (req) => {
@@ -291,11 +292,46 @@ Deno.serve(async (req) => {
       });
     }
 
-    // NEW: Credit coins to wallet (single credit at game end)
-    if (coinsEarned > 0) {
+    // FIX: Only credit coins if NOT pending reward (video doubling available)
+    // If pendingReward=true, create session and let reward-complete handle crediting
+    let rewardSessionId: string | null = null;
+    
+    if (body.pendingReward === true) {
+      // Create pending reward session - coins will be credited by reward-complete
+      await measureStage(ctx, 'create_reward_session', async () => {
+        try {
+          incDbQuery(ctx);
+          const { data: session, error: sessionError } = await supabaseAdmin
+            .from('reward_sessions')
+            .insert({
+              user_id: user.id,
+              event_type: 'end_game',
+              original_reward: coinsEarned,
+              status: 'pending',
+              game_result_id: gameResult?.id,
+              metadata: {
+                correct_answers: body.correctAnswers,
+                correlation_id: correlationId,
+              },
+            })
+            .select('id')
+            .single();
+
+          if (sessionError) {
+            console.error('[complete-game] Reward session creation error:', sessionError);
+          } else {
+            rewardSessionId = session.id;
+            console.log(`[complete-game] Created pending reward session ${rewardSessionId} for ${coinsEarned} coins`);
+          }
+        } catch (sessionErr) {
+          console.error('[complete-game] Reward session exception:', sessionErr);
+        }
+      });
+    } else if (coinsEarned > 0) {
+      // No video doubling - credit coins immediately (1× reward)
       await measureStage(ctx, 'credit_wallet', async () => {
         try {
-          const idempotencyKey = `game_complete:${user.id}:${gameResult?.id || Date.now()}`;
+          const walletIdempotencyKey = `game_complete:${user.id}:${gameResult?.id || Date.now()}`;
           
           // Insert wallet ledger entry
           incDbQuery(ctx);
@@ -306,7 +342,7 @@ Deno.serve(async (req) => {
               delta_coins: coinsEarned,
               delta_lives: 0,
               source: 'game_complete',
-              idempotency_key: idempotencyKey,
+              idempotency_key: walletIdempotencyKey,
               metadata: {
                 correct_answers: body.correctAnswers,
                 game_result_id: gameResult?.id,
@@ -332,7 +368,7 @@ Deno.serve(async (req) => {
               .eq('id', user.id);
           }
 
-          console.log(`[complete-game] Credited ${coinsEarned} coins to user ${user.id}`);
+          console.log(`[complete-game] Credited ${coinsEarned} coins to user ${user.id} (no doubling)`);
         } catch (walletErr) {
           console.error('[complete-game] Wallet credit error:', walletErr);
         }
@@ -422,6 +458,8 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         coinsEarned,
+        rewardSessionId, // For pending rewards - frontend passes to reward-complete
+        pendingReward: body.pendingReward === true,
         message: 'Game completed successfully!',
         correlation_id: correlationId,
         performance: {

@@ -185,7 +185,7 @@ export const useVideoAdFlow = ({ userId, onRewardStarted, onRewardClaimed }: Use
       );
     }
 
-    // Claim reward based on context
+    // Claim reward based on context with multiplier=2 (user watched video)
     let rewardType: 'daily_gift_double' | 'game_end_double' | 'refill';
     
     if (state.context === 'daily_gift') {
@@ -199,7 +199,8 @@ export const useVideoAdFlow = ({ userId, onRewardStarted, onRewardClaimed }: Use
     const result = await videoAd.claimReward(
       rewardType,
       state.originalReward,
-      idempotencyKey
+      idempotencyKey,
+      2 // multiplier=2: user watched video → 2× reward
     );
 
     if (result.success && onRewardClaimed) {
@@ -218,8 +219,26 @@ export const useVideoAdFlow = ({ userId, onRewardStarted, onRewardClaimed }: Use
     });
   }, [state, userId, videoAd, onRewardClaimed]);
 
-  // Cancel video watching (before completion)
-  const cancelVideo = useCallback(() => {
+  // FIX: Cancel video watching - credit 1× base reward for game_end (user declined doubling)
+  const cancelVideo = useCallback(async () => {
+    // For game_end context, user clicked double button but then cancelled
+    // They should still get 1× base reward
+    if (state.context === 'game_end' && state.originalReward > 0) {
+      const idempotencyKey = `video-ad-${state.context}-${userId}-${Date.now()}`;
+      
+      // Credit 1× base reward since user declined doubling
+      await videoAd.claimReward(
+        'game_end_double',
+        state.originalReward,
+        idempotencyKey,
+        1 // multiplier=1: user declined video → 1× base reward
+      );
+
+      if (onRewardClaimed) {
+        onRewardClaimed(state.originalReward, 0);
+      }
+    }
+
     setState({
       showPrompt: false,
       showVideo: false,
@@ -229,7 +248,7 @@ export const useVideoAdFlow = ({ userId, onRewardStarted, onRewardClaimed }: Use
       context: null,
       originalReward: 0,
     });
-  }, []);
+  }, [state, userId, videoAd, onRewardClaimed]);
 
   return {
     // State

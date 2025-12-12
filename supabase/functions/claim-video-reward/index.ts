@@ -10,6 +10,7 @@ interface RewardRequest {
   reward_type: 'daily_gift_double' | 'game_end_double' | 'refill';
   original_reward?: number; // For doubling rewards
   idempotency_key: string;
+  multiplier?: number; // 1 = declined video (1× base), 2 = watched video (2× base). Default: 2
 }
 
 serve(async (req) => {
@@ -45,18 +46,40 @@ serve(async (req) => {
 
     const body: RewardRequest = await req.json();
     const { reward_type, original_reward = 0, idempotency_key } = body;
+    // FIX: multiplier controls final reward: 1 = declined video (1×), 2 = watched video (2×)
+    const multiplier = body.multiplier ?? 2;
 
-    console.log(`[claim-video-reward] User ${userId}, type: ${reward_type}, key: ${idempotency_key}`);
+    console.log(`[claim-video-reward] User ${userId}, type: ${reward_type}, key: ${idempotency_key}, multiplier: ${multiplier}`);
 
-    // Check idempotency
+    // CRITICAL: Idempotency key includes multiplier to prevent abuse
+    // (e.g., claiming 1× then trying to claim 2× with same base key)
+    const finalIdempotencyKey = `${idempotency_key}:${multiplier}`;
+
+    // Check idempotency with the full key
     const { data: existingClaim } = await supabaseClient
       .from('wallet_ledger')
       .select('id')
-      .eq('idempotency_key', idempotency_key)
+      .eq('idempotency_key', finalIdempotencyKey)
       .single();
 
     if (existingClaim) {
-      console.log(`[claim-video-reward] Already claimed: ${idempotency_key}`);
+      console.log(`[claim-video-reward] Already claimed: ${finalIdempotencyKey}`);
+      return new Response(
+        JSON.stringify({ success: true, already_claimed: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Also check if any multiplier was already used for this base key
+    const { data: anyExistingClaim } = await supabaseClient
+      .from('wallet_ledger')
+      .select('id')
+      .like('idempotency_key', `${idempotency_key}:%`)
+      .limit(1)
+      .maybeSingle();
+
+    if (anyExistingClaim) {
+      console.log(`[claim-video-reward] Session already claimed with different multiplier: ${idempotency_key}`);
       return new Response(
         JSON.stringify({ success: true, already_claimed: true }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -67,33 +90,39 @@ serve(async (req) => {
     let livesToCredit = 0;
 
     if (reward_type === 'refill') {
-      // Get refill reward from config
-      const { data: rewardConfig } = await supabaseClient
-        .from('video_ad_rewards')
-        .select('coins_reward, lives_reward')
-        .eq('id', 'refill')
-        .single();
+      // Refill only awarded if user watched video (multiplier=2)
+      if (multiplier === 2) {
+        const { data: rewardConfig } = await supabaseClient
+          .from('video_ad_rewards')
+          .select('coins_reward, lives_reward')
+          .eq('id', 'refill')
+          .single();
 
-      if (rewardConfig) {
-        coinsToCredit = rewardConfig.coins_reward;
-        livesToCredit = rewardConfig.lives_reward;
-      } else {
-        // Default values
-        coinsToCredit = 500;
-        livesToCredit = 5;
+        if (rewardConfig) {
+          coinsToCredit = rewardConfig.coins_reward;
+          livesToCredit = rewardConfig.lives_reward;
+        } else {
+          coinsToCredit = 500;
+          livesToCredit = 5;
+        }
       }
+      // multiplier=1 for refill = declined, no reward
     } else if (reward_type === 'daily_gift_double') {
-      // Daily gift: credit the ADDITIONAL amount (base was already claimed)
-      coinsToCredit = original_reward;
+      // Daily gift: base was already credited, this is the ADDITIONAL amount
+      if (multiplier === 2) {
+        coinsToCredit = original_reward; // Double the base
+      }
+      // multiplier=1 = declined, base already credited, nothing more
     } else if (reward_type === 'game_end_double') {
-      // Game end 2×: Credit the FULL 2× amount (base NOT yet credited to DB)
-      // Frontend shows base amount visually, but DB credit only happens here
-      coinsToCredit = original_reward * 2;
+      // FIX: Game end reward - credit based on multiplier
+      // multiplier=1: user declined video → 1× base reward
+      // multiplier=2: user watched video → 2× base reward
+      coinsToCredit = original_reward * multiplier;
     }
 
     console.log(`[claim-video-reward] Crediting ${coinsToCredit} coins, ${livesToCredit} lives`);
 
-    // Credit wallet
+    // Credit wallet with multiplier-aware idempotency key
     const { error: walletError } = await supabaseClient
       .from('wallet_ledger')
       .insert({
@@ -101,10 +130,11 @@ serve(async (req) => {
         delta_coins: coinsToCredit,
         delta_lives: livesToCredit,
         source: `video_ad_${reward_type}`,
-        idempotency_key,
+        idempotency_key: finalIdempotencyKey,
         metadata: {
           reward_type,
           original_reward,
+          multiplier,
         },
       });
 
