@@ -4,8 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useI18n } from '@/i18n';
 
-const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes
-const WARNING_TIMEOUT = 9 * 60 * 1000; // 9 minutes (60 seconds before logout)
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes (was 10)
+const WARNING_TIMEOUT = 29 * 60 * 1000; // 29 minutes (60 seconds before logout)
 
 export const useAutoLogout = () => {
   const navigate = useNavigate();
