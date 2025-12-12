@@ -203,8 +203,8 @@ export const FullscreenRewardVideoView: React.FC<FullscreenRewardVideoViewProps>
 
   return (
     <div 
-      className="fixed inset-0 z-[9999] bg-black"
-      style={{ width: '100vw', height: '100dvh' }}
+      className="fixed inset-0 bg-black"
+      style={{ width: '100vw', height: '100dvh', zIndex: 1000000 }}
     >
       {/* Video embed - lowest layer */}
       <div className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }}>
