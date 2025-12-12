@@ -430,27 +430,6 @@ serve(async (req) => {
       );
     }
 
-    // If activating now, check 3/24h limit
-    if (activate_now) {
-      const { count } = await supabaseClient
-        .from('creator_videos')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .gte('first_activated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-
-      if (count !== null && count >= 3) {
-        console.log("[SUBMIT-VIDEO] Daily limit reached, count:", count);
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: "DAILY_LIMIT_REACHED",
-            current_count: count 
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 429 }
-        );
-      }
-    }
-
     // Get creator's country from their profile
     const { data: creatorProfile } = await supabaseClient
       .from('profiles')
@@ -461,21 +440,21 @@ serve(async (req) => {
     const creatorCountry = creatorProfile?.country_code || 'HU'; // Default to HU if not set
     console.log("[SUBMIT-VIDEO] Creator country:", creatorCountry);
 
-    // Create video record
+    // Create video record - ALL VIDEOS ARE IMMEDIATELY ACTIVE (no admin approval needed for embeds)
+    const now = new Date().toISOString();
+    const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+    
     const videoData: Record<string, unknown> = {
       user_id: userId,
       platform,
       video_url,
       embed_url: embedUrl,
       thumbnail_url: thumbnailUrl,
-      status: activate_now ? 'active' : 'pending',
-      is_active: activate_now,
+      status: 'active',
+      is_active: true,
+      first_activated_at: now,
+      expires_at: expiresAt,
     };
-
-    if (activate_now) {
-      videoData.first_activated_at = new Date().toISOString();
-      videoData.expires_at = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
-    }
 
     const { data: newVideo, error: insertError } = await supabaseClient
       .from('creator_videos')
