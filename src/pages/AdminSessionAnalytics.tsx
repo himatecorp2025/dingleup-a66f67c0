@@ -321,13 +321,13 @@ export default function AdminSessionAnalytics() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('common.all')}</SelectItem>
-                  <SelectItem value="app_opened">App Opened</SelectItem>
-                  <SelectItem value="app_closed">App Closed</SelectItem>
-                  <SelectItem value="tab_hidden">Tab Hidden</SelectItem>
-                  <SelectItem value="tab_visible">Tab Visible</SelectItem>
-                  <SelectItem value="app_installed">App Installed</SelectItem>
-                  <SelectItem value="app_launched_standalone">Standalone Launch</SelectItem>
-                  <SelectItem value="install_prompt_shown">Install Prompt</SelectItem>
+                  <SelectItem value="app_opened">{t('admin.session_analytics.event_app_opened')}</SelectItem>
+                  <SelectItem value="app_closed">{t('admin.session_analytics.event_app_closed')}</SelectItem>
+                  <SelectItem value="tab_hidden">{t('admin.session_analytics.event_tab_hidden')}</SelectItem>
+                  <SelectItem value="tab_visible">{t('admin.session_analytics.event_tab_visible')}</SelectItem>
+                  <SelectItem value="app_installed">{t('admin.session_analytics.event_app_installed')}</SelectItem>
+                  <SelectItem value="app_launched_standalone">{t('admin.session_analytics.event_standalone_launch')}</SelectItem>
+                  <SelectItem value="install_prompt_shown">{t('admin.session_analytics.event_install_prompt')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
