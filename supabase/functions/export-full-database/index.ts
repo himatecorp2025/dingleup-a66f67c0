@@ -4,7 +4,9 @@ import { getCorsHeaders, handleCorsPreflight } from '../_shared/cors.ts';
 const corsHeaders = getCorsHeaders('*');
 
 // COMPLETE Tables list in STRICT foreign key dependency order - updated 2025-12-12
-// Verified against information_schema.tables - 109 BASE TABLES in public schema
+// Verified against information_schema.tables - 98 BASE TABLES in public schema
+// REMOVED 7 obsolete tables: conversation_members, conversations, email_verifications,
+// tips_and_tricks_videos, weekly_leaderboard_snapshot, weekly_rankings, weekly_winner_popup_shown
 const TABLES = [
   // Level 0: No foreign keys - base/config tables
   'topics', 'booster_types', 'legal_documents', 'translations', 'daily_prize_table',
@@ -29,22 +31,22 @@ const TABLES = [
   
   // Level 3: Depends on Level 2
   'game_results', 'game_sessions', 'game_session_pools', 'friendships', 'invitations',
-  'daily_rankings', 'weekly_rankings', 'global_leaderboard', 
+  'daily_rankings', 'global_leaderboard', 
   'leaderboard_cache', 'leaderboard_public_cache', 
-  'daily_leaderboard_snapshot', 'weekly_leaderboard_snapshot',
+  'daily_leaderboard_snapshot',
   'daily_winner_awarded', 'weekly_winner_awarded', 'daily_winners_popup_views',
-  'daily_winner_popup_shown', 'weekly_winner_popup_shown', 'weekly_login_state',
+  'daily_winner_popup_shown', 'weekly_login_state',
   'booster_purchases', 'friend_request_rate_limit', 'admin_audit_log',
   'creator_videos', 'video_ad_rewards',
   
   // Level 4: Depends on Level 3
   'game_question_analytics', 'game_question_analytics_archive', 'game_help_usage', 
-  'game_exit_events', 'dm_threads', 'conversations',
+  'game_exit_events', 'dm_threads',
   'creator_video_countries', 'creator_video_topics', 'creator_video_impressions',
   'creator_analytics_daily', 'ad_events',
   
   // Level 5: Depends on Level 4
-  'dm_messages', 'message_reads', 'conversation_members', 'messages', 'thread_participants',
+  'dm_messages', 'message_reads', 'messages', 'thread_participants',
   
   // Level 6: Depends on Level 5
   'message_media', 'message_reactions',

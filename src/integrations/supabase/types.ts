@@ -410,65 +410,6 @@ export type Database = {
         }
         Relationships: []
       }
-      conversation_members: {
-        Row: {
-          conversation_id: string
-          id: string
-          is_admin: boolean
-          joined_at: string
-          user_id: string
-        }
-        Insert: {
-          conversation_id: string
-          id?: string
-          is_admin?: boolean
-          joined_at?: string
-          user_id: string
-        }
-        Update: {
-          conversation_id?: string
-          id?: string
-          is_admin?: boolean
-          joined_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversation_members_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      conversations: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          id: string
-          is_group: boolean
-          name: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_group?: boolean
-          name?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_group?: boolean
-          name?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       conversion_events: {
         Row: {
           created_at: string
@@ -2421,15 +2362,7 @@ export type Database = {
           retention_until?: string | null
           sender_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       navigation_events: {
         Row: {
@@ -4042,33 +3975,6 @@ export type Database = {
         }
         Relationships: []
       }
-      weekly_leaderboard_snapshot: {
-        Row: {
-          id: string
-          rank: number
-          score: number
-          snapshot_at: string | null
-          user_id: string
-          week_start: string
-        }
-        Insert: {
-          id?: string
-          rank: number
-          score: number
-          snapshot_at?: string | null
-          user_id: string
-          week_start: string
-        }
-        Update: {
-          id?: string
-          rank?: number
-          score?: number
-          snapshot_at?: string | null
-          user_id?: string
-          week_start?: string
-        }
-        Relationships: []
-      }
       weekly_login_rewards: {
         Row: {
           created_at: string | null
@@ -4138,60 +4044,6 @@ export type Database = {
         }
         Relationships: []
       }
-      weekly_rankings: {
-        Row: {
-          average_response_time: number | null
-          category: string
-          created_at: string | null
-          id: string
-          rank: number | null
-          total_correct_answers: number | null
-          updated_at: string | null
-          user_id: string
-          username: string | null
-          week_start: string
-        }
-        Insert: {
-          average_response_time?: number | null
-          category: string
-          created_at?: string | null
-          id?: string
-          rank?: number | null
-          total_correct_answers?: number | null
-          updated_at?: string | null
-          user_id: string
-          username?: string | null
-          week_start: string
-        }
-        Update: {
-          average_response_time?: number | null
-          category?: string
-          created_at?: string | null
-          id?: string
-          rank?: number | null
-          total_correct_answers?: number | null
-          updated_at?: string | null
-          user_id?: string
-          username?: string | null
-          week_start?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "weekly_rankings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "weekly_rankings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       weekly_winner_awarded: {
         Row: {
           awarded_at: string | null
@@ -4208,24 +4060,6 @@ export type Database = {
         Update: {
           awarded_at?: string | null
           rank?: number
-          user_id?: string
-          week_start?: string
-        }
-        Relationships: []
-      }
-      weekly_winner_popup_shown: {
-        Row: {
-          shown_at: string | null
-          user_id: string
-          week_start: string
-        }
-        Insert: {
-          shown_at?: string | null
-          user_id: string
-          week_start: string
-        }
-        Update: {
-          shown_at?: string | null
           user_id?: string
           week_start?: string
         }
@@ -4357,33 +4191,6 @@ export type Database = {
           id?: string | null
           invitation_code?: string | null
           username?: string | null
-        }
-        Relationships: []
-      }
-      weekly_rankings_public: {
-        Row: {
-          category: string | null
-          created_at: string | null
-          rank: number | null
-          total_correct_answers: number | null
-          username: string | null
-          week_start: string | null
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string | null
-          rank?: number | null
-          total_correct_answers?: number | null
-          username?: string | null
-          week_start?: string | null
-        }
-        Update: {
-          category?: string | null
-          created_at?: string | null
-          rank?: number | null
-          total_correct_answers?: number | null
-          username?: string | null
-          week_start?: string | null
         }
         Relationships: []
       }
