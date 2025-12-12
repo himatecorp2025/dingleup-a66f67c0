@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 
 export interface WalletData {
   coins: number;
@@ -85,7 +86,7 @@ export function useWalletQuery(userId: string | undefined) {
   useEffect(() => {
     if (!userId) return;
 
-    console.log('[useWalletQuery] Setting up realtime subscription for user:', userId);
+    logger.log('[useWalletQuery] Setting up realtime subscription for user:', userId);
 
     const channel = supabase
       .channel(`wallet-realtime-${userId}`)
@@ -98,7 +99,7 @@ export function useWalletQuery(userId: string | undefined) {
           filter: `id=eq.${userId}`,
         },
         (payload) => {
-          console.log('[useWalletQuery] Profile update received:', payload);
+          logger.log('[useWalletQuery] Profile update received:', payload);
           // Immediately refetch with zero delay
           queryClient.refetchQueries({
             queryKey: WALLET_QUERY_KEY(userId),
@@ -115,7 +116,7 @@ export function useWalletQuery(userId: string | undefined) {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.log('[useWalletQuery] Wallet ledger update received:', payload);
+          logger.log('[useWalletQuery] Wallet ledger update received:', payload);
           // Immediately refetch with zero delay
           queryClient.refetchQueries({
             queryKey: WALLET_QUERY_KEY(userId),
@@ -132,7 +133,7 @@ export function useWalletQuery(userId: string | undefined) {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.log('[useWalletQuery] Lives ledger update received:', payload);
+          logger.log('[useWalletQuery] Lives ledger update received:', payload);
           // Immediately refetch with zero delay
           queryClient.refetchQueries({
             queryKey: WALLET_QUERY_KEY(userId),
@@ -141,11 +142,11 @@ export function useWalletQuery(userId: string | undefined) {
         }
       )
       .subscribe((status) => {
-        console.log('[useWalletQuery] Subscription status:', status);
+        logger.log('[useWalletQuery] Subscription status:', status);
       });
 
     return () => {
-      console.log('[useWalletQuery] Cleaning up realtime subscription');
+      logger.log('[useWalletQuery] Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [userId, queryClient]);

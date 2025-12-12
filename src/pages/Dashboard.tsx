@@ -19,6 +19,7 @@ import { useNativeFullscreen } from '@/hooks/useNativeFullscreen';
 import { useGameQuestions } from '@/hooks/useGameQuestions';
 import { useVideoAdStore } from '@/stores/videoAdStore';
 import { useRewardVideoStore } from '@/stores/rewardVideoStore';
+import { logger } from '@/lib/logger';
 
 // PERFORMANCE OPTIMIZATION: Prefetch critical game assets
 // This preloads /game route code + intro video in background while user is on Dashboard
@@ -232,7 +233,7 @@ const Dashboard = () => {
         // Check for valid session first
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         if (sessionError || !sessionData?.session) {
-          console.log('[Dashboard] No valid session, skipping rank fetch');
+          logger.log('[Dashboard] No valid session, skipping rank fetch');
           setCurrentRank(1);
           return;
         }
@@ -245,7 +246,7 @@ const Dashboard = () => {
         });
         
         if (error) {
-          console.error('[Dashboard] Error fetching user rank:', error);
+          logger.error('[Dashboard] Error fetching user rank:', error);
           setCurrentRank(1); // Fallback to rank 1
           return;
         }
@@ -257,7 +258,7 @@ const Dashboard = () => {
           setCurrentRank(1);
         }
       } catch (err) {
-        console.error('[Dashboard] Exception fetching user rank:', err);
+        logger.error('[Dashboard] Exception fetching user rank:', err);
         setCurrentRank(null);
       }
     };
@@ -378,10 +379,10 @@ const Dashboard = () => {
         open={popupManager.popupState.showAgeGate} 
         userId={userId} 
         onSuccess={() => {
-          console.log('[Dashboard] Age gate completed successfully');
+          logger.log('[Dashboard] Age gate completed successfully');
           popupManager.closeAgeGate();
           refreshProfile();
-        }} 
+        }}
       />
     )}
     

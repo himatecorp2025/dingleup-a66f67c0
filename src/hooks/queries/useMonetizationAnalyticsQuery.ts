@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 interface RevenueDataPoint {
   date: string;
@@ -59,7 +60,7 @@ export function useMonetizationAnalyticsQuery() {
 
   // Real-time subscription for instant updates
   useEffect(() => {
-    console.log('[useMonetizationAnalyticsQuery] Setting up realtime subscription');
+    logger.log('[useMonetizationAnalyticsQuery] Setting up realtime subscription');
 
     const channel = supabase
       .channel('monetization-analytics-realtime')
@@ -71,7 +72,7 @@ export function useMonetizationAnalyticsQuery() {
           table: 'booster_purchases',
         },
         (payload) => {
-          console.log('[useMonetizationAnalyticsQuery] Booster purchases update received:', payload);
+          logger.log('[useMonetizationAnalyticsQuery] Booster purchases update received:', payload);
           queryClient.refetchQueries({
             queryKey: [MONETIZATION_ANALYTICS_KEY],
             exact: true,
@@ -86,7 +87,7 @@ export function useMonetizationAnalyticsQuery() {
           table: 'purchases',
         },
         (payload) => {
-          console.log('[useMonetizationAnalyticsQuery] Purchases update received:', payload);
+          logger.log('[useMonetizationAnalyticsQuery] Purchases update received:', payload);
           queryClient.refetchQueries({
             queryKey: [MONETIZATION_ANALYTICS_KEY],
             exact: true,
@@ -94,11 +95,11 @@ export function useMonetizationAnalyticsQuery() {
         }
       )
       .subscribe((status) => {
-        console.log('[useMonetizationAnalyticsQuery] Subscription status:', status);
+        logger.log('[useMonetizationAnalyticsQuery] Subscription status:', status);
       });
 
     return () => {
-      console.log('[useMonetizationAnalyticsQuery] Cleaning up realtime subscription');
+      logger.log('[useMonetizationAnalyticsQuery] Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [queryClient]);

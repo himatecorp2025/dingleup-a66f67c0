@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { trackPerformanceMetric } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 interface WebVitalsMetric {
   name: string;
@@ -30,7 +31,7 @@ export const useWebVitals = () => {
     };
 
     const reportWebVital = (metric: WebVitalsMetric) => {
-      console.log(`[Web Vitals] ${metric.name}:`, metric.value, `(${metric.rating})`);
+      logger.log(`[Web Vitals] ${metric.name}:`, metric.value, `(${metric.rating})`);
       
       // Send to analytics if available
       if (typeof window !== 'undefined' && (window as any).gtag) {
