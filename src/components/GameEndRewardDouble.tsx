@@ -4,7 +4,7 @@ import { Film, Coins } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { useRewardVideoStore } from '@/stores/rewardVideoStore';
+import { useRewardVideoStore, RewardVideo } from '@/stores/rewardVideoStore';
 import { FullscreenRewardVideoView } from './FullscreenRewardVideoView';
 
 interface GameEndRewardDoubleProps {
@@ -24,13 +24,14 @@ export const GameEndRewardDouble = ({
 }: GameEndRewardDoubleProps) => {
   const { lang } = useI18n();
   const [showVideo, setShowVideo] = useState(false);
+  const [videosToPlay, setVideosToPlay] = useState<RewardVideo[]>([]);
 
   // New reward video store
   const { 
     isPreloaded, 
-    hasEnoughVideos, 
+    hasEnoughVideos,
+    getVideosFromQueue,
     activeSession, 
-    isStartingSession,
     startRewardSession,
     completeRewardSession,
     cancelSession,
@@ -60,19 +61,24 @@ export const GameEndRewardDouble = ({
 
   const t = texts[lang as 'hu' | 'en'] || texts.en;
 
-  // Handle accept double - start 1×15s session
-  const handleAcceptDouble = async () => {
+  // PERFORMANCE CRITICAL: Show video INSTANTLY using preloaded queue
+  const handleAcceptDouble = () => {
     if (!userId) return;
     
-    // Start reward session for game end (1 video required)
-    const session = await startRewardSession(userId, 'end_game', coinsEarned);
+    // INSTANT: Get videos from preloaded queue synchronously
+    const videosFromQueue = getVideosFromQueue(1);
     
-    if (session && session.videos.length >= 1) {
-      // Show fullscreen video immediately
-      setShowVideo(true);
-    } else {
+    if (videosFromQueue.length === 0) {
       toast.error(lang === 'hu' ? 'Nincs elérhető videó' : 'No video available');
+      return;
     }
+    
+    // INSTANT: Show video view IMMEDIATELY - no async waiting!
+    setVideosToPlay(videosFromQueue);
+    setShowVideo(true);
+    
+    // Start session in background (non-blocking) - just for tracking
+    startRewardSession(userId, 'end_game', coinsEarned);
   };
 
   // Handle video completion (called when user clicks X after watching)
@@ -111,11 +117,11 @@ export const GameEndRewardDouble = ({
     }
   }, [isOpen]);
 
-  // Show fullscreen video view
-  if (showVideo && activeSession && activeSession.videos.length > 0) {
+  // Show fullscreen video view - use locally stored videos for instant display
+  if (showVideo && videosToPlay.length > 0) {
     return (
       <FullscreenRewardVideoView
-        videos={activeSession.videos}
+        videos={videosToPlay}
         durationSecondsPerVideo={15}
         onCompleted={handleVideoComplete}
         onClose={handleVideoClose}
@@ -157,10 +163,9 @@ export const GameEndRewardDouble = ({
               <div className="flex flex-col w-full gap-3">
                 <Button
                   onClick={handleAcceptDouble}
-                  disabled={isStartingSession}
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3"
                 >
-                  {isStartingSession ? '...' : t.watchVideo}
+                  {t.watchVideo}
                 </Button>
                 <Button
                   onClick={onClose}

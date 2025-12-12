@@ -12,7 +12,7 @@ import { GoldRewardCoin3D } from '@/components/icons/GoldRewardCoin3D';
 import { LoadingSpinner3D } from '@/components/icons/LoadingSpinner3D';
 import { trackConversionEvent } from '@/lib/analytics';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useRewardVideoStore } from '@/stores/rewardVideoStore';
+import { useRewardVideoStore, RewardVideo } from '@/stores/rewardVideoStore';
 import { FullscreenRewardVideoView } from './FullscreenRewardVideoView';
 
 interface InGameRescuePopupProps {
@@ -40,13 +40,14 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
   const [hasTrackedView, setHasTrackedView] = useState(false);
   const [userId, setUserId] = useState<string | undefined>();
   const [showVideo, setShowVideo] = useState(false);
+  const [videosToPlay, setVideosToPlay] = useState<RewardVideo[]>([]);
 
   // New reward video store
   const { 
     isPreloaded, 
-    hasEnoughVideos, 
+    hasEnoughVideos,
+    getVideosFromQueue,
     activeSession, 
-    isStartingSession,
     startRewardSession,
     completeRewardSession,
     cancelSession,
@@ -92,19 +93,24 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
     }
   }, [isOpen]);
 
-  // Handle video refill click - starts 2×15s session (backend handles video repetition if needed)
-  const handleVideoRefill = async () => {
+  // PERFORMANCE CRITICAL: Show video INSTANTLY using preloaded queue
+  const handleVideoRefill = () => {
     if (!userId) return;
     
-    // Start reward session for refill (2 videos required - backend will repeat if only 1 exists)
-    const session = await startRewardSession(userId, 'refill', 0);
+    // INSTANT: Get 2 videos from preloaded queue synchronously (will repeat if only 1)
+    const videosFromQueue = getVideosFromQueue(2);
     
-    if (session && session.videos.length > 0) {
-      // Close popup immediately and show fullscreen video
-      setShowVideo(true);
-    } else {
+    if (videosFromQueue.length === 0) {
       toast.error(lang === 'hu' ? 'Nincs elérhető videó' : 'No video available');
+      return;
     }
+    
+    // INSTANT: Show video view IMMEDIATELY - no async waiting!
+    setVideosToPlay(videosFromQueue);
+    setShowVideo(true);
+    
+    // Start session in background (non-blocking) - just for tracking
+    startRewardSession(userId, 'refill', 0);
   };
 
   // Handle video completion (called when user clicks X after watching)
@@ -193,11 +199,11 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
 
   const hasEnoughGold = currentGold >= 500;
 
-  // If video is showing, render fullscreen video view
-  if (showVideo && activeSession && activeSession.videos.length > 0) {
+  // If video is showing, render fullscreen video view - use locally stored videos
+  if (showVideo && videosToPlay.length > 0) {
     return (
       <FullscreenRewardVideoView
-        videos={activeSession.videos}
+        videos={videosToPlay}
         durationSecondsPerVideo={15}
         onCompleted={handleVideoComplete}
         onClose={handleVideoClose}
@@ -314,18 +320,14 @@ export const InGameRescuePopup: React.FC<InGameRescuePopupProps> = ({
 
               <Button
                 onClick={handleVideoRefill}
-                disabled={!videoAdAvailable || isStartingSession}
+                disabled={!videoAdAvailable}
                 className="w-full bg-gradient-to-b from-purple-400 via-purple-500 to-purple-700 hover:from-purple-300 hover:via-purple-400 hover:to-purple-600 text-white font-bold text-xs py-2 rounded-[10px] disabled:opacity-50 border-[2px] border-purple-300 shadow-xl transition-all"
                 style={{ textShadow: '0 2px 6px rgba(0, 0, 0, 0.8)' }}
               >
-                {isStartingSession ? (
-                  <LoadingSpinner3D size={14} />
-                ) : (
-                  <span className="flex items-center gap-1">
-                    <Film className="w-3 h-3" />
-                    2×15s
-                  </span>
-                )}
+                <span className="flex items-center gap-1">
+                  <Film className="w-3 h-3" />
+                  2×15s
+                </span>
               </Button>
             </div>
           </div>

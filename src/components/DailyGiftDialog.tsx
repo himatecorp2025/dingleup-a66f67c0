@@ -146,19 +146,29 @@ const DailyGiftDialog = ({
     }
   };
 
-  // NEW: Start video reward session - CLOSE DIALOG IMMEDIATELY when video starts
-  const handleVideoAccept = async () => {
+  // PERFORMANCE CRITICAL: Show video INSTANTLY using preloaded queue
+  // NO WAITING for backend calls - use videos already in memory
+  const handleVideoAccept = () => {
     if (!userId) return;
     
-    // Start reward session through new system
-    const session = await rewardStore.startRewardSession(userId, 'daily_gift', nextReward);
+    // INSTANT: Get videos from preloaded queue synchronously
+    const requiredVideos = 1;
+    const videosFromQueue = rewardStore.getVideosFromQueue(requiredVideos);
     
-    if (session && session.videos.length > 0) {
-      setActiveVideos(session.videos);
-      setShowVideoView(true);
-      // CRITICAL: Close the Daily Gift dialog immediately when video starts
-      // This signals to popup manager that Daily Gift is completed
+    // If no videos in queue, don't block - show error
+    if (videosFromQueue.length === 0) {
+      toast.error(lang === 'hu' ? 'Nincs elérhető videó' : 'No video available', {
+        position: 'top-center'
+      });
+      return;
     }
+    
+    // INSTANT: Show video view IMMEDIATELY - no async waiting!
+    setActiveVideos(videosFromQueue);
+    setShowVideoView(true);
+    
+    // Start session in background (non-blocking) - just for tracking
+    rewardStore.startRewardSession(userId, 'daily_gift', nextReward);
   };
 
   // CRITICAL: Video completion - reward is credited ONLY when user closes the modal (X button)
