@@ -4140,6 +4140,10 @@ export type Database = {
         Args: { uid1: string; uid2: string }
         Returns: string[]
       }
+      process_daily_winners_for_date: {
+        Args: { p_target_date: string }
+        Returns: Json
+      }
       process_invitation_reward: { Args: never; Returns: Json }
       purchase_life: { Args: never; Returns: Json }
       reactivate_creator_video: { Args: { p_video_id: string }; Returns: Json }
