@@ -27,10 +27,14 @@ This repository is now **100% self-hostable** and can run independently from Lov
 ### 3. Database Schema ✅
 - **Location**: `/db/schema_latest.sql` (complete consolidated schema)
 - **Migration Files**: `/supabase/migrations` (363 migration history)
-- **Tables**: 80+ tables with RLS policies
+- **Tables**: 104 tables with RLS policies
 - **Functions**: Core RPC functions (credit_wallet, check_rate_limit, has_role, etc.)
 - **Indexes**: 100+ performance indexes
 - **Initial Data**: Topics, legal documents, booster types
+- **Admin Export**: 3 buttons on /admin dashboard:
+  - Full Export (schema + data combined)
+  - Schema Export (CREATE TABLE only)
+  - Data Export (INSERT statements only)
 - **Documentation**: `db/README.md` with schema guide
 
 ### 4. Infrastructure & Deployment ✅
@@ -192,9 +196,10 @@ Load testing tools included in `/load-tests` directory with comprehensive scenar
 
 1. ✅ **Frontend**: Complete React + Vite application
 2. ✅ **Backend**: 97 edge functions with metrics, rate limiting, correlation IDs
-3. ✅ **Database**: Full schema in `db/schema_latest.sql` (executable on clean PostgreSQL)
-4. ✅ **Infrastructure**: Docker compose, Dockerfiles, nginx configs
-5. ✅ **Documentation**: Complete setup guides for all components
+3. ✅ **Database**: Full schema in `db/schema_latest.sql` (104 tables, executable on clean PostgreSQL)
+4. ✅ **Admin Export**: 3-button export system (Full/Schema/Data) on /admin dashboard
+5. ✅ **Infrastructure**: Docker compose, Dockerfiles, nginx configs
+6. ✅ **Documentation**: Complete setup guides for all components
 
 ---
 
