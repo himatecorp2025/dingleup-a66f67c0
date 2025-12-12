@@ -19,13 +19,14 @@ const AdminCreatorAnalytics = () => {
   const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [dateRange, setDateRange] = useState<string>('7');
 
-  // Fetch aggregated analytics
+  // Fetch aggregated analytics using real-time impressions (no dependency on creator_analytics_daily)
   const { data: analytics, isLoading } = useQuery({
     queryKey: ['admin-creator-analytics', platformFilter, dateRange],
     queryFn: async () => {
-      const startDate = subDays(new Date(), parseInt(dateRange));
+      const days = parseInt(dateRange);
+      const startDate = subDays(new Date(), days);
 
-      // Get all videos with stats
+      // Get all videos with basic stats
       let videosQuery = supabase
         .from('creator_videos')
         .select('id, user_id, platform, title, is_active, total_impressions, total_video_completions, total_relevant_hits, total_clickthrough, created_at');
@@ -37,92 +38,123 @@ const AdminCreatorAnalytics = () => {
       const { data: videos, error: videosError } = await videosQuery;
       if (videosError) throw videosError;
 
-      // Get daily analytics
-      let dailyQuery = supabase
-        .from('creator_analytics_daily')
-        .select('*')
-        .gte('date', format(startDate, 'yyyy-MM-dd'))
-        .order('date', { ascending: true });
+      const videoIds = (videos || []).map((v) => v.id);
 
-      if (platformFilter !== 'all') {
-        dailyQuery = dailyQuery.eq('platform', platformFilter);
+      // Get impressions for these videos in the selected date range (real-time source of truth)
+      let impressions: Array<{
+        creator_video_id: string;
+        watched_full_15s: boolean | null;
+        is_relevant_viewer: boolean | null;
+        created_at: string;
+      }> = [];
+
+      if (videoIds.length > 0) {
+        const { data: impData, error: impError } = await supabase
+          .from('creator_video_impressions')
+          .select('creator_video_id, watched_full_15s, is_relevant_viewer, created_at')
+          .in('creator_video_id', videoIds)
+          .gte('created_at', startDate.toISOString());
+
+        if (impError) throw impError;
+        impressions = impData || [];
       }
 
-      const { data: daily, error: dailyError } = await dailyQuery;
-      if (dailyError) throw dailyError;
-
-      // Aggregate totals
+      // Totals (impressions/completions/relevantHits from real-time impressions, clicks from videos table)
       const totals = {
-        impressions: videos?.reduce((sum, v) => sum + (v.total_impressions || 0), 0) || 0,
-        completions: videos?.reduce((sum, v) => sum + (v.total_video_completions || 0), 0) || 0,
-        relevantHits: videos?.reduce((sum, v) => sum + (v.total_relevant_hits || 0), 0) || 0,
-        clicks: videos?.reduce((sum, v) => sum + (v.total_clickthrough || 0), 0) || 0,
+        impressions: impressions.length,
+        completions: impressions.filter((i) => i.watched_full_15s).length,
+        relevantHits: impressions.filter((i) => i.is_relevant_viewer).length,
+        clicks:
+          videos?.reduce((sum, v) => sum + (v.total_clickthrough || 0), 0) || 0,
         totalVideos: videos?.length || 0,
-        activeVideos: videos?.filter(v => v.is_active).length || 0,
+        activeVideos: videos?.filter((v) => v.is_active).length || 0,
       };
 
-      // Group daily by date
-      const dailyAggregated = daily?.reduce((acc, d) => {
-        const existing = acc.find(a => a.date === d.date);
-        if (existing) {
-          existing.impressions += d.impressions;
-          existing.completions += d.video_completions;
-          existing.relevantHits += d.relevant_hits;
-          existing.clicks += d.clickthroughs;
-        } else {
-          acc.push({
-            date: d.date,
-            impressions: d.impressions,
-            completions: d.video_completions,
-            relevantHits: d.relevant_hits,
-            clicks: d.clickthroughs,
-          });
-        }
-        return acc;
-      }, [] as any[]) || [];
+      // Daily aggregation for charts
+      const dailyMap: Record<string, { impressions: number; completions: number; relevantHits: number; clicks: number }> = {};
 
-      // Platform breakdown
-      const platformBreakdown = videos?.reduce((acc, v) => {
-        const existing = acc.find(a => a.platform === v.platform);
-        if (existing) {
-          existing.impressions += v.total_impressions || 0;
-          existing.completions += v.total_video_completions || 0;
-          existing.clicks += v.total_clickthrough || 0;
-          existing.videos += 1;
-        } else {
-          acc.push({
-            platform: v.platform,
-            impressions: v.total_impressions || 0,
-            completions: v.total_video_completions || 0,
-            clicks: v.total_clickthrough || 0,
-            videos: 1,
-          });
-        }
-        return acc;
-      }, [] as any[]) || [];
+      // Initialize all days in range to 0 so charts always have a continuous line
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        dailyMap[dateStr] = { impressions: 0, completions: 0, relevantHits: 0, clicks: 0 };
+      }
 
-      // Top videos
-      const topVideos = [...(videos || [])].sort((a, b) => (b.total_impressions || 0) - (a.total_impressions || 0)).slice(0, 10);
-
-      // Hourly heatmap (if available)
-      const hourlyData = daily?.reduce((acc, d) => {
-        if (d.hour_of_day !== null) {
-          const existing = acc.find(a => a.hour === d.hour_of_day);
-          if (existing) {
-            existing.impressions += d.impressions;
-          } else {
-            acc.push({ hour: d.hour_of_day, impressions: d.impressions });
-          }
+      impressions.forEach((imp) => {
+        const dateStr = imp.created_at.split('T')[0];
+        if (!dailyMap[dateStr]) {
+          dailyMap[dateStr] = { impressions: 0, completions: 0, relevantHits: 0, clicks: 0 };
         }
-        return acc;
-      }, [] as any[]) || [];
+        dailyMap[dateStr].impressions += 1;
+        if (imp.watched_full_15s) dailyMap[dateStr].completions += 1;
+        if (imp.is_relevant_viewer) dailyMap[dateStr].relevantHits += 1;
+      });
+
+      const daily = Object.entries(dailyMap)
+        .map(([date, stats]) => ({ date, ...stats }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      // Platform breakdown (videos + real-time impressions per platform)
+      const platformBreakdownMap: Record<string, { platform: string; impressions: number; completions: number; clicks: number; videos: number }> = {};
+      const videoPlatformById: Record<string, string> = {};
+
+      (videos || []).forEach((v) => {
+        const platform = v.platform || 'unknown';
+        videoPlatformById[v.id] = platform;
+        if (!platformBreakdownMap[platform]) {
+          platformBreakdownMap[platform] = {
+            platform,
+            impressions: 0,
+            completions: 0,
+            clicks: 0,
+            videos: 0,
+          };
+        }
+        platformBreakdownMap[platform].videos += 1;
+        platformBreakdownMap[platform].clicks += v.total_clickthrough || 0;
+      });
+
+      impressions.forEach((imp) => {
+        const platform = videoPlatformById[imp.creator_video_id];
+        if (!platform) return;
+        if (!platformBreakdownMap[platform]) {
+          platformBreakdownMap[platform] = {
+            platform,
+            impressions: 0,
+            completions: 0,
+            clicks: 0,
+            videos: 0,
+          };
+        }
+        platformBreakdownMap[platform].impressions += 1;
+        if (imp.watched_full_15s) platformBreakdownMap[platform].completions += 1;
+      });
+
+      const platformBreakdown = Object.values(platformBreakdownMap);
+
+      // Top videos: keep existing logic (sorted by total_impressions)
+      const topVideos = [...(videos || [])]
+        .sort((a, b) => (b.total_impressions || 0) - (a.total_impressions || 0))
+        .slice(0, 10);
+
+      // Hourly distribution (for time tab) from real-time impressions
+      const hourlyMap: Record<number, number> = {};
+      impressions.forEach((imp) => {
+        const hour = new Date(imp.created_at).getHours();
+        hourlyMap[hour] = (hourlyMap[hour] || 0) + 1;
+      });
+
+      const hourlyData = Object.entries(hourlyMap)
+        .map(([hour, count]) => ({ hour: Number(hour), impressions: count as number }))
+        .sort((a, b) => a.hour - b.hour);
 
       return {
         totals,
-        daily: dailyAggregated,
+        daily,
         platformBreakdown,
         topVideos,
-        hourlyData: hourlyData.sort((a, b) => a.hour - b.hour),
+        hourlyData,
       };
     },
     staleTime: 0,
