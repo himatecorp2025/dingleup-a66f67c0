@@ -4404,6 +4404,10 @@ export type Database = {
       refresh_admin_materialized_views: { Args: never; Returns: Json }
       refresh_leaderboard_cache: { Args: never; Returns: undefined }
       refresh_leaderboard_cache_optimized: { Args: never; Returns: undefined }
+      refresh_leaderboard_cache_timezone_aware: {
+        Args: never
+        Returns: undefined
+      }
       refresh_leaderboard_public_cache: { Args: never; Returns: undefined }
       refresh_mv_daily_rankings: { Args: never; Returns: undefined }
       regenerate_invitation_code: { Args: never; Returns: string }

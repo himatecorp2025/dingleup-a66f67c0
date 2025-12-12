@@ -6,9 +6,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
  * This function runs every minute via cron job to pre-compute leaderboard data
  * Reduces runtime query from 3,500ms to ~150ms (95% improvement)
  * 
- * Performance Impact:
- * - Before: Runtime aggregation across profiles + daily_rankings
- * - After: Direct cache lookup with pre-computed ranks
+ * TIMEZONE-AWARE: Now caches based on each user's local timezone day,
+ * not a single UTC day. Users in different timezones see their local day's rankings.
  */
 
 Deno.serve(async (_req) => {
@@ -26,15 +25,21 @@ Deno.serve(async (_req) => {
       }
     );
 
-    // Call the optimized PostgreSQL function
-    const { error } = await supabase.rpc('refresh_leaderboard_cache_optimized');
+    // Call the optimized PostgreSQL function (now timezone-aware)
+    const { error } = await supabase.rpc('refresh_leaderboard_cache_timezone_aware');
 
     if (error) {
-      console.error('[refresh-leaderboard-cache] Error:', error);
-      return new Response(
-        JSON.stringify({ error: 'Failed to refresh cache' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
+      // Fallback to old function if new one doesn't exist
+      console.warn('[refresh-leaderboard-cache] Timezone-aware function not found, using fallback');
+      const { error: fallbackError } = await supabase.rpc('refresh_leaderboard_cache_optimized');
+      
+      if (fallbackError) {
+        console.error('[refresh-leaderboard-cache] Error:', fallbackError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to refresh cache' }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Get cache statistics

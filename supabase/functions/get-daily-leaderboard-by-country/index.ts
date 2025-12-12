@@ -119,48 +119,58 @@ Deno.serve(async (req) => {
 
     console.log('[get-daily-leaderboard-by-country] User authenticated:', user.id);
 
-    // Calculate current day (YYYY-MM-DD UTC)
-    const now = new Date();
-    const currentDay = now.toISOString().split('T')[0];
-    const dayOfWeek = getDayOfWeekNumber(now);
-    const isSunday = now.getDay() === 0;
+    // First fetch user profile to get timezone
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('country_code, user_timezone')
+      .eq('id', user.id)
+      .single();
 
-    // OPTIMIZATION: Parallel queries for profile and daily rewards
-    const [profileResult, rewardsResult] = await Promise.all([
-      supabase
-        .from('profiles')
-        .select('country_code')
-        .eq('id', user.id)
-        .single(),
-      supabase
-        .from('daily_prize_table')
-        .select('rank, gold, lives, day_of_week')
-        .eq('day_of_week', dayOfWeek)
-        .order('rank', { ascending: true })
-    ]);
-
-    if (profileResult.error) {
-      console.error('[get-daily-leaderboard-by-country] Profile error:', profileResult.error);
+    if (profileError) {
+      console.error('[get-daily-leaderboard-by-country] Profile error:', profileError);
       return new Response(
         JSON.stringify({ error: 'Profile not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const userCountryCode = profileResult.data?.country_code || 'HU';
-    
-    // Build daily rewards from parallel query result
+    const userCountryCode = profileData?.country_code || 'HU';
+    const userTimezone = profileData?.user_timezone || 'UTC';
+
+    // CRITICAL FIX: Calculate current day based on user's timezone, not UTC
+    const now = new Date();
+    const currentDay = now.toLocaleDateString('en-CA', {
+      timeZone: userTimezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+
+    // Calculate day of week in user's timezone
+    const localDateString = now.toLocaleString('en-US', { timeZone: userTimezone });
+    const localDate = new Date(localDateString);
+    const dayOfWeek = getDayOfWeekNumber(localDate);
+    const isSunday = localDate.getDay() === 0;
+
+    // Fetch daily rewards
+    const { data: rewardsData } = await supabase
+      .from('daily_prize_table')
+      .select('rank, gold, lives, day_of_week')
+      .eq('day_of_week', dayOfWeek)
+      .order('rank', { ascending: true });
+
+    // Build daily rewards
     const dailyRewards = {
-      day: getWeekday(now),
+      day: getWeekday(localDate),
       type: isSunday ? 'JACKPOT' as const : 'NORMAL' as const,
-      rewards: (rewardsResult.data || []).map((r: any) => ({
+      rewards: (rewardsData || []).map((r: any) => ({
         rank: r.rank,
         gold: r.gold,
         life: r.lives,
       }))
     };
     
-    console.log('[get-daily-leaderboard-by-country] User country:', userCountryCode, 'Day:', currentDay, 'Rewards:', dailyRewards.rewards.length);
+    console.log('[get-daily-leaderboard-by-country] User country:', userCountryCode, 'Timezone:', userTimezone, 'Day:', currentDay, 'Rewards:', dailyRewards.rewards.length);
 
     // Determine how many players to fetch based on day type
     const maxPlayers = dailyRewards.type === 'JACKPOT' ? 25 : 10;
