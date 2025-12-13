@@ -153,13 +153,96 @@ serve(async (req) => {
       );
     }
 
-    // Shuffle and pick up to requestedCount videos
-    const shuffled = countryFilteredVideos.sort(() => Math.random() - 0.5);
+    // PLATFORM MIXING: Avoid 3+ consecutive videos from same platform
+    // Rule: max 2 consecutive videos from same platform allowed
+    const mixPlatforms = (videos: typeof countryFilteredVideos): typeof countryFilteredVideos => {
+      if (videos.length <= 2) return videos;
+      
+      // Group videos by platform
+      const byPlatform: Record<string, typeof videos> = {};
+      for (const v of videos) {
+        const p = v.platform || 'unknown';
+        if (!byPlatform[p]) byPlatform[p] = [];
+        byPlatform[p].push(v);
+      }
+      
+      // Shuffle each platform's videos
+      for (const p in byPlatform) {
+        byPlatform[p].sort(() => Math.random() - 0.5);
+      }
+      
+      const result: typeof videos = [];
+      const platforms = Object.keys(byPlatform).filter(p => byPlatform[p].length > 0);
+      
+      // Round-robin with max 2 consecutive from same platform
+      let lastPlatform = '';
+      let consecutiveCount = 0;
+      
+      while (result.length < videos.length) {
+        let added = false;
+        
+        // Try to find a video from a different platform first
+        for (const p of platforms) {
+          if (byPlatform[p].length === 0) continue;
+          
+          // If same as last, check consecutive count
+          if (p === lastPlatform) {
+            if (consecutiveCount >= 2) continue; // Skip if already 2 consecutive
+          }
+          
+          // Prefer different platform if possible
+          if (p !== lastPlatform || platforms.every(pl => pl === lastPlatform || byPlatform[pl].length === 0)) {
+            const video = byPlatform[p].shift()!;
+            result.push(video);
+            
+            if (p === lastPlatform) {
+              consecutiveCount++;
+            } else {
+              lastPlatform = p;
+              consecutiveCount = 1;
+            }
+            added = true;
+            break;
+          }
+        }
+        
+        // Fallback: take from any available platform
+        if (!added) {
+          for (const p of platforms) {
+            if (byPlatform[p].length > 0) {
+              const video = byPlatform[p].shift()!;
+              result.push(video);
+              if (p === lastPlatform) {
+                consecutiveCount++;
+              } else {
+                lastPlatform = p;
+                consecutiveCount = 1;
+              }
+              break;
+            }
+          }
+        }
+        
+        // Safety check - remove empty platforms
+        for (let i = platforms.length - 1; i >= 0; i--) {
+          if (byPlatform[platforms[i]].length === 0) {
+            platforms.splice(i, 1);
+          }
+        }
+        
+        if (platforms.length === 0) break;
+      }
+      
+      return result;
+    };
+
+    // Apply platform mixing
+    const mixedVideos = mixPlatforms(countryFilteredVideos);
     
-    // If we have fewer videos than requested, allow repetition
+    // Pick up to requestedCount videos (allow repetition if needed)
     const resultVideos: RewardVideo[] = [];
     for (let i = 0; i < requestedCount; i++) {
-      const video = shuffled[i % shuffled.length];
+      const video = mixedVideos[i % mixedVideos.length];
       resultVideos.push({
         id: video.id,
         embedUrl: video.embed_url!,
