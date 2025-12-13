@@ -214,11 +214,11 @@ serve(async (req) => {
     let newExpiresAt: Date;
     
     if (video.expires_at && new Date(video.expires_at) > now) {
-      // Video still active: add 90 days to current expiry
-      newExpiresAt = new Date(new Date(video.expires_at).getTime() + 90 * 24 * 60 * 60 * 1000);
+      // Video still active: add 30 days to current expiry
+      newExpiresAt = new Date(new Date(video.expires_at).getTime() + 30 * 24 * 60 * 60 * 1000);
     } else {
       // Video expired: start fresh from now
-      newExpiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+      newExpiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     }
 
     // Update the video
