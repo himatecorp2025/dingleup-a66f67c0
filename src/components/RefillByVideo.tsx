@@ -57,16 +57,15 @@ export const RefillByVideo = ({
   // Check availability when opened
   useEffect(() => {
     if (isOpen && userId) {
-      setCheckingAvailability(true);
-      videoAdFlow.checkRefillAvailable().then((available) => {
-        setVideoAdAvailable(available);
-        setCheckingAvailability(false);
-        
-        // If available, auto-start the flow
-        if (available) {
-          videoAdFlow.startRefillFlow();
-        }
-      });
+      // INSTANT: checkRefillAvailable is now synchronous
+      const available = videoAdFlow.checkRefillAvailable();
+      setVideoAdAvailable(available);
+      setCheckingAvailability(false);
+      
+      // If available, auto-start the flow
+      if (available) {
+        videoAdFlow.startRefillFlow();
+      }
     }
   }, [isOpen, userId]);
 

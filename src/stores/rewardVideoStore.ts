@@ -80,7 +80,7 @@ export const useRewardVideoStore = create<RewardVideoStore>((set, get) => ({
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('preload-reward-videos', {
+      const { data, error } = await supabase.functions.invoke('preload-reward-videos?count=20', {
         body: {},
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
@@ -124,7 +124,7 @@ export const useRewardVideoStore = create<RewardVideoStore>((set, get) => ({
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('preload-reward-videos', {
+      const { data, error } = await supabase.functions.invoke('preload-reward-videos?count=20', {
         body: {},
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
@@ -195,7 +195,7 @@ export const useRewardVideoStore = create<RewardVideoStore>((set, get) => ({
           return null;
         }
 
-        const { data: refillData } = await supabase.functions.invoke('preload-reward-videos', {
+        const { data: refillData } = await supabase.functions.invoke('preload-reward-videos?count=20', {
           body: {},
           headers: { Authorization: `Bearer ${session.access_token}` },
         });

@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useVideoAd, VideoData } from './useVideoAd';
+import { useState, useCallback } from 'react';
+import { useRewardVideoStore, RewardVideo } from '@/stores/rewardVideoStore';
+import { logger } from '@/lib/logger';
 
 interface UseVideoAdFlowOptions {
   userId: string | undefined;
@@ -10,7 +11,7 @@ interface UseVideoAdFlowOptions {
 interface VideoAdFlowState {
   showPrompt: boolean;
   showVideo: boolean;
-  videos: VideoData[];
+  videos: RewardVideo[];
   totalDuration: number;
   isLoading: boolean;
   context: 'daily_gift' | 'game_end' | 'refill' | null;
@@ -28,46 +29,41 @@ export const useVideoAdFlow = ({ userId, onRewardStarted, onRewardClaimed }: Use
     originalReward: 0,
   });
 
-  const videoAd = useVideoAd();
+  const rewardVideoStore = useRewardVideoStore();
 
-  // Check if daily gift doubling is available
-  const checkDailyGiftDoubleAvailable = useCallback(async (): Promise<boolean> => {
-    if (!userId) return false;
-    const result = await videoAd.checkAvailability('daily_gift');
-    return result.available;
-  }, [userId, videoAd]);
+  // Check if daily gift doubling is available - INSTANT from preloaded queue
+  const checkDailyGiftDoubleAvailable = useCallback((): boolean => {
+    return rewardVideoStore.hasEnoughVideos(1);
+  }, [rewardVideoStore]);
 
-  // Check if game end doubling is available
-  const checkGameEndDoubleAvailable = useCallback(async (): Promise<boolean> => {
-    if (!userId) return false;
-    const result = await videoAd.checkAvailability('game_end');
-    return result.available;
-  }, [userId, videoAd]);
+  // Check if game end doubling is available - INSTANT from preloaded queue
+  const checkGameEndDoubleAvailable = useCallback((): boolean => {
+    return rewardVideoStore.hasEnoughVideos(1);
+  }, [rewardVideoStore]);
 
-  // Check if refill is available (2 videos)
-  const checkRefillAvailable = useCallback(async (): Promise<boolean> => {
-    if (!userId) return false;
-    const videos = await videoAd.fetchRefillVideos();
-    return videos.length >= 2;
-  }, [userId, videoAd]);
+  // Check if refill is available (2 videos) - INSTANT from preloaded queue
+  const checkRefillAvailable = useCallback((): boolean => {
+    return rewardVideoStore.hasEnoughVideos(2);
+  }, [rewardVideoStore]);
 
-  // Start daily gift double flow
+  // Start daily gift double flow - INSTANT, no backend call
   const startDailyGiftDouble = useCallback(async (originalCoins: number, skipPrompt: boolean = false): Promise<boolean> => {
     if (!userId) return false;
     
-    setState(prev => ({ ...prev, isLoading: true }));
+    // INSTANT: Get video from preloaded queue
+    const videos = rewardVideoStore.getVideosFromQueue(1);
     
-    const result = await videoAd.checkAvailability('daily_gift');
-    
-    if (!result.available || !result.video) {
-      setState(prev => ({ ...prev, isLoading: false }));
+    if (videos.length === 0) {
+      logger.warn('[useVideoAdFlow] No videos in queue for daily gift');
       return false;
     }
+
+    logger.log('[useVideoAdFlow] Starting daily gift double INSTANTLY with preloaded video');
 
     setState({
       showPrompt: !skipPrompt,
       showVideo: skipPrompt, // Go directly to video if skipping prompt
-      videos: [result.video],
+      videos,
       totalDuration: 15,
       isLoading: false,
       context: 'daily_gift',
@@ -75,29 +71,29 @@ export const useVideoAdFlow = ({ userId, onRewardStarted, onRewardClaimed }: Use
     });
     
     return true;
-  }, [userId, videoAd]);
+  }, [userId, rewardVideoStore]);
 
-  // Start game end double flow
+  // Start game end double flow - INSTANT, no backend call
   const startGameEndDouble = useCallback(async (coinsEarned: number): Promise<boolean> => {
     if (!userId) return false;
     
-    // CRITICAL: Call onRewardStarted IMMEDIATELY before any async work
-    // This ensures the flag is set BEFORE user can interact with exit button
+    // CRITICAL: Call onRewardStarted IMMEDIATELY before any work
     onRewardStarted?.();
     
-    setState(prev => ({ ...prev, isLoading: true }));
+    // INSTANT: Get video from preloaded queue
+    const videos = rewardVideoStore.getVideosFromQueue(1);
     
-    const result = await videoAd.checkAvailability('game_end');
-    
-    if (!result.available || !result.video) {
-      setState(prev => ({ ...prev, isLoading: false }));
+    if (videos.length === 0) {
+      logger.warn('[useVideoAdFlow] No videos in queue for game end');
       return false;
     }
+
+    logger.log('[useVideoAdFlow] Starting game end double INSTANTLY with preloaded video');
 
     setState({
       showPrompt: false,
       showVideo: true, // Go directly to video, skip prompt
-      videos: [result.video],
+      videos,
       totalDuration: 15,
       isLoading: false,
       context: 'game_end',
@@ -105,20 +101,21 @@ export const useVideoAdFlow = ({ userId, onRewardStarted, onRewardClaimed }: Use
     });
     
     return true;
-  }, [userId, videoAd, onRewardStarted]);
+  }, [userId, rewardVideoStore, onRewardStarted]);
 
-  // Start refill flow (2 videos, 30 seconds total) - directly starts video, no prompt
+  // Start refill flow (2 videos, 30 seconds total) - INSTANT, no backend call
   const startRefillFlow = useCallback(async (): Promise<boolean> => {
     if (!userId) return false;
     
-    setState(prev => ({ ...prev, isLoading: true }));
-    
-    const videos = await videoAd.fetchRefillVideos();
+    // INSTANT: Get 2 videos from preloaded queue
+    const videos = rewardVideoStore.getVideosFromQueue(2);
     
     if (videos.length < 2) {
-      setState(prev => ({ ...prev, isLoading: false }));
+      logger.warn('[useVideoAdFlow] Not enough videos in queue for refill');
       return false;
     }
+
+    logger.log('[useVideoAdFlow] Starting refill INSTANTLY with preloaded videos');
 
     setState({
       showPrompt: false,
@@ -131,7 +128,7 @@ export const useVideoAdFlow = ({ userId, onRewardStarted, onRewardClaimed }: Use
     });
     
     return true;
-  }, [userId, videoAd]);
+  }, [userId, rewardVideoStore]);
 
   // Accept prompt - start watching videos
   const acceptPrompt = useCallback(() => {
@@ -156,10 +153,8 @@ export const useVideoAdFlow = ({ userId, onRewardStarted, onRewardClaimed }: Use
   }, []);
 
   // Video watching completed - claim reward and close
-  // This is called ONLY when user clicks the X button after timer completes
   const onVideoComplete = useCallback(async () => {
-    if (!state.context) {
-      // No context means already processed or not started
+    if (!state.context || !userId) {
       setState({
         showPrompt: false,
         showVideo: false,
@@ -172,42 +167,38 @@ export const useVideoAdFlow = ({ userId, onRewardStarted, onRewardClaimed }: Use
       return;
     }
 
-    const idempotencyKey = `video-ad-${state.context}-${userId}-${Date.now()}`;
-
-    // Log impressions for all videos
-    for (let i = 0; i < state.videos.length; i++) {
-      await videoAd.logImpression(
-        state.videos[i].id,
-        state.context,
-        true, // watched full 15s
-        videoAd.isRelevant,
-        i + 1
-      );
-    }
-
-    // Claim reward based on context with multiplier=2 (user watched video)
-    let rewardType: 'daily_gift_double' | 'game_end_double' | 'refill';
+    // Use rewardVideoStore to complete session and credit reward
+    const eventType = state.context === 'daily_gift' ? 'daily_gift' : 
+                      state.context === 'game_end' ? 'end_game' : 'refill';
     
-    if (state.context === 'daily_gift') {
-      rewardType = 'daily_gift_double';
-    } else if (state.context === 'game_end') {
-      rewardType = 'game_end_double';
-    } else {
-      rewardType = 'refill';
-    }
-
-    const result = await videoAd.claimReward(
-      rewardType,
-      state.originalReward,
-      idempotencyKey,
-      2 // multiplier=2: user watched video → 2× reward
+    // Start session (uses preloaded videos internally)
+    const session = await rewardVideoStore.startRewardSession(
+      userId,
+      eventType,
+      state.originalReward
     );
-
-    if (result.success && onRewardClaimed) {
-      onRewardClaimed(result.coinsCredited || 0, result.livesCredited || 0);
+    
+    if (session) {
+      // Complete the session
+      const result = await rewardVideoStore.completeRewardSession(
+        state.videos.map(v => v.id)
+      );
+      
+      if (result.success && onRewardClaimed) {
+        onRewardClaimed(result.coinsDelta, result.livesDelta);
+      }
     }
 
-    // Reset state AFTER processing reward
+    // Consume videos from queue after use
+    const usedIds = new Set(state.videos.map(v => v.id));
+    useRewardVideoStore.setState(store => ({
+      videoQueue: store.videoQueue.filter(v => !usedIds.has(v.id)),
+    }));
+
+    // Trigger background refill
+    rewardVideoStore.refillQueueIfNeeded(userId);
+
+    // Reset state
     setState({
       showPrompt: false,
       showVideo: false,
@@ -217,17 +208,10 @@ export const useVideoAdFlow = ({ userId, onRewardStarted, onRewardClaimed }: Use
       context: null,
       originalReward: 0,
     });
-  }, [state, userId, videoAd, onRewardClaimed]);
+  }, [state, userId, rewardVideoStore, onRewardClaimed]);
 
-  // FIX: Cancel video - this is called AFTER onVideoComplete when user closes the fullscreen view
-  // CRITICAL: Do NOT credit any reward here - reward is ONLY credited in onVideoComplete
-  // This function is just for cleanup after video completion or if user somehow aborts
-  // The 1× fallback is handled by finishGame() when user swipes up without watching video
+  // Cancel video - just reset state, no reward
   const cancelVideo = useCallback(() => {
-    // Just reset state - no reward crediting here
-    // Reward was either:
-    // 1. Already credited in onVideoComplete (2×) if user watched full video
-    // 2. Will be credited in finishGame() (1×) when user swipes up if they didn't watch
     setState({
       showPrompt: false,
       showVideo: false,
@@ -245,12 +229,12 @@ export const useVideoAdFlow = ({ userId, onRewardStarted, onRewardClaimed }: Use
     showVideo: state.showVideo,
     videos: state.videos,
     totalDuration: state.totalDuration,
-    isLoading: state.isLoading || videoAd.isLoading,
+    isLoading: state.isLoading,
     context: state.context,
     originalReward: state.originalReward,
-    isAvailable: videoAd.isAvailable,
+    isAvailable: rewardVideoStore.isPreloaded && rewardVideoStore.videoQueue.length > 0,
     
-    // Availability checks
+    // Availability checks - NOW SYNCHRONOUS, INSTANT
     checkDailyGiftDoubleAvailable,
     checkGameEndDoubleAvailable,
     checkRefillAvailable,

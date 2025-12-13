@@ -614,9 +614,11 @@ const GamePreview = memo(() => {
             <FullscreenRewardVideoView
               videos={videoAdFlow.videos.map(v => ({
                 id: v.id,
-                embedUrl: v.embed_url,
+                embedUrl: v.embedUrl,
                 platform: v.platform as 'tiktok' | 'youtube' | 'instagram' | 'facebook',
-                durationSeconds: v.duration_seconds
+                durationSeconds: 15,
+                creatorName: v.creatorName,
+                videoUrl: v.videoUrl,
               }))}
               durationSecondsPerVideo={15}
               onCompleted={(watchedIds) => videoAdFlow.onVideoComplete()}
@@ -752,9 +754,11 @@ const GamePreview = memo(() => {
           <FullscreenRewardVideoView
             videos={videoAdFlow.videos.map(v => ({
               id: v.id,
-              embedUrl: v.embed_url,
+              embedUrl: v.embedUrl,
               platform: v.platform as 'tiktok' | 'youtube' | 'instagram' | 'facebook',
-              durationSeconds: v.duration_seconds
+              durationSeconds: 15,
+              creatorName: v.creatorName,
+              videoUrl: v.videoUrl,
             }))}
             durationSecondsPerVideo={15}
             onCompleted={(watchedIds) => videoAdFlow.onVideoComplete()}
@@ -788,9 +792,11 @@ const GamePreview = memo(() => {
         <FullscreenRewardVideoView
           videos={videoAdFlow.videos.map(v => ({
             id: v.id,
-            embedUrl: v.embed_url,
+            embedUrl: v.embedUrl,
             platform: v.platform as 'tiktok' | 'youtube' | 'instagram' | 'facebook',
-            durationSeconds: v.duration_seconds
+            durationSeconds: 15,
+            creatorName: v.creatorName,
+            videoUrl: v.videoUrl,
           }))}
           durationSecondsPerVideo={15}
           onCompleted={(watchedIds) => videoAdFlow.onVideoComplete()}
