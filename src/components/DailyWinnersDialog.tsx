@@ -580,18 +580,6 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
                           {t('dailyWinners.noWinnersSecondLine')}
                         </p>
                       </div>
-
-                      <div 
-                        className="absolute bottom-0 left-0 right-0 flex justify-center pb-10"
-                        style={{ zIndex: 30 }}
-                      >
-                        <HexAcceptButton 
-                          onClick={handlePlayNow}
-                          className="w-full max-w-[280px]"
-                        >
-                          {t('dailyWinners.playNowButton')}
-                        </HexAcceptButton>
-                      </div>
                     </div>
                   ) : (
                     <>
@@ -1014,7 +1002,7 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
                 </div>
               </HexShieldFrame>
               
-              {/* CONGRATULATIONS BUTTON - Fixed at shield bottom, OUTSIDE HexShieldFrame */}
+              {/* BOTTOM BUTTON - Changes based on whether there are winners */}
               <div 
                 className="absolute left-1/2 flex justify-center"
                 style={{ 
@@ -1026,11 +1014,11 @@ export const DailyWinnersDialog = ({ open, onClose }: DailyWinnersDialogProps) =
                 }}
               >
                 <HexAcceptButton 
-                  onClick={handleAccept}
+                  onClick={topPlayers.length === 0 ? handlePlayNow : handleAccept}
                   className="w-full"
                 >
                   <span className="font-bold leading-tight flex items-center justify-center w-full" style={{ fontSize: 'clamp(0.875rem, 3.5vw, 1.125rem)' }}>
-                    {t('dailyWinners.congratulate')}
+                    {topPlayers.length === 0 ? t('dailyWinners.playNowButton') : t('dailyWinners.congratulate')}
                   </span>
                 </HexAcceptButton>
               </div>
