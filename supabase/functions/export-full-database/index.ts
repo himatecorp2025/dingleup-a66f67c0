@@ -3,8 +3,8 @@ import { getCorsHeaders, handleCorsPreflight } from '../_shared/cors.ts';
 
 const corsHeaders = getCorsHeaders('*');
 
-// COMPLETE Tables list in STRICT foreign key dependency order - updated 2025-12-12
-// Verified against information_schema.tables - 98 BASE TABLES in public schema
+// COMPLETE Tables list in STRICT foreign key dependency order - updated 2025-12-13
+// Verified against information_schema.tables - 100 BASE TABLES in public schema
 // REMOVED 7 obsolete tables: conversation_members, conversations, email_verifications,
 // tips_and_tricks_videos, weekly_leaderboard_snapshot, weekly_rankings, weekly_winner_popup_shown
 const TABLES = [
