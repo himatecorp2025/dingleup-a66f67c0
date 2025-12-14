@@ -1,7 +1,7 @@
 # DingleUP! – Teljes Önálló Üzemeltetési Útmutató
 
-**Verzió:** 2.0  
-**Frissítve:** 2025-12-12  
+**Verzió:** 3.0  
+**Frissítve:** 2025-12-14  
 **Célja:** A DingleUP! alkalmazás TELJES függetlenítése Lovable-től – saját domain, saját szerver, saját Google Play/App Store publikáció
 
 ---
@@ -118,7 +118,13 @@ npm install -g @capacitor/cli
 
 ### 3.2 Export Fájlok Tartalma
 
-**100 tábla kerül exportálásra a jelenlegi adatbázisból.**
+**100 tábla kerül exportálásra a jelenlegi adatbázisból (frissítve: 2025-12-14).**
+
+**Adatbázis statisztikák:**
+- **100 tábla** teljes sémával és RLS policy-kkel
+- **6,000 kérdés** 30 témakörben (200 kérdés/téma)
+- **18,000 kérdésfordítás** (magyar + angol, minden válasszal)
+- **100+ index** a teljesítmény optimalizáláshoz
 
 **Teljes export fájl (`dingleup_full_export_*.sql`):**
 ```sql
@@ -129,7 +135,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 -- Enum Types
 DO $$ BEGIN CREATE TYPE app_role AS ENUM ('admin', 'user'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- Tables (104 tábla)
+-- Tables (100 tábla)
 DROP TABLE IF EXISTS public.topics CASCADE;
 CREATE TABLE public.topics (...);
 INSERT INTO public.topics (...) VALUES (...);

@@ -1,7 +1,7 @@
 # DingleUP! – Teljes Független Környezet Útmutató
 
-**Verzió:** 1.0  
-**Frissítve:** 2025-01-29  
+**Verzió:** 2.0  
+**Frissítve:** 2025-12-14  
 **Célja:** A DingleUP! alkalmazás teljes migrálása Lovable-ről saját, független környezetbe
 
 ---
