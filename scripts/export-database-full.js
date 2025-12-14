@@ -29,21 +29,20 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Tables to export in order (respecting foreign key dependencies) - 98 tables total
-// REMOVED 7 obsolete tables: conversation_members, conversations, email_verifications,
-// tips_and_tricks_videos, weekly_leaderboard_snapshot, weekly_rankings, weekly_winner_popup_shown
+// Tables to export in order (respecting foreign key dependencies) - 100 tables total
+// Updated 2025-12-14 - verified against information_schema.tables
 const TABLES = [
-  // Level 0: No foreign keys - base/config tables
+  // Level 0: No foreign keys - base/config tables (17 tables)
   'topics', 'booster_types', 'legal_documents', 'translations', 'daily_prize_table',
   'weekly_prize_table', 'weekly_login_rewards', 'data_collection_metadata', 
   'engagement_analytics', 'performance_summary', 'rpc_rate_limits',
   'daily_winner_processing_log', 'app_download_links', 'retention_analytics', 
   'tips_tricks_videos', 'subscription_promo_events', 'creator_plans',
   
-  // Level 1: Depends on Level 0
+  // Level 1: Depends on Level 0 (3 tables)
   'profiles', 'questions', 'question_pools',
   
-  // Level 2: Depends on profiles (user_id references)
+  // Level 2: Depends on profiles (user_id references) (32 tables)
   'user_roles', 'password_history', 'pin_reset_tokens', 'login_attempts', 'login_attempts_pin',
   'question_translations', 'wallet_ledger', 'wallet_ledger_archive',
   'lives_ledger', 'lives_ledger_archive', 'tutorial_progress', 'user_presence', 'speed_tokens',
@@ -54,7 +53,7 @@ const TABLES = [
   'creator_subscriptions', 'creator_channels', 'creator_admin_notes', 'creator_audit_log',
   'reward_sessions',
   
-  // Level 3: Depends on Level 2
+  // Level 3: Depends on Level 2 (20 tables)
   'game_results', 'game_sessions', 'game_session_pools', 'friendships', 'invitations',
   'daily_rankings', 'global_leaderboard', 
   'leaderboard_cache', 'leaderboard_public_cache', 
@@ -64,19 +63,19 @@ const TABLES = [
   'booster_purchases', 'friend_request_rate_limit', 'admin_audit_log',
   'creator_videos', 'video_ad_rewards',
   
-  // Level 4: Depends on Level 3
+  // Level 4: Depends on Level 3 (10 tables)
   'game_question_analytics', 'game_question_analytics_archive', 'game_help_usage', 
   'game_exit_events', 'dm_threads',
   'creator_video_countries', 'creator_video_topics', 'creator_video_impressions',
   'creator_analytics_daily', 'ad_events',
   
-  // Level 5: Depends on Level 4
+  // Level 5: Depends on Level 4 (4 tables)
   'dm_messages', 'message_reads', 'messages', 'thread_participants',
   
-  // Level 6: Depends on Level 5
+  // Level 6: Depends on Level 5 (2 tables)
   'message_media', 'message_reactions',
   
-  // Analytics tables (no strict FK dependencies)
+  // Analytics tables - no strict FK dependencies (12 tables)
   'app_session_events', 'app_session_events_archive', 'navigation_events', 
   'feature_usage_events', 'feature_usage_events_archive',
   'bonus_claim_events', 'chat_interaction_events', 'conversion_events', 
