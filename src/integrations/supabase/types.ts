@@ -4390,6 +4390,7 @@ export type Database = {
         Args: { uid1: string; uid2: string }
         Returns: string[]
       }
+      populate_question_pools_direct: { Args: never; Returns: Json }
       process_daily_winners_for_date: {
         Args: { p_target_date: string }
         Returns: Json
