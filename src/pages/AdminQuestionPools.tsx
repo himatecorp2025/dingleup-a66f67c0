@@ -158,7 +158,7 @@ export default function AdminQuestionPools() {
                     key={pool.id}
                     className={`
                       text-center p-3 rounded-lg border-2 transition-colors
-                      ${pool.question_count >= 15 
+                      ${pool.question_count >= 300 
                         ? 'border-primary bg-primary/10 hover:bg-primary/20' 
                         : 'border-destructive bg-destructive/10'
                       }
@@ -171,7 +171,7 @@ export default function AdminQuestionPools() {
               </div>
             )}
 
-            {pools.length > 0 && minQuestions < 15 && (
+            {pools.length > 0 && minQuestions < 300 && (
               <Badge variant="outline" className="mt-4 border-yellow-500 text-yellow-600">
                 {t('admin.pools.warning_low_questions')}
               </Badge>

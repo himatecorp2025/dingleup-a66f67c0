@@ -6,9 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// CRITICAL: 15 GLOBAL POOLS (pool_1 through pool_15)
-// Each pool contains ~300 questions (30 topics × 10 questions/topic)
-const TOTAL_POOLS = 15;
+// CRITICAL: 20 GLOBAL POOLS (pool_1 through pool_20)
+// Each pool contains 300 questions (30 topics × 10 questions/topic)
+// 6000 questions total => 20 pools
+const TOTAL_POOLS = 20;
 const MIN_QUESTIONS_PER_POOL = 300;
 const QUESTIONS_PER_TOPIC_PER_POOL = 10; // Each pool gets max 10 questions from each topic
 
@@ -233,7 +234,7 @@ serve(async (req) => {
         questions_per_topic_per_pool: QUESTIONS_PER_TOPIC_PER_POOL,
         expected_questions_per_pool: topicIds.length * QUESTIONS_PER_TOPIC_PER_POOL,
         pools: insertedPools,
-        note: `15 GLOBAL pools created with ${QUESTIONS_PER_TOPIC_PER_POOL} questions per topic per pool (currently ${topicIds.length} topics = ~${topicIds.length * QUESTIONS_PER_TOPIC_PER_POOL} questions/pool)`,
+         note: `20 GLOBAL pools created with ${QUESTIONS_PER_TOPIC_PER_POOL} questions per topic per pool (currently ${topicIds.length} topics = ${topicIds.length * QUESTIONS_PER_TOPIC_PER_POOL} questions/pool)`,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

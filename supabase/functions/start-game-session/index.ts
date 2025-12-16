@@ -8,7 +8,7 @@ import { startMetrics, measureStage, incDbQuery, logSuccess, logError, shouldSam
 // OPTIMIZED GAME SESSION START - CENTRALIZED METRICS & STRUCTURED LOGGING
 // ============================================================================
 
-const TOTAL_POOLS = 15;
+const TOTAL_POOLS = 20;
 const MIN_QUESTIONS_PER_POOL = 300;
 const QUESTIONS_PER_GAME = 15;
 

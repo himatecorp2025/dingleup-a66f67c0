@@ -6,8 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// 15 GLOBAL POOLS with 300 questions each
-const TOTAL_POOLS = 15;
+// 20 GLOBAL POOLS with 300 questions each
+const TOTAL_POOLS = 20;
 const MIN_QUESTIONS_PER_POOL = 300;
 const QUESTIONS_PER_TOPIC_PER_POOL = 10;
 

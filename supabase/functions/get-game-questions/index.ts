@@ -6,8 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// CRITICAL: 15 GLOBAL POOLS (pool_1 ... pool_15)
-const TOTAL_POOLS = 15;
+// CRITICAL: 20 GLOBAL POOLS (pool_1 ... pool_20)
+const TOTAL_POOLS = 20;
 const MIN_QUESTIONS_PER_POOL = 300;
 const QUESTIONS_PER_GAME = 15;
 
