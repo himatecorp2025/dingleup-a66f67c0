@@ -112,12 +112,30 @@ export const QuestionCard = ({
               const isSelected = selectedAnswer === answer.key;
               const isCorrect = answer.key === correctAnswerKey;
               const isSelectedCorrect = isSelected && isCorrect;
-              const isSelectedWrong = isSelected && !isCorrect;
               const isFirstAttempt = firstAttempt === answer.key;
               const isSecondAttempt = secondAttempt === answer.key;
-              // Orange for both first and second attempt when double answer is active and no final answer yet
-              const isDoubleChoiceActive = isDoubleAnswerActiveThisQuestion && (isFirstAttempt || isSecondAttempt) && !selectedAnswer;
-              const showCorrectPulse = selectedAnswer && !isSelected && isCorrect; // Show green pulse on correct when user selected wrong
+              
+              // Timeout case: selectedAnswer === '__timeout__'
+              const isTimeout = selectedAnswer === '__timeout__';
+              
+              // Wrong answer logic:
+              // 1. User selected this wrong answer directly
+              // 2. In double answer mode: first attempt was wrong AND we have a final answer (both wrong)
+              const isSelectedWrong = (isSelected && !isCorrect) || 
+                (isDoubleAnswerActiveThisQuestion && isFirstAttempt && !isCorrect && selectedAnswer !== null);
+              
+              // Orange for attempts in double answer mode BEFORE final selection
+              // First attempt shows orange until second attempt is made
+              // Second attempt shows orange briefly, then both show red when final answer is set
+              const isDoubleChoiceActive = isDoubleAnswerActiveThisQuestion && 
+                (isFirstAttempt || isSecondAttempt) && 
+                !selectedAnswer;
+              
+              // Show correct answer (green pulse) when:
+              // 1. User selected wrong answer (reveal correct)
+              // 2. Timeout happened (reveal correct)
+              const showCorrectPulse = (selectedAnswer && selectedAnswer !== '__timeout__' && !isSelected && isCorrect) ||
+                (isTimeout && isCorrect);
 
               return (
                 <div key={answer.key} className="relative">
