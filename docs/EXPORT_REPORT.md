@@ -1,5 +1,7 @@
 # DingleUP! - Final Export Report
 
+**Utolsó frissítés:** 2025-12-14
+
 ## ✅ Export Complete
 
 This repository is now **100% self-hostable** and can run independently from Lovable on any infrastructure.
@@ -7,30 +9,33 @@ This repository is now **100% self-hostable** and can run independently from Lov
 ## 📦 What Was Exported
 
 ### 1. Complete Frontend Code ✅
-- **Location**: `/frontend` (all source files at root level)
-- **Framework**: React 18 + Vite + TypeScript
-- **Components**: 150+ components (game, admin, UI, lootbox, etc.)
-- **Hooks**: 60+ custom hooks
-- **Pages**: 40+ route pages
+- **Location**: `/src` (all source files at root level)
+- **Framework**: React 18.3.1 + Vite 6.x + TypeScript
+- **Components**: 150+ components (game, admin, UI, creators, etc.)
+- **Hooks**: 70+ custom hooks
+- **Pages**: 50+ route pages
 - **Assets**: All images, videos, audio, fonts
 - **Config**: PWA manifest, Capacitor config, Vite config
+- **i18n**: Complete Hungarian/English bilingual support
 - **Documentation**: `frontend/README.md` with setup instructions
 
 ### 2. Complete Backend Code ✅
-- **Location**: `/supabase/functions` (97 edge functions)
+- **Location**: `/supabase/functions` (97+ edge functions)
 - **Runtime**: Deno (Supabase Edge Functions)
-- **Functions**: Auth, game flow, lootbox, payments, admin, background jobs
-- **Shared**: Utility modules in `_shared/` directory
-- **Config**: `supabase/config.toml` with all function definitions and 8 cron jobs
+- **Functions**: Auth, game flow, creator videos, payments, admin, background jobs
+- **Shared**: Utility modules in `_shared/` directory (CORS, validation, rate limiting, metrics)
+- **Config**: `supabase/config.toml` with all function definitions
 - **Documentation**: `backend/README.md` with API reference
 
 ### 3. Database Schema ✅
 - **Location**: `/db/schema_latest.sql` (complete consolidated schema)
-- **Migration Files**: `/supabase/migrations` (363 migration history)
-- **Tables**: 100 tables with RLS policies
+- **Migration Files**: `/supabase/migrations` (370+ migration history)
+- **Tables**: **100 tables** with RLS policies
+- **Questions**: **6,000 questions** across 30 topics (200 per topic)
+- **Translations**: **18,000 question translations** (Hungarian + English, 3 answers each)
 - **Functions**: Core RPC functions (credit_wallet, check_rate_limit, has_role, etc.)
 - **Indexes**: 100+ performance indexes
-- **Initial Data**: Topics, legal documents, booster types
+- **Initial Data**: 30 Topics, legal documents, booster types, creator plans
 - **Admin Export**: 3 buttons on /admin dashboard:
   - Full Export (schema + data combined)
   - Schema Export (CREATE TABLE only)
@@ -49,10 +54,12 @@ This repository is now **100% self-hostable** and can run independently from Lov
 
 ### 5. Documentation ✅
 - **Root README**: Project overview, quick start, architecture
+- **ARCHITECTURE.md**: System diagrams, design patterns, data flow
 - **Frontend README**: Setup, development, API usage
 - **Backend README**: Edge functions, RPC reference, monitoring
 - **Database README**: Schema, migrations, maintenance
 - **Infrastructure README**: Docker deployment, scaling, security
+- **INDEPENDENT_DEPLOYMENT.md**: Complete self-hosting guide
 - **This Report**: Complete export summary
 
 ## 🚀 How to Run Independently
@@ -194,12 +201,13 @@ Load testing tools included in `/load-tests` directory with comprehensive scenar
 
 **Every required file has been successfully created and exported:**
 
-1. ✅ **Frontend**: Complete React + Vite application
-2. ✅ **Backend**: 97 edge functions with metrics, rate limiting, correlation IDs
+1. ✅ **Frontend**: Complete React + Vite application with bilingual support
+2. ✅ **Backend**: 97+ edge functions with metrics, rate limiting, correlation IDs
 3. ✅ **Database**: Full schema in `db/schema_latest.sql` (100 tables, executable on clean PostgreSQL)
-4. ✅ **Admin Export**: 3-button export system (Full/Schema/Data) on /admin dashboard
-5. ✅ **Infrastructure**: Docker compose, Dockerfiles, nginx configs
-6. ✅ **Documentation**: Complete setup guides for all components
+4. ✅ **Questions**: 6,000 questions across 30 topics with Hungarian + English translations
+5. ✅ **Admin Export**: 3-button export system (Full/Schema/Data) on /admin dashboard
+6. ✅ **Infrastructure**: Docker compose, Dockerfiles, nginx configs
+7. ✅ **Documentation**: Complete setup guides for all components
 
 ---
 
@@ -209,11 +217,11 @@ Load testing tools included in `/load-tests` directory with comprehensive scenar
 
 The `db/schema_latest.sql` file is ready and contains:
 - ✅ All enums and custom types
-- ✅ 80+ table definitions with complete column specifications
+- ✅ **100 table** definitions with complete column specifications
 - ✅ 100+ performance indexes
 - ✅ Complete RLS policies for all user-specific tables
 - ✅ Core RPC functions (credit_wallet, check_rate_limit, has_role, update_daily_ranking_for_user, regenerate_lives_background)
-- ✅ Initial data (30 topics, legal documents, booster types)
+- ✅ Initial data (30 topics, legal documents, booster types, creator plans)
 - ✅ Grant statements for authenticated and service roles
 
 The schema is executable on a clean PostgreSQL instance:
@@ -221,11 +229,18 @@ The schema is executable on a clean PostgreSQL instance:
 psql -U postgres -d dingleup -f db/schema_latest.sql
 ```
 
-### 2. Production Secrets
+### 2. Question Database (✅ Complete)
+
+- **6,000 questions** across 30 topics (200 per topic)
+- **18,000 translations** (Hungarian + English, each question has 3 answer translations)
+- All questions have `source_category='mixed'`
+- Export via Admin Dashboard "Data Export" button
+
+### 3. Production Secrets
 
 Replace all example values in `.env` files with production credentials before deployment.
 
-### 3. Stripe Webhook Configuration
+### 4. Stripe Webhook Configuration
 
 Update Stripe webhook endpoint to point to your production domain:
 ```
@@ -237,7 +252,7 @@ https://yourdomain.com/functions/v1/stripe-webhook-handler
 This codebase is production-ready and fully documented. For ongoing maintenance:
 
 - Monitor logs via `docker-compose logs`
-- Database backups via `pg_dump`
+- Database backups via `pg_dump` or Admin Dashboard export
 - Update via `git pull` + rebuild containers
 - Scale via Docker replicas or load balancers
 
@@ -248,8 +263,15 @@ This codebase is production-ready and fully documented. For ongoing maintenance:
 ✅ **Documented**: Full setup guides provided  
 ✅ **Self-hosted**: No dependency on Lovable infrastructure  
 ✅ **Production-ready**: Security and performance optimized  
-✅ **Database**: Complete schema ready for PostgreSQL deployment
+✅ **Database**: Complete schema ready for PostgreSQL deployment (100 tables)
+✅ **Content**: 6,000 questions with full bilingual support (Hungarian + English)
+✅ **Translations**: 18,000+ question translations included
 
 ---
 
 **DingleUP! is now fully portable and can be deployed anywhere.**
+
+---
+
+**Export Report Version:** 2.0  
+**Last Updated:** 2025-12-14

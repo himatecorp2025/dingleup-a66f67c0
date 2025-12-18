@@ -1,73 +1,171 @@
-# Welcome to your Lovable project
+# DingleUP! 🎮
 
-## Project info
+**A gamified trivia platform** with daily challenges, leaderboards, and rewards.
 
-**URL**: https://lovable.dev/projects/1fe67fc5-5c88-483e-b2e5-9ea42baa3c0f
+**Verzió:** Production Ready  
+**Utolsó frissítés:** 2025-12-14
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 📋 Projekt Áttekintés
 
-**Use Lovable**
+DingleUP! egy PWA-alapú kvízjáték alkalmazás, amely napi kihívásokat, országos ranglistákat és jutalomrendszert kínál.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/1fe67fc5-5c88-483e-b2e5-9ea42baa3c0f) and start prompting.
+### Főbb Jellemzők
+- 🎯 **6,000 kérdés** 30 témakörben (200/téma)
+- 🌍 **Kétnyelvű** támogatás (Magyar + Angol)
+- 📊 **Országos ranglisták** időzóna-alapú napi versennyel
+- 🎁 **Napi jutalmak** és streak rendszer
+- 👨‍🎨 **Creator rendszer** videó hirdetésekkel
+- 💰 **Monetizáció** Stripe integrációval
+- 📱 **PWA + Capacitor** (iOS/Android natív build)
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## 🛠️ Technológiai Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+| Komponens | Technológia | Verzió |
+|-----------|-------------|--------|
+| Frontend | React + Vite + TypeScript | 18.3.1 / 6.x |
+| UI | shadcn/ui + Tailwind CSS | latest |
+| Backend | Deno (Supabase Edge Functions) | 1.40+ |
+| Database | PostgreSQL | 15+ |
+| Mobile | Capacitor | 7.x |
+| Payments | Stripe | latest |
+| State | TanStack Query + Zustand | 5.x / 5.x |
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+---
 
-Follow these steps:
+## 📦 Adatbázis Statisztikák
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+| Metrika | Érték |
+|---------|-------|
+| Táblák | **100** |
+| Edge Functions | **97+** |
+| Kérdések | **6,000** |
+| Kérdésfordítások | **18,000** |
+| Témakörök | **30** |
+| Nyelvek | HU, EN |
+
+---
+
+## 🚀 Gyors Kezdés
+
+### Lokális Fejlesztés
+
+```bash
+# 1. Klónozás
 git clone <YOUR_GIT_URL>
+cd dingleup
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# 2. Dependencies telepítés
+npm install
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 3. Fejlesztői szerver indítás
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Önálló Telepítés (Self-Hosted)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Részletes útmutató: **[docs/INDEPENDENT_DEPLOYMENT.md](docs/INDEPENDENT_DEPLOYMENT.md)**
 
-**Use GitHub Codespaces**
+```bash
+# Docker-alapú telepítés
+cd infra
+docker-compose up -d
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Adatbázis inicializálás
+docker cp ../db/schema_latest.sql dingleup-db:/tmp/
+docker exec dingleup-db psql -U postgres -d dingleup -f /tmp/schema_latest.sql
+```
 
-## What technologies are used for this project?
+---
 
-This project is built with:
+## 📚 Dokumentáció
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+| Dokumentum | Leírás |
+|------------|--------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Rendszer architektúra, diagramok |
+| [docs/INDEPENDENT_DEPLOYMENT.md](docs/INDEPENDENT_DEPLOYMENT.md) | Önálló üzemeltetés útmutató |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Telepítési útmutató |
+| [docs/EXPORT_REPORT.md](docs/EXPORT_REPORT.md) | Export összefoglaló |
+| [db/EXPORT_INSTRUCTIONS.md](db/EXPORT_INSTRUCTIONS.md) | Adatbázis export útmutató |
+| [infra/README.md](infra/README.md) | Docker infrastruktúra |
+| [backend/README.md](backend/README.md) | Backend API dokumentáció |
+| [frontend/README.md](frontend/README.md) | Frontend fejlesztési útmutató |
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/1fe67fc5-5c88-483e-b2e5-9ea42baa3c0f) and click on Share -> Publish.
+## 🔐 Admin Felület
 
-## Can I connect a custom domain to my Lovable project?
+Az admin felület elérhető: `/admin`
 
-Yes, you can!
+**Főbb funkciók:**
+- Dashboard statisztikák
+- Felhasználók kezelése
+- Kérdésfordítások kezelése
+- **Adatbázis export** (Full/Schema/Data)
+- Analitika dashboardok
+- Creator kezelés
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 🌐 Önálló Működés
+
+Ez a projekt **100% független** tud működni a Lovable platformtól:
+
+✅ Teljes forráskód exportálva  
+✅ 100 táblás adatbázis séma  
+✅ 97+ edge function  
+✅ Docker infrastruktúra  
+✅ Részletes dokumentáció  
+
+Részletek: **[docs/EXPORT_REPORT.md](docs/EXPORT_REPORT.md)**
+
+---
+
+## 📱 Mobil Build
+
+### Android (APK/AAB)
+```bash
+npx cap sync android
+npx cap open android
+# Android Studio → Build → Generate Signed Bundle
+```
+
+### iOS (IPA)
+```bash
+npx cap sync ios
+npx cap open ios
+# Xcode → Product → Archive
+```
+
+---
+
+## 🔧 Environment Változók
+
+### Frontend (`.env`)
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
+VITE_SUPABASE_PROJECT_ID=your-project-id
+VITE_STRIPE_PUBLISHABLE_KEY=pk_live_...
+```
+
+### Backend (Supabase Secrets)
+```bash
+supabase secrets set STRIPE_SECRET_KEY=sk_live_...
+supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+---
+
+## 📞 Támogatás
+
+- **Dokumentáció:** `/docs` mappa
+- **Adatbázis export:** Admin Dashboard → "Teljes adatbázis export"
+- **Load tesztek:** `/load-tests` mappa
+
+---
+
+**© 2025 DingleUP! - All Rights Reserved**
