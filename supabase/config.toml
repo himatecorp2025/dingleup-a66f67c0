@@ -178,9 +178,6 @@ verify_jwt = false
 [functions.populate-question-pools-en]
 verify_jwt = false
 
-[functions.populate-question-pools]
-verify_jwt = false
-
 [functions.regenerate-question-pools]
 verify_jwt = false
 

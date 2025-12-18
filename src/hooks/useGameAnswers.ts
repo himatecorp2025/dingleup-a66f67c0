@@ -119,14 +119,13 @@ export const useGameAnswers = (options: UseGameAnswersOptions) => {
       setSecondAttempt(answerKey);
       const firstAnswerObj = currentQuestion.answers.find(a => a.key === firstAttempt);
       
-      // 0.5 second delay before showing result in double answer mode
-      setTimeout(() => {
-        if (isCorrect || firstAnswerObj?.correct) {
-          handleCorrectAnswer(responseTime, isCorrect ? answerKey : firstAttempt!);
-        } else {
-          handleWrongAnswer(responseTime, answerKey);
-        }
-      }, 500);
+      if (isCorrect || firstAnswerObj?.correct) {
+        // INSTANT - no delay
+        handleCorrectAnswer(responseTime, isCorrect ? answerKey : firstAttempt!);
+      } else {
+        // INSTANT - no delay
+        handleWrongAnswer(responseTime, answerKey);
+      }
       return;
     }
 

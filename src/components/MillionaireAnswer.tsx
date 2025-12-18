@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState, useId } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 
 interface MillionaireAnswerProps {
   children: ReactNode;
@@ -27,9 +27,6 @@ export const MillionaireAnswer = ({
 }: MillionaireAnswerProps) => {
   const textRef = useRef<HTMLParagraphElement>(null);
   const [isMultiLine, setIsMultiLine] = useState(false);
-  
-  // CRITICAL: Generate unique ID per component instance to avoid SVG gradient conflicts
-  const uniqueId = useId().replace(/:/g, '_');
 
   useEffect(() => {
     if (!textRef.current) return;
@@ -42,8 +39,7 @@ export const MillionaireAnswer = ({
     setIsMultiLine(lines >= 2);
   }, [children]);
 
-  // Determine gradient suffix based on state - ORDER MATTERS
-  // Priority: showCorrectPulse/isCorrect > isWrong > isDoubleChoiceActive > default
+  // Determine gradient suffix based on state
   let gradientSuffix = 'default';
   if (showCorrectPulse || isCorrect) {
     gradientSuffix = 'correct';
@@ -53,14 +49,8 @@ export const MillionaireAnswer = ({
     gradientSuffix = 'orange';
   }
 
-  // UNIQUE gradient IDs per instance to prevent SVG ID collisions
-  const band20Id = `band20_${uniqueId}_${gradientSuffix}`;
-  const band5Id = `band5_${uniqueId}_${gradientSuffix}`;
-  const hexPathId = `HEX_ANS_${uniqueId}`;
-  const bgGradId = `bg_ans_${uniqueId}`;
-  const chromeGradId = `chromeGrad_ans_${uniqueId}`;
-  const filterId = `pro3d_ans_${uniqueId}`;
-  const maskId = `maskOuterOnly_ans_${uniqueId}`;
+  const band20Id = `band20_ans_${gradientSuffix}`;
+  const band5Id = `band5_ans_${gradientSuffix}`;
 
   return (
     <div className={`w-full flex justify-center mb-1 ${isRemoved ? 'opacity-40' : ''}`}>
@@ -82,14 +72,14 @@ export const MillionaireAnswer = ({
           aria-hidden
         >
           <defs>
-            <path id={hexPathId} d="M 592.82399,0 h -467.76283 c -23.80302,0 -36.4576,36.10205 -62.53058,36.10196 26.07298,-9e-5 38.72756,36.10196 62.53058,36.10196 h 467.76283 c 23.80302,0 36.4576,-36.10205 62.53058,-36.10196 -26.07298,9e-5 -38.72756,-36.10196 -62.53058,-36.10196 z"/>
+            <path id="HEX_ANS" d="M 592.82399,0 h -467.76283 c -23.80302,0 -36.4576,36.10205 -62.53058,36.10196 26.07298,-9e-5 38.72756,36.10196 62.53058,36.10196 h 467.76283 c 23.80302,0 36.4576,-36.10205 62.53058,-36.10196 -26.07298,9e-5 -38.72756,-36.10196 -62.53058,-36.10196 z"/>
 
-            <linearGradient id={bgGradId} x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
+            <linearGradient id="bg_ans" x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stopColor="#191534"/>
               <stop offset="100%" stopColor="#0e0b1c"/>
             </linearGradient>
 
-            <linearGradient id={chromeGradId} x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
+            <linearGradient id="chromeGrad_ans" x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stopColor="#f8fbff"/>
               <stop offset="10%" stopColor="#c6ccd3"/>
               <stop offset="22%" stopColor="#ffffff"/>
@@ -99,91 +89,85 @@ export const MillionaireAnswer = ({
               <stop offset="100%" stopColor="#ffffff"/>
             </linearGradient>
 
-            {/* Color gradients based on state */}
-            {gradientSuffix === 'default' && (
-              <>
-                <linearGradient id={band20Id} x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#E0BFFF"/>
-                  <stop offset="35%" stopColor="#9C27F3"/>
-                  <stop offset="100%" stopColor="#6A0BB8"/>
-                </linearGradient>
-                <linearGradient id={band5Id} x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#F2E6FF"/>
-                  <stop offset="50%" stopColor="#B85AFF"/>
-                  <stop offset="100%" stopColor="#7B1ED6"/>
-                </linearGradient>
-              </>
-            )}
-            {gradientSuffix === 'correct' && (
-              <>
-                <linearGradient id={band20Id} x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#BFFFBF"/>
-                  <stop offset="35%" stopColor="#27F327"/>
-                  <stop offset="100%" stopColor="#0BB80B"/>
-                </linearGradient>
-                <linearGradient id={band5Id} x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#E6FFE6"/>
-                  <stop offset="50%" stopColor="#5AFF5A"/>
-                  <stop offset="100%" stopColor="#1ED61E"/>
-                </linearGradient>
-              </>
-            )}
-            {gradientSuffix === 'wrong' && (
-              <>
-                <linearGradient id={band20Id} x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#FFBFBF"/>
-                  <stop offset="35%" stopColor="#F32727"/>
-                  <stop offset="100%" stopColor="#B80B0B"/>
-                </linearGradient>
-                <linearGradient id={band5Id} x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#FFE6E6"/>
-                  <stop offset="50%" stopColor="#FF5A5A"/>
-                  <stop offset="100%" stopColor="#D61E1E"/>
-                </linearGradient>
-              </>
-            )}
-            {gradientSuffix === 'orange' && (
-              <>
-                <linearGradient id={band20Id} x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#FFDBBF"/>
-                  <stop offset="35%" stopColor="#F39C27"/>
-                  <stop offset="100%" stopColor="#B8660B"/>
-                </linearGradient>
-                <linearGradient id={band5Id} x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#FFEDE6"/>
-                  <stop offset="50%" stopColor="#FFB85A"/>
-                  <stop offset="100%" stopColor="#D6851E"/>
-                </linearGradient>
-              </>
-            )}
+            {/* Purple/Default gradients */}
+            <linearGradient id="band20_ans_default" x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#E0BFFF"/>
+              <stop offset="35%" stopColor="#9C27F3"/>
+              <stop offset="100%" stopColor="#6A0BB8"/>
+            </linearGradient>
 
-            <filter id={filterId} x="-50%" y="-50%" width="200%" height="200%">
+            <linearGradient id="band5_ans_default" x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#F2E6FF"/>
+              <stop offset="50%" stopColor="#B85AFF"/>
+              <stop offset="100%" stopColor="#7B1ED6"/>
+            </linearGradient>
+
+            {/* Green/Correct gradients */}
+            <linearGradient id="band20_ans_correct" x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#BFFFBF"/>
+              <stop offset="35%" stopColor="#27F327"/>
+              <stop offset="100%" stopColor="#0BB80B"/>
+            </linearGradient>
+
+            <linearGradient id="band5_ans_correct" x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#E6FFE6"/>
+              <stop offset="50%" stopColor="#5AFF5A"/>
+              <stop offset="100%" stopColor="#1ED61E"/>
+            </linearGradient>
+
+            {/* Red/Wrong gradients */}
+            <linearGradient id="band20_ans_wrong" x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#FFBFBF"/>
+              <stop offset="35%" stopColor="#F32727"/>
+              <stop offset="100%" stopColor="#B80B0B"/>
+            </linearGradient>
+
+            <linearGradient id="band5_ans_wrong" x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#FFE6E6"/>
+              <stop offset="50%" stopColor="#FF5A5A"/>
+              <stop offset="100%" stopColor="#D61E1E"/>
+            </linearGradient>
+
+            {/* Orange/Double Choice gradients */}
+            <linearGradient id="band20_ans_orange" x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#FFDBBF"/>
+              <stop offset="35%" stopColor="#F39C27"/>
+              <stop offset="100%" stopColor="#B8660B"/>
+            </linearGradient>
+
+            <linearGradient id="band5_ans_orange" x1="0" y1="-47.58" x2="0" y2="119.78" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#FFEDE6"/>
+              <stop offset="50%" stopColor="#FFB85A"/>
+              <stop offset="100%" stopColor="#D6851E"/>
+            </linearGradient>
+
+            <filter id="pro3d_ans" x="-50%" y="-50%" width="200%" height="200%">
               <feDropShadow dx="0" dy="1.2" stdDeviation="1.2" floodColor="rgba(0,0,0,0.35)"/>
               <feDropShadow dx="0" dy="-0.6" stdDeviation="0.7" floodColor="rgba(255,255,255,0.35)"/>
             </filter>
 
-            <mask id={maskId} maskUnits="userSpaceOnUse">
+            <mask id="maskOuterOnly_ans" maskUnits="userSpaceOnUse">
               <rect x="-9999" y="-9999" width="20000" height="20000" fill="black"/>
-              <use href={`#${hexPathId}`} stroke="white" strokeWidth="2" fill="none"/>
-              <use href={`#${hexPathId}`} stroke="black" strokeWidth="25" fill="none"/>
+              <use href="#HEX_ANS" stroke="white" strokeWidth="2" fill="none"/>
+              <use href="#HEX_ANS" stroke="black" strokeWidth="25" fill="none"/>
             </mask>
           </defs>
 
           <rect x="-10000" y="-10000" width="30000" height="30000" fill="none" />
 
           <g transform="scale(1,1.44)">
-            <use href={`#${hexPathId}`} fill="black" fillOpacity="0.5"/>
+            <use href="#HEX_ANS" fill="black" fillOpacity="0.5"/>
 
-            <use href={`#${hexPathId}`} fill="none" stroke={`url(#${band20Id})`} strokeWidth="20"
-                 strokeLinejoin="miter" strokeMiterlimit="200" strokeLinecap="butt" filter={`url(#${filterId})`}
+            <use href="#HEX_ANS" fill="none" stroke={`url(#${band20Id})`} strokeWidth="20"
+                 strokeLinejoin="miter" strokeMiterlimit="200" strokeLinecap="butt" filter="url(#pro3d_ans)"
                  vectorEffect="non-scaling-stroke"/>
 
-            <use href={`#${hexPathId}`} fill="none" stroke={`url(#${band5Id})`} strokeWidth="5"
-                 strokeLinejoin="miter" strokeMiterlimit="200" strokeLinecap="butt" filter={`url(#${filterId})`}
+            <use href="#HEX_ANS" fill="none" stroke={`url(#${band5Id})`} strokeWidth="5"
+                 strokeLinejoin="miter" strokeMiterlimit="200" strokeLinecap="butt" filter="url(#pro3d_ans)"
                  vectorEffect="non-scaling-stroke"/>
 
-            <g mask={`url(#${maskId})`}>
-              <use href={`#${hexPathId}`} fill="none" stroke={`url(#${chromeGradId})`} strokeWidth="2"
+            <g mask="url(#maskOuterOnly_ans)">
+              <use href="#HEX_ANS" fill="none" stroke="url(#chromeGrad_ans)" strokeWidth="2"
                    strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
             </g>
           </g>

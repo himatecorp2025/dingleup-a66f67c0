@@ -383,21 +383,6 @@ graph TB
 
 ---
 
-## 8. Adatbázis Statisztikák (2025-12-14)
-
-| Metrika | Érték |
-|---------|-------|
-| Táblák száma | 100 |
-| Edge Functions | 97+ |
-| Kérdések | 6,000 (30 téma × 200 kérdés) |
-| Kérdésfordítások | 18,000 (HU + EN, 3 válasz/kérdés) |
-| Témakörök | 30 |
-| Nyelvek | Magyar (HU), Angol (EN) |
-| RLS Policies | Minden user-specifikus táblán |
-| Indexek | 100+ |
-
----
-
-**Verzió:** 2.0  
-**Utolsó frissítés:** 2025-12-14  
+**Verzió:** 1.0  
+**Utolsó frissítés:** 2025-01-25  
 **Projekt:** DingleUP! Trivia Game Platform

@@ -373,17 +373,11 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
     setIsStarting(false);
   }, [navigate, t, userId, refetchWallet, broadcast]);
 
-  // Track if finishGame was already called to prevent duplicate submissions
-  const finishGameCalledRef = useRef(false);
-
   const restartGameImmediately = useCallback(async () => {
     if (!profile || isStarting) return;
 
     logger.log('[useGameLifecycle] ⚡ INSTANT RESTART initiated');
     toast.dismiss();
-    
-    // CRITICAL: Reset finishGame flag for new game
-    finishGameCalledRef.current = false;
     
     // ATOMIC STATE RESET
     resetGameStateHook();
@@ -441,36 +435,11 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
   ]);
 
   const finishGame = useCallback(async () => {
-    logger.log('[useGameLifecycle] 🎮 finishGame CALLED', {
-      hasProfile: !!profile,
-      alreadyCalled: finishGameCalledRef.current,
-      questionsLength: questions?.length || 0,
-      correctAnswers,
-      coinsEarned,
-    });
-
-    if (!profile) {
-      logger.error('[useGameLifecycle] ❌ finishGame aborted: no profile');
-      return;
-    }
-    
-    // CRITICAL: Prevent duplicate submissions
-    if (finishGameCalledRef.current) {
-      logger.log('[useGameLifecycle] finishGame already called, skipping duplicate');
-      return;
-    }
-    finishGameCalledRef.current = true;
+    if (!profile) return;
 
     const avgResponseTime = responseTimes.length > 0 
       ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length 
       : 0;
-
-    logger.log('[useGameLifecycle] 🎮 finishGame proceeding - saving to backend', {
-      correctAnswers,
-      coinsEarned,
-      avgResponseTime,
-      questionsCount: questions?.length || 0,
-    });
 
     try {
       if (userId && correctAnswers > 0) {
@@ -483,12 +452,8 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
       }
 
       const { data: { session } } = await supabase.auth.getSession();
-      logger.log('[useGameLifecycle] 🔐 Session check:', { hasSession: !!session, hasToken: !!session?.access_token });
-      
       if (!session?.access_token) {
-        logger.error('[useGameLifecycle] ❌ No session token!');
         toast.error(t('errors.session_expired'));
-        finishGameCalledRef.current = false; // Reset on error
         return;
       }
 
@@ -501,35 +466,19 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
         questionIndex: idx,
       }));
 
-      logger.log('[useGameLifecycle] 📡 Calling complete-game edge function with:', {
-        category: 'mixed',
-        correctAnswers,
-        totalQuestions: questions.length,
-        avgResponseTime,
-        coinsEarned,
-        questionAnalyticsCount: questionAnalytics.length,
-      });
-
       const { data, error } = await supabase.functions.invoke('complete-game', {
         headers: { Authorization: `Bearer ${session.access_token}` },
         body: {
           category: 'mixed',
           correctAnswers: correctAnswers,
-          totalQuestions: 15, // FIXED: Always send 15, not questions.length which could be wrong
+          totalQuestions: questions.length,
           averageResponseTime: avgResponseTime,
-          coinsEarned: coinsEarned,
+          coinsEarned: coinsEarned, // NEW: Send frontend-calculated coins for DB credit
           questionAnalytics: questionAnalytics,
         }
       });
 
-      logger.log('[useGameLifecycle] 📡 complete-game response:', { data, error });
-
-      if (error) {
-        logger.error('[useGameLifecycle] complete-game error:', error);
-        throw error;
-      }
-
-      logger.log('[useGameLifecycle] ✅ Game saved successfully:', data);
+      if (error) throw error;
 
       const serverCoinsEarned = data?.coinsEarned || 0;
       setCoinsEarned(serverCoinsEarned);
@@ -553,9 +502,9 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
         }
       }
       
+      
     } catch (error) {
-      logger.error('[useGameLifecycle] Error finishing game:', error);
-      finishGameCalledRef.current = false; // Reset on error to allow retry
+      console.error('Error finishing game:', error);
       await refreshProfile();
     }
   }, [

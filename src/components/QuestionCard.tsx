@@ -111,50 +111,13 @@ export const QuestionCard = ({
               const isRemoved = removedAnswer === answer.key;
               const isSelected = selectedAnswer === answer.key;
               const isCorrect = answer.key === correctAnswerKey;
+              const isSelectedCorrect = isSelected && isCorrect;
+              const isSelectedWrong = isSelected && !isCorrect;
               const isFirstAttempt = firstAttempt === answer.key;
               const isSecondAttempt = secondAttempt === answer.key;
-              const isTimeout = selectedAnswer === '__timeout__';
-              
-              // Double answer mode helpers
-              const firstAttemptWasCorrect = firstAttempt === correctAnswerKey;
-              const secondAttemptWasCorrect = secondAttempt === correctAnswerKey;
-              const anyAttemptWasCorrect = firstAttemptWasCorrect || secondAttemptWasCorrect;
-              const hasFinalAnswer = selectedAnswer !== null && selectedAnswer !== '__timeout__';
-              
-              let isSelectedCorrect = false;
-              let isSelectedWrong = false;
-              let isDoubleChoiceActive = false;
-              let showCorrectPulse = false;
-              
-              if (isDoubleAnswerActiveThisQuestion) {
-                // DOUBLE ANSWER MODE
-                if (hasFinalAnswer) {
-                  // Final result - show green/red only on selected attempts
-                  if (isFirstAttempt) {
-                    isSelectedCorrect = firstAttemptWasCorrect;
-                    isSelectedWrong = !firstAttemptWasCorrect;
-                  } else if (isSecondAttempt) {
-                    isSelectedCorrect = secondAttemptWasCorrect;
-                    isSelectedWrong = !secondAttemptWasCorrect;
-                  }
-                  // Reveal correct answer ONLY if neither attempt was correct
-                  showCorrectPulse = !anyAttemptWasCorrect && isCorrect && !isFirstAttempt && !isSecondAttempt;
-                } else {
-                  // Before final - show orange on attempts
-                  isDoubleChoiceActive = isFirstAttempt || isSecondAttempt;
-                }
-              } else {
-                // NORMAL MODE
-                isSelectedCorrect = isSelected && isCorrect;
-                isSelectedWrong = isSelected && !isCorrect;
-                // Reveal correct if user selected wrong
-                showCorrectPulse = hasFinalAnswer && !isSelected && isCorrect && !isSelectedCorrect;
-              }
-              
-              // Timeout always reveals correct answer
-              if (isTimeout && isCorrect) {
-                showCorrectPulse = true;
-              }
+              // Orange for both first and second attempt when double answer is active and no final answer yet
+              const isDoubleChoiceActive = isDoubleAnswerActiveThisQuestion && (isFirstAttempt || isSecondAttempt) && !selectedAnswer;
+              const showCorrectPulse = selectedAnswer && !isSelected && isCorrect; // Show green pulse on correct when user selected wrong
 
               return (
                 <div key={answer.key} className="relative">

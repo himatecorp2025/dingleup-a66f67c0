@@ -6,10 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// CRITICAL: 20 GLOBAL POOLS (pool_1 through pool_20)
-// Each pool contains 300 questions (30 topics × 10 questions/topic)
-// 6000 questions total => 20 pools
-const TOTAL_POOLS = 20;
+// CRITICAL: 15 GLOBAL POOLS (pool_1 through pool_15)
+// Each pool contains ~300 questions (30 topics × 10 questions/topic)
+const TOTAL_POOLS = 15;
 const MIN_QUESTIONS_PER_POOL = 300;
 const QUESTIONS_PER_TOPIC_PER_POOL = 10; // Each pool gets max 10 questions from each topic
 
@@ -69,30 +68,15 @@ serve(async (req) => {
       );
     }
 
-    // Get ALL questions with proper pagination (PostgREST default limit is 1000)
-    const batchSize = 1000;
-    let allQuestions: any[] = [];
-    let offset = 0;
+    // Get ALL questions grouped by topic (NO LIMIT)
+    const { data: questions, error: questionsError } = await supabase
+      .from('questions')
+      .select('*')
+      .limit(10000); // Explicit high limit to get ALL questions
 
-    while (true) {
-      const { data: batch, error: batchError } = await supabase
-        .from('questions')
-        .select('*')
-        .range(offset, offset + batchSize - 1);
-
-      if (batchError) {
-        throw new Error(`Failed to fetch questions: ${batchError.message}`);
-      }
-
-      if (!batch || batch.length === 0) break;
-
-      allQuestions = allQuestions.concat(batch);
-      offset += batchSize;
-
-      if (batch.length < batchSize) break;
+    if (questionsError) {
+      throw new Error(`Failed to fetch questions: ${questionsError.message}`);
     }
-
-    const questions = allQuestions as Question[];
 
     if (!questions || questions.length === 0) {
       return new Response(
@@ -102,45 +86,6 @@ serve(async (req) => {
     }
 
     console.log(`Total questions available: ${questions.length}`);
-
-    // Fetch ALL English translations with pagination
-    let allEnTranslations: any[] = [];
-    offset = 0;
-
-    while (true) {
-      const { data: transBatch, error: transBatchError } = await supabase
-        .from('question_translations')
-        .select('question_id, question_text, answer_a, answer_b, answer_c')
-        .eq('lang', 'en')
-        .range(offset, offset + batchSize - 1);
-
-      if (transBatchError) {
-        console.error('Failed to fetch translations:', transBatchError);
-        break;
-      }
-
-      if (!transBatch || transBatch.length === 0) break;
-
-      allEnTranslations = allEnTranslations.concat(transBatch);
-      offset += batchSize;
-
-      if (transBatch.length < batchSize) break;
-    }
-
-    const enTranslations = allEnTranslations;
-
-    // Create lookup map for English translations
-    const enTransMap = new Map<string, { question_text: string; answer_a: string; answer_b: string; answer_c: string }>();
-    (enTranslations || []).forEach((t: any) => {
-      enTransMap.set(t.question_id, {
-        question_text: t.question_text,
-        answer_a: t.answer_a,
-        answer_b: t.answer_b,
-        answer_c: t.answer_c,
-      });
-    });
-
-    console.log(`English translations loaded: ${enTransMap.size}`);
 
     // Group questions by topic_id
     const questionsByTopic = new Map<number, Question[]>();
@@ -213,28 +158,10 @@ serve(async (req) => {
         [poolQuestions[i], poolQuestions[j]] = [poolQuestions[j], poolQuestions[i]];
       }
 
-      // Create English version of pool questions
-      const poolQuestionsEn = poolQuestions.map((q: Question) => {
-        const enTrans = enTransMap.get(q.id);
-        if (enTrans) {
-          return {
-            ...q,
-            question: enTrans.question_text,
-            answers: q.answers.map((a: any, idx: number) => ({
-              ...a,
-              text: idx === 0 ? enTrans.answer_a : idx === 1 ? enTrans.answer_b : enTrans.answer_c,
-            })),
-          };
-        }
-        return q; // Fallback to Hungarian if no translation
-      });
-
       if (poolQuestions.length >= MIN_QUESTIONS_PER_POOL) {
         pools.push({
           pool_order: poolOrder,
           questions: poolQuestions,
-          questions_en: poolQuestionsEn,
-          question_count: poolQuestions.length,
           version: 1,
         });
         console.log(`[regenerate-pools] ✓ Pool ${poolOrder}: ${poolQuestions.length} questions (${topicIds.length} topics mixed)`);
@@ -264,7 +191,7 @@ serve(async (req) => {
         questions_per_topic_per_pool: QUESTIONS_PER_TOPIC_PER_POOL,
         expected_questions_per_pool: topicIds.length * QUESTIONS_PER_TOPIC_PER_POOL,
         pools: insertedPools,
-         note: `20 GLOBAL pools created with ${QUESTIONS_PER_TOPIC_PER_POOL} questions per topic per pool (currently ${topicIds.length} topics = ${topicIds.length * QUESTIONS_PER_TOPIC_PER_POOL} questions/pool)`,
+        note: `15 GLOBAL pools created with ${QUESTIONS_PER_TOPIC_PER_POOL} questions per topic per pool (currently ${topicIds.length} topics = ~${topicIds.length * QUESTIONS_PER_TOPIC_PER_POOL} questions/pool)`,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
