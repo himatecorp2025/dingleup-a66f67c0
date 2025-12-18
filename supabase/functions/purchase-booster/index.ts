@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface BoosterPurchaseRequest {
-  boosterCode: 'FREE' | 'GOLD_SAVER';
+  boosterCode: 'FREE' | 'GOLD_TO_LIFE' | 'LIFE_TO_GOLD';
 }
 
 interface BoosterPurchaseResponse {
@@ -62,25 +62,12 @@ serve(async (req) => {
 
     console.log(`[purchase-booster] User ${userId} purchasing ${boosterCode}`);
 
-    // Get booster definition
-    const { data: boosterType, error: boosterError } = await supabaseAdmin
-      .from("booster_types")
-      .select("*")
-      .eq("code", boosterCode)
-      .eq("is_active", true)
-      .single();
-
-    if (boosterError || !boosterType) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Invalid booster type" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     if (boosterCode === 'FREE') {
-      return await handleFreeBoosterPurchase(supabaseAdmin, userId, boosterType);
-    } else if (boosterCode === 'GOLD_SAVER') {
-      return await handleGoldSaverPurchase(supabaseAdmin, userId, boosterType);
+      return await handleFreeBoosterPurchase(supabaseAdmin, userId);
+    } else if (boosterCode === 'GOLD_TO_LIFE') {
+      return await handleGoldToLifePurchase(supabaseAdmin, userId);
+    } else if (boosterCode === 'LIFE_TO_GOLD') {
+      return await handleLifeToGoldPurchase(supabaseAdmin, userId);
     }
 
     return new Response(
@@ -98,17 +85,14 @@ serve(async (req) => {
   }
 });
 
-// FREE BOOSTER: Pay 900 gold → Net -600 gold, grant +300 gold, +15 lives, 4× 30min speed tokens
-async function handleFreeBoosterPurchase(supabaseAdmin: any, userId: string, boosterType: any) {
-  const priceGold = boosterType.price_gold || 0;
-  const rewardGold = boosterType.reward_gold || 0;
-  const rewardLives = boosterType.reward_lives || 0;
-  const rewardSpeedCount = boosterType.reward_speed_count || 0;
-  const rewardSpeedDuration = boosterType.reward_speed_duration_min || 0;
+// FREE BOOSTER (Profile): Pay 500 gold → grant +1000 gold, +15 lives (net +500 gold, +15 lives)
+async function handleFreeBoosterPurchase(supabaseAdmin: any, userId: string) {
+  const priceGold = 500;
+  const rewardGold = 1000;
+  const rewardLives = 15;
 
-  console.log(`[FREE] Price: ${priceGold}, Rewards: gold=${rewardGold}, lives=${rewardLives}, speed=${rewardSpeedCount}x${rewardSpeedDuration}min`);
+  console.log(`[FREE] Price: ${priceGold}, Rewards: gold=${rewardGold}, lives=${rewardLives}`);
 
-  // Get current user balance for validation only
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
     .select("coins, lives")
@@ -138,20 +122,18 @@ async function handleFreeBoosterPurchase(supabaseAdmin: any, userId: string, boo
 
   const idempotencyKey = `free_booster:${userId}:${Date.now()}`;
   
+  // Net delta: -500 + 1000 = +500 gold
   const { data: creditResult, error: creditError } = await supabaseAdmin.rpc('credit_wallet', {
     p_user_id: userId,
-    p_delta_coins: rewardGold - priceGold,
-    p_delta_lives: rewardLives,
+    p_delta_coins: rewardGold - priceGold, // +500 net
+    p_delta_lives: rewardLives, // +15 lives
     p_source: 'booster_purchase',
     p_idempotency_key: idempotencyKey,
     p_metadata: {
-      booster_type_id: boosterType.id,
       booster_code: 'FREE',
       price_gold: priceGold,
       reward_gold: rewardGold,
       reward_lives: rewardLives,
-      reward_speed_count: rewardSpeedCount,
-      reward_speed_duration_min: rewardSpeedDuration,
       purchase_context: 'PROFILE'
     }
   });
@@ -180,7 +162,7 @@ async function handleFreeBoosterPurchase(supabaseAdmin: any, userId: string, boo
     .from("booster_purchases")
     .insert({
       user_id: userId,
-      booster_type_id: boosterType.id,
+      booster_type_id: 'FREE',
       purchase_source: "GOLD",
       gold_spent: priceGold,
       usd_cents_spent: 0,
@@ -194,43 +176,30 @@ async function handleFreeBoosterPurchase(supabaseAdmin: any, userId: string, boo
       user_id: userId,
       event_type: "purchase_complete",
       product_type: "booster",
-      product_id: boosterType.code,
+      product_id: 'FREE',
       session_id: `session_${userId}_${Date.now()}`,
       metadata: {
-        booster_code: boosterType.code,
+        booster_code: 'FREE',
         price_gold: priceGold,
         reward_gold: rewardGold,
         reward_lives: rewardLives
       }
     });
 
-  // Create Speed tokens (pending activation)
-  if (rewardSpeedCount > 0) {
-    const speedTokens = [];
-    for (let i = 0; i < rewardSpeedCount; i++) {
-      speedTokens.push({
-        user_id: userId,
-        duration_minutes: rewardSpeedDuration,
-        source: 'FREE_BOOSTER'
-      });
-    }
-
-    await supabaseAdmin.from("speed_tokens").insert(speedTokens);
-    console.log(`[FREE] Created ${rewardSpeedCount} speed tokens`);
-  }
+  console.log(`[FREE] Purchase successful - net +${rewardGold - priceGold} gold, +${rewardLives} lives`);
 
   const response: BoosterPurchaseResponse = {
     success: true,
     balanceAfter: {
       gold: newGold,
       lives: newLives,
-      speedTokensAvailable: rewardSpeedCount
+      speedTokensAvailable: 0
     },
     grantedRewards: {
       gold: rewardGold,
       lives: rewardLives,
-      speedCount: rewardSpeedCount,
-      speedDurationMinutes: rewardSpeedDuration
+      speedCount: 0,
+      speedDurationMinutes: 0
     }
   };
 
@@ -240,13 +209,12 @@ async function handleFreeBoosterPurchase(supabaseAdmin: any, userId: string, boo
   );
 }
 
-// GOLD_SAVER BOOSTER: Pay 500 gold → Net -250 gold, grant +250 gold, +15 lives
-async function handleGoldSaverPurchase(supabaseAdmin: any, userId: string, boosterType: any) {
-  const priceGold = boosterType.price_gold || 0;
-  const rewardGold = boosterType.reward_gold || 0;
-  const rewardLives = boosterType.reward_lives || 0;
+// GOLD_TO_LIFE: Pay 500 gold → grant +5 lives (net -500 gold, +5 lives)
+async function handleGoldToLifePurchase(supabaseAdmin: any, userId: string) {
+  const priceGold = 500;
+  const rewardLives = 5;
 
-  console.log(`[GOLD_SAVER] Price: ${priceGold}, Rewards: gold=${rewardGold}, lives=${rewardLives}`);
+  console.log(`[GOLD_TO_LIFE] Price: ${priceGold} gold, Reward: ${rewardLives} lives`);
 
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
@@ -275,26 +243,25 @@ async function handleGoldSaverPurchase(supabaseAdmin: any, userId: string, boost
     );
   }
 
-  const idempotencyKey = `gold_saver:${userId}:${Date.now()}`;
+  const idempotencyKey = `gold_to_life:${userId}:${Date.now()}`;
   
   const { data: creditResult, error: creditError } = await supabaseAdmin.rpc('credit_wallet', {
     p_user_id: userId,
-    p_delta_coins: rewardGold - priceGold,
-    p_delta_lives: rewardLives,
+    p_delta_coins: -priceGold, // -500 gold
+    p_delta_lives: rewardLives, // +5 lives
     p_source: 'booster_purchase',
     p_idempotency_key: idempotencyKey,
     p_metadata: {
-      booster_type_id: boosterType.id,
-      booster_code: 'GOLD_SAVER',
+      booster_code: 'GOLD_TO_LIFE',
       price_gold: priceGold,
-      reward_gold: rewardGold,
+      reward_gold: 0,
       reward_lives: rewardLives,
       purchase_context: 'INGAME'
     }
   });
 
   if (creditError) {
-    console.error("[GOLD_SAVER] credit_wallet RPC error:", creditError);
+    console.error("[GOLD_TO_LIFE] credit_wallet RPC error:", creditError);
     return new Response(
       JSON.stringify({ success: false, error: "Wallet transaction failed" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -316,31 +283,150 @@ async function handleGoldSaverPurchase(supabaseAdmin: any, userId: string, boost
     .from("booster_purchases")
     .insert({
       user_id: userId,
-      booster_type_id: boosterType.id,
+      booster_type_id: 'GOLD_TO_LIFE',
       purchase_source: "GOLD",
       gold_spent: priceGold,
       usd_cents_spent: 0,
       purchase_context: "INGAME"
     });
 
-  // Track purchase completion
+  // Track conversion
   await supabaseAdmin
     .from("conversion_events")
     .insert({
       user_id: userId,
       event_type: "purchase_complete",
       product_type: "booster",
-      product_id: boosterType.code,
+      product_id: 'GOLD_TO_LIFE',
       session_id: `session_${userId}_${Date.now()}`,
       metadata: {
-        booster_code: boosterType.code,
+        booster_code: 'GOLD_TO_LIFE',
         price_gold: priceGold,
-        reward_gold: rewardGold,
         reward_lives: rewardLives
       }
     });
 
-  console.log(`[GOLD_SAVER] Purchase successful`);
+  console.log(`[GOLD_TO_LIFE] Purchase successful`);
+
+  const response: BoosterPurchaseResponse = {
+    success: true,
+    balanceAfter: {
+      gold: newGold,
+      lives: newLives,
+      speedTokensAvailable: 0
+    },
+    grantedRewards: {
+      gold: 0,
+      lives: rewardLives,
+      speedCount: 0,
+      speedDurationMinutes: 0
+    }
+  };
+
+  return new Response(
+    JSON.stringify(response),
+    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
+
+// LIFE_TO_GOLD: Pay 15 lives → grant +1500 gold (net -15 lives, +1500 gold)
+async function handleLifeToGoldPurchase(supabaseAdmin: any, userId: string) {
+  const priceLives = 15;
+  const rewardGold = 1500;
+
+  console.log(`[LIFE_TO_GOLD] Price: ${priceLives} lives, Reward: ${rewardGold} gold`);
+
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("coins, lives")
+    .eq("id", userId)
+    .single();
+
+  if (profileError || !profile) {
+    return new Response(
+      JSON.stringify({ success: false, error: "Profile not found" }),
+      { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  const currentGold = profile.coins || 0;
+  const currentLives = profile.lives || 0;
+
+  if (currentLives < priceLives) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "NOT_ENOUGH_LIVES",
+        balanceAfter: { gold: currentGold, lives: currentLives, speedTokensAvailable: 0 }
+      }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  const idempotencyKey = `life_to_gold:${userId}:${Date.now()}`;
+  
+  const { data: creditResult, error: creditError } = await supabaseAdmin.rpc('credit_wallet', {
+    p_user_id: userId,
+    p_delta_coins: rewardGold, // +1500 gold
+    p_delta_lives: -priceLives, // -15 lives
+    p_source: 'booster_purchase',
+    p_idempotency_key: idempotencyKey,
+    p_metadata: {
+      booster_code: 'LIFE_TO_GOLD',
+      price_lives: priceLives,
+      reward_gold: rewardGold,
+      reward_lives: 0,
+      purchase_context: 'INGAME'
+    }
+  });
+
+  if (creditError) {
+    console.error("[LIFE_TO_GOLD] credit_wallet RPC error:", creditError);
+    return new Response(
+      JSON.stringify({ success: false, error: "Wallet transaction failed" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  if (!creditResult || !creditResult.success) {
+    return new Response(
+      JSON.stringify({ success: false, error: creditResult?.error || "Insufficient lives" }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  const newGold = creditResult.new_coins;
+  const newLives = creditResult.new_lives;
+
+  // Log purchase - use lives_spent field conceptually (gold_spent=0)
+  await supabaseAdmin
+    .from("booster_purchases")
+    .insert({
+      user_id: userId,
+      booster_type_id: 'LIFE_TO_GOLD',
+      purchase_source: "LIVES",
+      gold_spent: 0,
+      usd_cents_spent: 0,
+      purchase_context: "INGAME"
+    });
+
+  // Track conversion
+  await supabaseAdmin
+    .from("conversion_events")
+    .insert({
+      user_id: userId,
+      event_type: "purchase_complete",
+      product_type: "booster",
+      product_id: 'LIFE_TO_GOLD',
+      session_id: `session_${userId}_${Date.now()}`,
+      metadata: {
+        booster_code: 'LIFE_TO_GOLD',
+        price_lives: priceLives,
+        reward_gold: rewardGold
+      }
+    });
+
+  console.log(`[LIFE_TO_GOLD] Purchase successful`);
 
   const response: BoosterPurchaseResponse = {
     success: true,
@@ -351,7 +437,7 @@ async function handleGoldSaverPurchase(supabaseAdmin: any, userId: string, boost
     },
     grantedRewards: {
       gold: rewardGold,
-      lives: rewardLives,
+      lives: 0,
       speedCount: 0,
       speedDurationMinutes: 0
     }

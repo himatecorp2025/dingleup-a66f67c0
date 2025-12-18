@@ -113,8 +113,8 @@ export const getSkipCost = (questionIndex: number): number => {
   return 30; // Questions 11-15
 };
 
-export const CONTINUE_AFTER_WRONG_COST = 50;
-export const TIMEOUT_CONTINUE_COST = 150;
+export const CONTINUE_AFTER_WRONG_COST = 5;
+export const TIMEOUT_CONTINUE_COST = 15;
 export const EXTRA_LIFE_COST = 100;
 export const INITIAL_LIVES = 15;
 export const LIVES_REGEN_MINUTES = 12;
