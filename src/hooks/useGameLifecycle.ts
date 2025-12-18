@@ -373,11 +373,17 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
     setIsStarting(false);
   }, [navigate, t, userId, refetchWallet, broadcast]);
 
+  // Track if finishGame was already called to prevent duplicate submissions
+  const finishGameCalledRef = useRef(false);
+
   const restartGameImmediately = useCallback(async () => {
     if (!profile || isStarting) return;
 
     logger.log('[useGameLifecycle] ⚡ INSTANT RESTART initiated');
     toast.dismiss();
+    
+    // CRITICAL: Reset finishGame flag for new game
+    finishGameCalledRef.current = false;
     
     // ATOMIC STATE RESET
     resetGameStateHook();
@@ -436,10 +442,23 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
 
   const finishGame = useCallback(async () => {
     if (!profile) return;
+    
+    // CRITICAL: Prevent duplicate submissions
+    if (finishGameCalledRef.current) {
+      logger.log('[useGameLifecycle] finishGame already called, skipping duplicate');
+      return;
+    }
+    finishGameCalledRef.current = true;
 
     const avgResponseTime = responseTimes.length > 0 
       ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length 
       : 0;
+
+    logger.log('[useGameLifecycle] 🎮 finishGame called - saving to backend', {
+      correctAnswers,
+      coinsEarned,
+      avgResponseTime
+    });
 
     try {
       if (userId && correctAnswers > 0) {
@@ -454,6 +473,7 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         toast.error(t('errors.session_expired'));
+        finishGameCalledRef.current = false; // Reset on error
         return;
       }
 
@@ -473,12 +493,17 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
           correctAnswers: correctAnswers,
           totalQuestions: questions.length,
           averageResponseTime: avgResponseTime,
-          coinsEarned: coinsEarned, // NEW: Send frontend-calculated coins for DB credit
+          coinsEarned: coinsEarned,
           questionAnalytics: questionAnalytics,
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useGameLifecycle] complete-game error:', error);
+        throw error;
+      }
+
+      logger.log('[useGameLifecycle] ✅ Game saved successfully:', data);
 
       const serverCoinsEarned = data?.coinsEarned || 0;
       setCoinsEarned(serverCoinsEarned);
@@ -502,9 +527,9 @@ export const useGameLifecycle = (options: UseGameLifecycleOptions) => {
         }
       }
       
-      
     } catch (error) {
-      console.error('Error finishing game:', error);
+      logger.error('[useGameLifecycle] Error finishing game:', error);
+      finishGameCalledRef.current = false; // Reset on error to allow retry
       await refreshProfile();
     }
   }, [

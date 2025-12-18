@@ -367,11 +367,17 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
         }
       );
       
-      // Mark game as completed - DO NOT save to backend yet
-      // Backend credit happens either:
-      // 1. When user swipes for new game → finishGame() called in handleSwipeUp
-      // 2. When user watches video for 2× → claim-video-reward credits 2× amount
+      // Mark game as completed
       setGameCompleted(true);
+      
+      // CRITICAL FIX: Save game result to backend IMMEDIATELY with pendingReward flag
+      // This ensures results are saved even if user exits without swiping
+      // Video ad flow uses reward-complete to handle 2× bonus separately
+      logger.log('[useGameNavigation] 🎮 Game complete - saving result to backend (pendingReward mode)');
+      finishGame().catch(err => {
+        logger.error('[useGameNavigation] Failed to save game result:', err);
+      });
+      
       return;
     }
     
@@ -457,14 +463,11 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
   }, [profile, continueType, refreshProfile, handleNextQuestion, finishGame]);
 
   const handleSwipeUp = useCallback(async () => {
-    // If game completed, FIRST save results to backend THEN restart new game
+    // If game completed, just restart - finishGame was already called when game ended
     if (gameCompleted) {
       toast.dismiss(); // Dismiss game results toast before new game
-      // CRITICAL: Only call finishGame if reward was NOT already claimed via video ad
-      // Video ad reward (reward-complete) already credits 2× coins, so finishGame would double-credit
-      if (!rewardAlreadyClaimed) {
-        await finishGame(); // Credit coins to DB before restart
-      }
+      // Note: finishGame is now called automatically when game ends (in handleNextQuestion)
+      // No need to call it again here - just restart
       await restartGameImmediately();
       return;
     }
@@ -497,7 +500,6 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     }
   }, [
     gameCompleted,
-    rewardAlreadyClaimed,
     errorBannerVisible,
     profile,
     continueType,
@@ -505,7 +507,6 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     isAnimating,
     questions,
     currentQuestionIndex,
-    finishGame,
     restartGameImmediately,
     setErrorBannerVisible,
     setRescueReason,
@@ -519,12 +520,10 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     if (errorBannerVisible) {
       setErrorBannerVisible(false);
     }
-    // If game completed and reward NOT already claimed via video ad, credit coins
-    if (gameCompleted && !rewardAlreadyClaimed) {
-      await finishGame();
-    }
+    // Note: finishGame is now called automatically when game ends (in handleNextQuestion)
+    // No need to call it again here - just restart
     await restartGameImmediately();
-  }, [errorBannerVisible, gameCompleted, rewardAlreadyClaimed, setErrorBannerVisible, finishGame, restartGameImmediately]);
+  }, [errorBannerVisible, setErrorBannerVisible, restartGameImmediately]);
 
   return {
     handleNextQuestion,
