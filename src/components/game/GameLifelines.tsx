@@ -1,4 +1,4 @@
-import { Users, SkipForward, CircleSlash, CheckCheck } from "lucide-react";
+import { Users, CircleSlash, CheckCheck } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { trackFeatureUsage } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,13 +10,10 @@ interface GameLifelinesProps {
   isHelp5050ActiveThisQuestion: boolean;
   isDoubleAnswerActiveThisQuestion: boolean;
   isAudienceActiveThisQuestion: boolean;
-  usedQuestionSwap: boolean;
-  skipCost: number;
   coins: number;
   onUseHelp5050: () => void;
   onUseHelp2xAnswer: () => void;
   onUseHelpAudience: () => void;
-  onUseQuestionSwap: () => void;
 }
 
 const Lifeline3DButton = ({ 
@@ -226,13 +223,10 @@ export const GameLifelines = ({
   isHelp5050ActiveThisQuestion,
   isDoubleAnswerActiveThisQuestion,
   isAudienceActiveThisQuestion,
-  usedQuestionSwap,
-  skipCost,
   coins,
   onUseHelp5050,
   onUseHelp2xAnswer,
-  onUseHelpAudience,
-  onUseQuestionSwap
+  onUseHelpAudience
 }: GameLifelinesProps) => {
   const { t } = useI18n();
   
@@ -288,17 +282,6 @@ export const GameLifelines = ({
         label={undefined}
         cost={helpAudienceUsageCount === 1 ? 25 : undefined}
         colorScheme="blue"
-      />
-      <Lifeline3DButton
-        onClick={async () => {
-          await trackLifelineUsage('question_swap', skipCost);
-          onUseQuestionSwap();
-        }}
-        disabled={usedQuestionSwap || coins < skipCost}
-        isActive={false}
-        icon={SkipForward}
-        cost={skipCost}
-        colorScheme="red"
       />
     </div>
   );

@@ -7,7 +7,7 @@ import { useGameProfile } from "@/hooks/useGameProfile";
 import { useWallet } from "@/hooks/useWallet";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 import { supabase } from "@/integrations/supabase/client";
-import { Question, Answer, getSkipCost, CONTINUE_AFTER_WRONG_COST, TIMEOUT_CONTINUE_COST } from "@/types/game";
+import { Question, Answer, CONTINUE_AFTER_WRONG_COST, TIMEOUT_CONTINUE_COST } from "@/types/game";
 import { GameStateScreen } from "./GameStateScreen";
 import { QuestionCard } from "./QuestionCard";
 import { ExitGameDialog } from "./ExitGameDialog";
@@ -271,7 +271,6 @@ const GamePreview = memo(() => {
 
   const {
     handleNextQuestion,
-    handleSkipQuestion,
     handleContinueAfterMistake,
     handleSwipeUp,
     handleSwipeDown,
@@ -320,7 +319,6 @@ const GamePreview = memo(() => {
     useHelp5050,
     useHelp2xAnswer,
     useHelpAudience,
-    useQuestionSwap,
   } = useGameHelperActions({
     profile,
     refreshProfile,
@@ -334,7 +332,6 @@ const GamePreview = memo(() => {
     isHelp5050ActiveThisQuestion,
     isDoubleAnswerActiveThisQuestion,
     isAudienceActiveThisQuestion,
-    usedQuestionSwap,
     setRemovedAnswer,
     setIsHelp5050ActiveThisQuestion,
     setHelp5050UsageCount,
@@ -345,10 +342,6 @@ const GamePreview = memo(() => {
     setAudienceVotes,
     setIsAudienceActiveThisQuestion,
     setHelpAudienceUsageCount,
-    setQuestions,
-    resetTimer: (time: number) => resetTimer(time),
-    setQuestionStartTime,
-    setUsedQuestionSwap,
     ALL_QUESTIONS: [],
   });
   
@@ -676,7 +669,6 @@ const GamePreview = memo(() => {
                 isHelp5050ActiveThisQuestion={isHelp5050ActiveThisQuestion}
                 isDoubleAnswerActiveThisQuestion={isDoubleAnswerActiveThisQuestion}
                 isAudienceActiveThisQuestion={isAudienceActiveThisQuestion}
-                usedQuestionSwap={usedQuestionSwap}
                 lives={lives}
                 maxLives={profile?.max_lives || 15}
                 coins={coins}
@@ -686,7 +678,6 @@ const GamePreview = memo(() => {
                 onUseHelp5050={useHelp5050}
                 onUseHelp2xAnswer={useHelp2xAnswer}
                 onUseHelpAudience={useHelpAudience}
-                onUseQuestionSwap={handleSkipQuestion}
                 onExit={() => setShowExitDialog(true)}
               />
             </GameQuestionContainer>

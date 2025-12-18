@@ -1,13 +1,14 @@
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Question, getSkipCost } from '@/types/game';
+import { Question } from '@/types/game';
 import { useI18n } from '@/i18n';
 import { logger } from '@/lib/logger';
+
 interface UseGameHelperActionsOptions {
   profile: any;
   refreshProfile: () => Promise<void>;
-  logHelpUsage: (helpType: 'third' | 'skip' | 'audience' | '2x_answer') => Promise<void>;
+  logHelpUsage: (helpType: 'third' | 'audience' | '2x_answer') => Promise<void>;
   questions: Question[];
   currentQuestionIndex: number;
   selectedAnswer: string | null;
@@ -17,7 +18,6 @@ interface UseGameHelperActionsOptions {
   isHelp5050ActiveThisQuestion: boolean;
   isDoubleAnswerActiveThisQuestion: boolean;
   isAudienceActiveThisQuestion: boolean;
-  usedQuestionSwap: boolean;
   setRemovedAnswer: (answer: string | null) => void;
   setIsHelp5050ActiveThisQuestion: (active: boolean) => void;
   setHelp5050UsageCount: (count: number) => void;
@@ -28,10 +28,6 @@ interface UseGameHelperActionsOptions {
   setAudienceVotes: (votes: Record<string, number>) => void;
   setIsAudienceActiveThisQuestion: (active: boolean) => void;
   setHelpAudienceUsageCount: (count: number) => void;
-  setQuestions: (questions: Question[]) => void;
-  resetTimer: (time: number) => void;
-  setQuestionStartTime: (time: number) => void;
-  setUsedQuestionSwap: (used: boolean) => void;
   ALL_QUESTIONS: Question[];
 }
 
@@ -50,7 +46,6 @@ export const useGameHelperActions = (options: UseGameHelperActionsOptions) => {
     isHelp5050ActiveThisQuestion,
     isDoubleAnswerActiveThisQuestion,
     isAudienceActiveThisQuestion,
-    usedQuestionSwap,
     setRemovedAnswer,
     setIsHelp5050ActiveThisQuestion,
     setHelp5050UsageCount,
@@ -61,10 +56,6 @@ export const useGameHelperActions = (options: UseGameHelperActionsOptions) => {
     setAudienceVotes,
     setIsAudienceActiveThisQuestion,
     setHelpAudienceUsageCount,
-    setQuestions,
-    resetTimer,
-    setQuestionStartTime,
-    setUsedQuestionSwap,
     ALL_QUESTIONS,
   } = options;
 
@@ -238,66 +229,9 @@ export const useGameHelperActions = (options: UseGameHelperActionsOptions) => {
     refreshProfile, logHelpUsage
   ]);
 
-  const useQuestionSwap = useCallback(async () => {
-    if (usedQuestionSwap || selectedAnswer) return;
-    
-    logger.log('[useQuestionSwap] Starting question skip');
-    
-    const skipCost = getSkipCost(currentQuestionIndex);
-    
-    if (!profile || profile.coins < skipCost) {
-      toast.error(`${t('game.not_enough_gold_skip')} ${skipCost} ${t('game.gold_needed')}`);
-      return;
-    }
-    
-    logger.log('[useQuestionSwap] Spending coins:', skipCost);
-    const { data: success } = await supabase.rpc('spend_coins', { amount: skipCost });
-    if (!success) {
-      logger.error('[useQuestionSwap] Failed to spend coins');
-      toast.error(t('game.help_activation_error'));
-      return;
-    }
-    
-    logger.log('[useQuestionSwap] Skip successful, advancing to next question');
-    
-    // Mark skip as used and reset helpers for this question
-    setUsedQuestionSwap(true);
-    setRemovedAnswer(null);
-    setAudienceVotes({});
-    setFirstAttempt(null);
-    setSecondAttempt(null);
-    
-    await logHelpUsage('skip');
-    await refreshProfile();
-    
-    // Toast notification  
-    const successMsg = t('game.question_skipped') || (profile?.preferred_language === 'hu' ? 'Kérdés sikeresen átugorva!' : 'Question skipped successfully!');
-    toast.success(successMsg, { position: 'top-center', duration: 2000 });
-    
-    // CRITICAL: Actually advance to next question by resetting timer and moving index
-    resetTimer(10);
-    setQuestionStartTime(Date.now());
-    
-    // Move to next question - set questions array with current question replaced
-    if (currentQuestionIndex < questions.length - 1) {
-      // Trigger next question by setting a new question index through setQuestions callback pattern
-      const updatedQuestions = [...questions];
-      // We need to swap current question with the next one to effectively skip
-      // Actually just mark as answered and let the game flow handle it
-      // The proper way is to directly advance the question index
-      setQuestions(updatedQuestions); // Force re-render
-    }
-  }, [
-    usedQuestionSwap, selectedAnswer, currentQuestionIndex, profile, questions, t,
-    setUsedQuestionSwap, setRemovedAnswer, setAudienceVotes,
-    setFirstAttempt, setSecondAttempt, logHelpUsage, refreshProfile,
-    resetTimer, setQuestionStartTime, setQuestions
-  ]);
-
   return {
     useHelp5050,
     useHelp2xAnswer,
     useHelpAudience,
-    useQuestionSwap,
   };
 };

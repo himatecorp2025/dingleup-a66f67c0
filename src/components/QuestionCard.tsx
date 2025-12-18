@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Users } from "lucide-react";
 import { MillionaireQuestion } from "./MillionaireQuestion";
 import { MillionaireAnswer } from "./MillionaireAnswer";
-import { Question, getSkipCost } from "@/types/game";
+import { Question } from "@/types/game";
 import { GameHeader } from "./game/GameHeader";
 import { GameTimer } from "./game/GameTimer";
 import { GameLifelines } from "./game/GameLifelines";
@@ -23,7 +23,6 @@ interface QuestionCardProps {
   isHelp5050ActiveThisQuestion: boolean;
   isDoubleAnswerActiveThisQuestion: boolean;
   isAudienceActiveThisQuestion: boolean;
-  usedQuestionSwap: boolean;
   lives: number;
   maxLives: number;
   coins: number;
@@ -33,7 +32,6 @@ interface QuestionCardProps {
   onUseHelp5050: () => void;
   onUseHelp2xAnswer: () => void;
   onUseHelpAudience: () => void;
-  onUseQuestionSwap: () => void;
   onExit: () => void;
   disabled?: boolean;
   className?: string;
@@ -54,7 +52,6 @@ export const QuestionCard = ({
   isHelp5050ActiveThisQuestion,
   isDoubleAnswerActiveThisQuestion,
   isAudienceActiveThisQuestion,
-  usedQuestionSwap,
   lives,
   maxLives,
   coins,
@@ -64,14 +61,12 @@ export const QuestionCard = ({
   onUseHelp5050,
   onUseHelp2xAnswer,
   onUseHelpAudience,
-  onUseQuestionSwap,
   onExit,
   disabled = false,
   className = ""
 }: QuestionCardProps) => {
   const answers = Array.isArray(question.answers) ? question.answers : [];
   const correctAnswerKey = answers.find(a => a.correct)?.key || "";
-  const skipCost = getSkipCost(questionNumber - 1); // Convert to 0-indexed
 
   return (
     <div className={`relative w-full min-h-screen`}>
@@ -199,13 +194,10 @@ export const QuestionCard = ({
           isHelp5050ActiveThisQuestion={isHelp5050ActiveThisQuestion}
           isDoubleAnswerActiveThisQuestion={isDoubleAnswerActiveThisQuestion}
           isAudienceActiveThisQuestion={isAudienceActiveThisQuestion}
-          usedQuestionSwap={usedQuestionSwap}
-          skipCost={skipCost}
           coins={coins}
           onUseHelp5050={onUseHelp5050}
           onUseHelp2xAnswer={onUseHelp2xAnswer}
           onUseHelpAudience={onUseHelpAudience}
-          onUseQuestionSwap={onUseQuestionSwap}
         />
       </div>
       </div>

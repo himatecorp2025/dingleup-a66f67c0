@@ -10,10 +10,6 @@ function = "regenerate-lives-background"
 schedule = "0 2 * * *"
 function = "aggregate-daily-activity"
 
-# Cron job for country-specific daily winners processing (runs every 5 minutes to catch all timezones)
-[[edge_runtime.cron]]
-schedule = "*/5 * * * *"
-function = "process-daily-winners"
 
 # CRITICAL OPTIMIZATION: Leaderboard cache refresh every 1 minute
 [[edge_runtime.cron]]
@@ -67,29 +63,11 @@ verify_jwt = true
 [functions.submit-dob]
 verify_jwt = true
 
-# Daily Gift & Winners Functions
+# Daily Gift Functions
 [functions.get-daily-gift-status]
 verify_jwt = true
 
 [functions.dismiss-daily-gift]
-verify_jwt = true
-
-[functions.get-daily-winners-status]
-verify_jwt = true
-
-[functions.process-daily-winners]
-verify_jwt = false
-
-[functions.claim-daily-rank-reward]
-verify_jwt = true
-
-[functions.dismiss-daily-rank-reward]
-verify_jwt = true
-
-[functions.get-pending-rank-reward]
-verify_jwt = true
-
-[functions.backfill-daily-winners]
 verify_jwt = true
 
 # Wallet & Profile Functions

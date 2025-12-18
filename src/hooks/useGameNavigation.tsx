@@ -428,25 +428,6 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
     onDoubleRewardClick,
   ]);
 
-  const handleSkipQuestion = useCallback(async () => {
-    if (!profile) return;
-    
-    let cost = 10;
-    if (currentQuestionIndex >= 5 && currentQuestionIndex <= 9) cost = 20;
-    if (currentQuestionIndex >= 10) cost = 30;
-    
-    if (profile.coins < cost) {
-      toast.error(`${t('game.insufficient_coins')} ${cost} ${t('game.coins_required')}`);
-      return;
-    }
-    
-    const { data: success } = await supabase.rpc('spend_coins', { amount: cost });
-    if (success) {
-      await refreshProfile();
-      await logHelpUsage('skip');
-      await handleNextQuestion();
-    }
-  }, [profile, currentQuestionIndex, refreshProfile, logHelpUsage, handleNextQuestion, t]);
 
   const handleContinueAfterMistake = useCallback(async () => {
     if (!profile) return;
@@ -527,7 +508,6 @@ export const useGameNavigation = (options: UseGameNavigationOptions) => {
 
   return {
     handleNextQuestion,
-    handleSkipQuestion,
     handleContinueAfterMistake,
     handleSwipeUp,
     handleSwipeDown,

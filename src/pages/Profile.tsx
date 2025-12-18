@@ -694,7 +694,7 @@ const Profile = () => {
               <p className="text-[10px] sm:text-xs text-white/70 leading-tight" dangerouslySetInnerHTML={{ __html: t('profile.free_booster_rewards') }} />
               <button
                 onClick={async () => {
-                  if ((walletData?.coinsCurrent || 0) < 900) {
+                  if ((walletData?.coinsCurrent || 0) < 500) {
                     toast.error(t('profile.not_enough_gold'));
                     return;
                   }
@@ -713,10 +713,10 @@ const Profile = () => {
                     toast.error(t('profile.purchase_error'), { id: 'free-booster' });
                   }
                 }}
-                disabled={(walletData?.coinsCurrent || 0) < 900}
+                disabled={(walletData?.coinsCurrent || 0) < 500}
                 className="w-full mt-2 px-2 py-1.5 text-xs sm:text-sm font-bold rounded-lg bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
               >
-                {(walletData?.coinsCurrent || 0) < 900 ? t('profile.not_enough_gold') : t('profile.free_booster_price')}
+                {(walletData?.coinsCurrent || 0) < 500 ? t('profile.not_enough_gold') : t('profile.free_booster_price')}
               </button>
             </div>
           </div>
