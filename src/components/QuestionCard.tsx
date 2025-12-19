@@ -138,18 +138,30 @@ export const QuestionCard = ({
                   // Before final - show orange on attempts
                   isDoubleChoiceActive = isFirstAttempt || isSecondAttempt;
                 }
-              } else {
+                } else {
                 // NORMAL MODE
+                // CRITICAL FIX: Separate "selected and correct" from "is the correct answer"
                 isSelectedCorrect = isSelected && isCorrect;
                 isSelectedWrong = isSelected && !isCorrect;
-                // Reveal correct if user selected wrong
-                showCorrectPulse = hasFinalAnswer && !isSelected && isCorrect && !isSelectedCorrect;
+                
+                // The correct answer should ALWAYS show as correct (green) when user has answered
+                // showCorrectPulse triggers the pulse animation to highlight the correct answer
+                // This ensures correct answer is visible whether user picked right or wrong
+                if (hasFinalAnswer && isCorrect) {
+                  // If user selected THIS correct answer: show green, no extra pulse
+                  // If user selected WRONG answer: correct answer needs to be revealed
+                  showCorrectPulse = !isSelectedCorrect; // Pulse only if user didn't pick this one
+                }
               }
               
               // Timeout always reveals correct answer
               if (isTimeout && isCorrect) {
                 showCorrectPulse = true;
               }
+              
+              // CRITICAL FIX: Determine if this answer should show as correct (green)
+              // The correct answer must ALWAYS be green after user has answered or timeout
+              const shouldShowAsCorrect = isCorrect && (hasFinalAnswer || isTimeout);
 
               return (
                 <div key={answer.key} className="relative">
@@ -157,7 +169,7 @@ export const QuestionCard = ({
                     letter={answer.key as 'A' | 'B' | 'C'}
                     onClick={() => !disabled && onAnswerSelect(answer.key)}
                     isSelected={isSelected}
-                    isCorrect={isSelectedCorrect}
+                    isCorrect={shouldShowAsCorrect}
                     isWrong={isSelectedWrong}
                     disabled={disabled || isRemoved}
                     isRemoved={isRemoved}
