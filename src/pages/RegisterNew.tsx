@@ -10,6 +10,7 @@ import { z } from "zod";
 import { useI18n } from "@/i18n";
 import { getCountryFromTimezone } from "@/lib/utils";
 import type { LangCode } from "@/i18n/types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import loadingLogo from '@/assets/dingleup-loading-logo.png';
 import gameBackground from '@/assets/game-background.png';
 
@@ -82,6 +83,8 @@ const RegisterNew = () => {
   const [isStandalone, setIsStandalone] = useState(false);
   const [showPin, setShowPin] = useState(false);
   const [showPinConfirm, setShowPinConfirm] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
 
   useEffect(() => {
     const checkStandalone = () => {
@@ -133,6 +136,9 @@ const RegisterNew = () => {
         return;
       }
 
+      // Store recovery code to show in dialog
+      const recoveryCodeFromServer = regData?.recovery_code || null;
+      
       // Auto-login after successful registration
       const autoEmail = `${validated.username.toLowerCase()}@dingleup.auto`;
       const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -142,21 +148,33 @@ const RegisterNew = () => {
 
       if (signInError) {
         console.error('Auto-login error:', signInError);
-        toast.success(t('auth.register.success_title'), {
-          description: t('auth.register.successPleaseLogin'),
-          duration: 2000,
-        });
-        navigate('/auth/login');
+        // Still show recovery code even if auto-login fails
+        if (recoveryCodeFromServer) {
+          setRecoveryCode(recoveryCodeFromServer);
+          setShowSuccessDialog(true);
+        } else {
+          toast.success(t('auth.register.success_title'), {
+            description: t('auth.register.successPleaseLogin'),
+            duration: 2000,
+          });
+          navigate('/auth/login');
+        }
         return;
       }
 
-      toast.success(t('auth.register.success_title'), {
-        description: t('auth.register.successMessage'),
-        duration: 2000,
-      });
-      // Desktop users go to creators, mobile/tablet users go to dashboard
-      const isDesktop = window.innerWidth > 1024;
-      navigate(isDesktop ? '/creators' : '/dashboard');
+      // Show recovery code dialog - CRITICAL: user must save this!
+      if (recoveryCodeFromServer) {
+        setRecoveryCode(recoveryCodeFromServer);
+        setShowSuccessDialog(true);
+      } else {
+        // Fallback: no recovery code returned (shouldn't happen), go to dashboard
+        toast.success(t('auth.register.success_title'), {
+          description: t('auth.register.successMessage'),
+          duration: 2000,
+        });
+        const isDesktop = window.innerWidth > 1024;
+        navigate(isDesktop ? '/creators' : '/dashboard');
+      }
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Partial<Record<keyof RegisterForm, string>> = {};
@@ -433,6 +451,37 @@ const RegisterNew = () => {
           </div>
         </div>
       </div>
+
+      {/* Success Dialog with recovery code - CRITICAL: user must save this! */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="bg-gradient-to-br from-[#1a0033] via-[#2d1b69] to-[#0f0033] border-yellow-500/30 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 bg-clip-text text-transparent">
+              {t('auth.register.successDialogTitle') || 'Sikeres regisztráció!'}
+            </DialogTitle>
+            <DialogDescription className="text-white/80 space-y-4">
+              <p>{t('auth.register.successDialogMessage') || 'A fiókod sikeresen létrejött.'}</p>
+              {recoveryCode && (
+                <div className="bg-white/10 border border-yellow-500/30 rounded-lg p-4 space-y-2">
+                  <p className="text-yellow-400 font-semibold text-sm">{t('auth.register.recoveryCodeLabel') || 'Helyreállítási kód:'}</p>
+                  <p className="text-white font-mono text-lg text-center tracking-wider select-all">{recoveryCode}</p>
+                  <p className="text-white/70 text-xs">{t('auth.register.recoveryCodeWarning') || 'Írd fel vagy mentsd el ezt a kódot! Ezzel tudod visszaállítani a PIN kódodat, ha elfelejted. A kódot nem küldjük el újra!'}</p>
+                </div>
+              )}
+              <Button
+                onClick={() => {
+                  setShowSuccessDialog(false);
+                  const isDesktop = window.innerWidth > 1024;
+                  navigate(isDesktop ? '/creators' : '/dashboard');
+                }}
+                className="w-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:from-yellow-500 hover:via-yellow-600 hover:to-yellow-700 text-black font-bold"
+              >
+                {t('auth.register.continueButton') || 'Tovább'}
+              </Button>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
