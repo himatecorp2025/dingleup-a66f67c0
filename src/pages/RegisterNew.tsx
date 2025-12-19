@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, User, Lock, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, User, Lock, Eye, EyeOff, Copy, Check, ShieldCheck } from "lucide-react";
 import { z } from "zod";
 import { useI18n } from "@/i18n";
 import { getCountryFromTimezone } from "@/lib/utils";
@@ -85,6 +86,13 @@ const RegisterNew = () => {
   const [showPinConfirm, setShowPinConfirm] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
+  
+  // Recovery code modal state - user must explicitly acknowledge
+  const [recoveryCopied, setRecoveryCopied] = useState(false);
+  const [recoveryAcknowledged, setRecoveryAcknowledged] = useState(false);
+  
+  // Can only close modal if user copied OR acknowledged
+  const canCloseRecoveryModal = recoveryCopied || recoveryAcknowledged;
 
   useEffect(() => {
     const checkStandalone = () => {
@@ -458,36 +466,116 @@ const RegisterNew = () => {
         </div>
       </div>
 
-      {/* Success Dialog with recovery code - CRITICAL: user must save this! */}
-      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-        <DialogContent className="bg-gradient-to-br from-[#1a0033] via-[#2d1b69] to-[#0f0033] border-yellow-500/30 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-black bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 bg-clip-text text-transparent">
-              {t('auth.register.successDialogTitle') || 'Sikeres regisztráció!'}
-            </DialogTitle>
-            <DialogDescription className="text-white/80 space-y-4">
-              <p>{t('auth.register.successDialogMessage') || 'A fiókod sikeresen létrejött.'}</p>
-              {recoveryCode && (
-                <div className="bg-white/10 border border-yellow-500/30 rounded-lg p-4 space-y-2">
-                  <p className="text-yellow-400 font-semibold text-sm">{t('auth.register.recoveryCodeLabel') || 'Helyreállítási kód:'}</p>
-                  <p className="text-white font-mono text-lg text-center tracking-wider select-all">{recoveryCode}</p>
-                  <p className="text-white/70 text-xs">{t('auth.register.recoveryCodeWarning') || 'Írd fel vagy mentsd el ezt a kódot! Ezzel tudod visszaállítani a PIN kódodat, ha elfelejted. A kódot nem küldjük el újra!'}</p>
-                </div>
-              )}
+      {/* CRITICAL Recovery Code Modal - CANNOT close without user action */}
+      {showSuccessDialog && recoveryCode && (
+        <div 
+          className="fixed inset-0 z-[99999] flex items-center justify-center"
+          style={{
+            background: 'rgba(0, 0, 0, 0.9)',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          <div 
+            className="w-[90vw] max-w-md bg-gradient-to-br from-[#1a0033] via-[#2d1b69] to-[#0f0033] border-2 border-yellow-500/50 rounded-2xl shadow-2xl shadow-yellow-500/20 p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="text-center space-y-2">
+              <div className="flex justify-center">
+                <ShieldCheck className="w-12 h-12 text-yellow-400" />
+              </div>
+              <h2 className="text-2xl font-black bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 bg-clip-text text-transparent">
+                {lang === 'hu' ? 'Visszaállító kódod' : 'Your Recovery Code'}
+              </h2>
+            </div>
+            
+            {/* Warning */}
+            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3">
+              <p className="text-red-300 text-sm font-semibold text-center">
+                ⚠️ {lang === 'hu' 
+                  ? 'Jegyezd fel vagy mentsd el! Később nem tudjuk újra megmutatni.' 
+                  : 'Write it down or save it. We can\'t show it again later.'}
+              </p>
+            </div>
+            
+            {/* Recovery Code Display */}
+            <div className="bg-black/40 border border-yellow-500/40 rounded-xl p-4 space-y-3">
+              <p className="text-white/70 text-xs text-center">
+                {lang === 'hu' ? 'Helyreállítási kód:' : 'Recovery code:'}
+              </p>
+              <p className="text-white font-mono text-2xl text-center tracking-[0.3em] select-all font-bold">
+                {recoveryCode}
+              </p>
+              
+              {/* Copy Button */}
               <Button
-                onClick={() => {
-                  setShowSuccessDialog(false);
-                  const isDesktop = window.innerWidth > 1024;
-                  navigate(isDesktop ? '/creators' : '/dashboard');
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(recoveryCode);
+                    setRecoveryCopied(true);
+                    toast.success(lang === 'hu' ? 'Kód másolva!' : 'Code copied!');
+                  } catch (e) {
+                    toast.error(lang === 'hu' ? 'Másolás sikertelen' : 'Copy failed');
+                  }
                 }}
-                className="w-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:from-yellow-500 hover:via-yellow-600 hover:to-yellow-700 text-black font-bold"
+                variant="outline"
+                className={`w-full border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/10 ${recoveryCopied ? 'bg-green-500/20 border-green-500/50' : ''}`}
               >
-                {t('auth.register.continueButton') || 'Tovább'}
+                {recoveryCopied ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    {lang === 'hu' ? 'Másolva!' : 'Copied!'}
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 mr-2" />
+                    {lang === 'hu' ? 'Kód másolása' : 'Copy code'}
+                  </>
+                )}
               </Button>
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
+            </div>
+            
+            {/* Acknowledgment Checkbox */}
+            <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+              <Checkbox
+                id="recovery-ack"
+                checked={recoveryAcknowledged}
+                onCheckedChange={(checked) => setRecoveryAcknowledged(!!checked)}
+                className="border-yellow-500/50 data-[state=checked]:bg-yellow-500 data-[state=checked]:border-yellow-500"
+              />
+              <label 
+                htmlFor="recovery-ack" 
+                className="text-white/80 text-sm cursor-pointer select-none"
+              >
+                {lang === 'hu' 
+                  ? 'Elmentettem a kódot, megértettem a figyelmeztetést' 
+                  : 'I saved the code and understood the warning'}
+              </label>
+            </div>
+            
+            {/* Continue Button - only enabled if copied or acknowledged */}
+            <Button
+              onClick={() => {
+                setShowSuccessDialog(false);
+                setRecoveryCopied(false);
+                setRecoveryAcknowledged(false);
+                const isDesktop = window.innerWidth > 1024;
+                navigate(isDesktop ? '/creators' : '/dashboard');
+              }}
+              disabled={!canCloseRecoveryModal}
+              className={`w-full font-bold transition-all ${
+                canCloseRecoveryModal 
+                  ? 'bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:from-yellow-500 hover:via-yellow-600 hover:to-yellow-700 text-black' 
+                  : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              {canCloseRecoveryModal 
+                ? (lang === 'hu' ? 'Értettem, elmentettem' : 'I saved it') 
+                : (lang === 'hu' ? 'Mentsd el a kódot a folytatáshoz' : 'Save the code to continue')}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
