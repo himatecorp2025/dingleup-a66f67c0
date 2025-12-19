@@ -49,7 +49,7 @@ serve(async (req) => {
   }
 
   try {
-    const { username, pin, invitationCode } = await req.json();
+    const { username, pin, invitationCode, countryCode, userTimezone, preferredLanguage } = await req.json();
 
     // Validation
     if (!username || !pin) {
@@ -66,7 +66,7 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
+
     if (/\s/.test(username)) {
       return new Response(
         JSON.stringify({ error: 'Username cannot contain spaces' }),
@@ -92,16 +92,15 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
+
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
-        persistSession: false
-      }
+        persistSession: false,
+      },
     });
 
-    // ATOMIC CHECK: Use SELECT FOR UPDATE to prevent username race conditions under high load
-    // This locks the row if username exists, preventing concurrent registrations with same username
+    // Uniqueness check (case-insensitive)
     const { data: existingUser } = await supabaseAdmin
       .from('profiles')
       .select('id')
@@ -116,26 +115,33 @@ serve(async (req) => {
       );
     }
 
-    // OPTIMIZATION: Validate invitation code with case-insensitive lookup using indexed UPPER()
-    // Uses idx_profiles_invitation_code_upper index for O(1) performance
+    // Invitation code lookup (FIX: profiles primary key is id, not user_id)
     let inviterId: string | null = null;
     if (invitationCode && invitationCode.trim() !== '') {
       const normalizedCode = invitationCode.trim().toUpperCase();
-      
-      const { data: inviterProfile } = await supabaseAdmin
+
+      const { data: inviterProfile, error: inviterError } = await supabaseAdmin
         .from('profiles')
-        .select('user_id')
+        .select('id')
         .eq('invitation_code', normalizedCode)
         .maybeSingle();
-      
+
+      if (inviterError) {
+        console.error('[register] Invitation lookup error:', inviterError);
+        return new Response(
+          JSON.stringify({ error: 'Invalid invitation code' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       if (!inviterProfile) {
         return new Response(
           JSON.stringify({ error: 'Invalid invitation code' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      
-      inviterId = inviterProfile.user_id;
+
+      inviterId = inviterProfile.id;
     }
 
     // BATCH HASH GENERATION: Compute all hashes in parallel for speed
@@ -168,19 +174,33 @@ serve(async (req) => {
 
       authUserId = authData.user.id;
 
-      // Step 2: Create profile row with all required fields
+      // Step 2: Create profile row with all required fields (initialize core defaults)
+      const nowIso = new Date().toISOString();
+      const profilePayload: Record<string, unknown> = {
+        id: authUserId,
+        username,
+        pin_hash: pinHash,
+        email: null,
+        recovery_code_hash: recoveryCodeHash,
+        recovery_code_set_at: nowIso,
+
+        // Best-effort initialization for app expectations
+        country_code: typeof countryCode === 'string' && countryCode ? countryCode : null,
+        user_timezone: typeof userTimezone === 'string' && userTimezone ? userTimezone : null,
+        preferred_language: typeof preferredLanguage === 'string' && preferredLanguage ? preferredLanguage : 'hu',
+
+        // These columns exist in current prod schema; setting them here prevents NOT NULL/default issues
+        coins: 0,
+        max_lives: 15,
+        lives: 15,
+        lives_regeneration_rate: 12,
+        last_life_regeneration: nowIso,
+        updated_at: nowIso,
+      };
+
       const { error: profileError } = await supabaseAdmin
         .from('profiles')
-        .upsert({ 
-          id: authUserId,
-          username,
-          pin_hash: pinHash,
-          email: null,
-          recovery_code_hash: recoveryCodeHash,
-          recovery_code_set_at: new Date().toISOString(),
-        }, {
-          onConflict: 'id'
-        });
+        .upsert(profilePayload, { onConflict: 'id' });
 
       if (profileError) {
         console.error('[register] Profile creation failed:', profileError);
@@ -198,6 +218,17 @@ serve(async (req) => {
           JSON.stringify({ error: 'Profile creation failed', error_code: 'PROFILE_CREATION_FAILED' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
+      }
+
+      // Ensure base user role exists (some policies/features assume this row)
+      try {
+        await supabaseAdmin
+          .from('user_roles')
+          .insert({ user_id: authUserId, role: 'user' })
+          .select('id')
+          .maybeSingle();
+      } catch (e) {
+        console.error('[register] user_roles insert failed (non-fatal):', e);
       }
 
       // SUCCESS: auth.users and profiles are now consistent

@@ -68,8 +68,8 @@ const createRegisterSchema = (t: (key: string) => string) => z.object({
 
 const RegisterNew = () => {
   const navigate = useNavigate();
-  const { t, setLang, isLoading: i18nLoading } = useI18n();
-  
+  const { t, lang } = useI18n();
+
   const registerSchema = createRegisterSchema(t);
   type RegisterForm = z.infer<typeof registerSchema>;
   const [formData, setFormData] = useState<RegisterForm>({
@@ -111,12 +111,18 @@ const RegisterNew = () => {
     try {
       const validated = registerSchema.parse(formData);
 
-      // Call register edge function with optional invitation code
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+      const cc = tz ? getCountryFromTimezone(tz) : null;
+
+      // Call register backend function with optional invitation code
       const { data: regData, error: regError } = await supabase.functions.invoke('register-with-username-pin', {
         body: {
           username: validated.username,
           pin: validated.pin,
           invitationCode: validated.invitationCode || null,
+          countryCode: cc,
+          userTimezone: tz,
+          preferredLanguage: lang,
         },
       });
 
