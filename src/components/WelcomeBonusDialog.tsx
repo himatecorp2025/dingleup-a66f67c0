@@ -159,11 +159,11 @@ export const WelcomeBonusDialog = ({ open, onClaim, onLater, claiming }: Welcome
             style={{ 
               width: 'min(420px, 90vw)',
               aspectRatio: '9 / 16',
-              transform: contentVisible ? 'scale(1)' : 'scale(0)',
+              transform: contentVisible ? 'scale(1)' : 'scale(0.8)',
               opacity: contentVisible ? 1 : 0,
-              transition: 'transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 150ms ease-in-out',
+              transition: 'transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 60ms ease-out',
               transformOrigin: 'center center',
-              willChange: contentVisible ? 'transform, opacity' : 'auto',
+              willChange: 'transform, opacity',
             }}
           >
             {/* BONUS MODAL CARD - Teljes belső tartalom */}
