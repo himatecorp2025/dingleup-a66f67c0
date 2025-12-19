@@ -45,27 +45,7 @@ Deno.serve(async (req) => {
       throw profileError;
     }
 
-    // SECURITY: Admin users (verified by role) never see Daily Gift
-    const { data: isAdmin } = await supabase.rpc('has_role', {
-      _user_id: user.id,
-      _role: 'admin'
-    });
-
-    if (isAdmin) {
-      return new Response(
-        JSON.stringify({
-          canShow: false,
-          localDate: null,
-          timeZone: profile.user_timezone || 'UTC',
-          streak: 0,
-          nextReward: 0,
-          yesterdayRank: null,
-          isTop10Yesterday: false,
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
+    // NOTE: Admins are NOT excluded - they have full access to all features including Daily Gift
     const userTimezone = profile.user_timezone || 'UTC';
     
     // Calculate today's date in user's timezone
