@@ -3,9 +3,9 @@ import { getCorsHeaders, handleCorsPreflight } from '../_shared/cors.ts';
 
 const corsHeaders = getCorsHeaders('*');
 
-// COMPLETE Tables list in STRICT foreign key dependency order - updated 2025-12-14
-// Verified against information_schema.tables - 100 BASE TABLES in public schema
-// All 100 tables included for complete database export
+// COMPLETE Tables list in STRICT foreign key dependency order - updated 2025-12-19
+// Verified against information_schema.tables - 98 BASE TABLES in public schema
+// All tables included for complete database export
 const TABLES = [
   // Level 0: No foreign keys - base/config tables (17 tables)
   'topics', 'booster_types', 'legal_documents', 'translations', 'daily_prize_table',
@@ -50,7 +50,7 @@ const TABLES = [
   // Level 6: Depends on Level 5 (2 tables)
   'message_media', 'message_reactions',
   
-  // Analytics tables - no strict FK dependencies (12 tables)
+  // Analytics tables - no strict FK dependencies (10 tables)
   'app_session_events', 'app_session_events_archive', 'navigation_events', 
   'feature_usage_events', 'feature_usage_events_archive',
   'bonus_claim_events', 'chat_interaction_events', 'conversion_events', 
@@ -58,8 +58,8 @@ const TABLES = [
   'session_details', 'reports',
 ];
 
-// OPTIMIZATION: Batch size for parallel processing
-const BATCH_SIZE = 5;
+// OPTIMIZATION: Page size for data fetch
+const PAGE_SIZE = 1000;
 
 // Map PostgreSQL data_type to SQL DDL type
 function mapPgType(dataType: string, udtName: string): string {

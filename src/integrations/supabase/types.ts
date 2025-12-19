@@ -4220,7 +4220,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      claim_daily_gift: { Args: never; Returns: Json }
+      claim_daily_gift: { Args: { p_claim_type?: string }; Returns: Json }
       claim_daily_winner_reward: {
         Args: { p_country_code: string; p_day_date: string; p_user_id: string }
         Returns: Json

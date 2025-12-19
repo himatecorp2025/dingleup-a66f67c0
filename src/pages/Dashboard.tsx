@@ -285,8 +285,8 @@ const Dashboard = () => {
     };
   }, [userId, enableSecondaryLoading]);
 
-  const handleClaimDailyGift = async (): Promise<boolean> => {
-    const success = await popupManager.dailyGift.claimDailyGift(refetchWallet);
+  const handleClaimDailyGift = async (claimType: 'base' | 'ad'): Promise<boolean> => {
+    const success = await popupManager.dailyGift.claimDailyGift(claimType, refetchWallet);
     if (success) {
       await popupManager.dailyGift.checkDailyGift();
       await refreshProfile();

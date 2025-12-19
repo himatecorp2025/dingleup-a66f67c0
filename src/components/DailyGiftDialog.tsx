@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 
 interface DailyGiftDialogProps {
   open: boolean;
-  onClaim: () => Promise<boolean>;
+  onClaim: (claimType: 'base' | 'ad') => Promise<boolean>;
   onLater: () => void;
   weeklyEntryCount: number;
   nextReward: number;
@@ -25,6 +25,20 @@ interface DailyGiftDialogProps {
 }
 
 const DAILY_REWARDS = [50, 75, 110, 160, 220, 300, 500];
+
+// Calculate correct multiplied rewards based on TOP10 status
+const getRewardAmounts = (baseReward: number, isTop10: boolean) => {
+  // Not TOP10: base = 1x, ad = 2x
+  // TOP10: base = 3x, ad = 5x
+  const baseMultiplier = isTop10 ? 3 : 1;
+  const adMultiplier = isTop10 ? 5 : 2;
+  return {
+    baseAmount: baseReward * baseMultiplier,
+    adAmount: baseReward * adMultiplier,
+    baseMultiplier,
+    adMultiplier
+  };
+};
 
 const DailyGiftDialog = ({ 
   open, 
@@ -111,13 +125,17 @@ const DailyGiftDialog = ({
     }
   }, [open, userId, nextReward, weeklyEntryCount]);
 
+  // Calculate correct reward amounts based on TOP10 status
+  const rewardAmounts = getRewardAmounts(baseReward, isTop10Yesterday);
+
   const handleClaim = async () => {
     if (!userId) return;
     
     // Track feature usage - claim attempt
     await trackFeatureUsage(userId, 'user_action', 'daily_gift', 'claim_attempt', {
-      coins_amount: nextReward,
-      streak_day: weeklyEntryCount + 1
+      coins_amount: rewardAmounts.baseAmount,
+      streak_day: weeklyEntryCount + 1,
+      claim_type: 'base'
     });
     
     // Track claim attempt
@@ -125,18 +143,19 @@ const DailyGiftDialog = ({
       (window as any).gtag('event', 'reward_attempt', {
         event_category: 'daily_gift',
         event_label: 'click_claim',
-        value: nextReward
+        value: rewardAmounts.baseAmount
       });
     }
     
-    // Execute the actual claim
-    const success = await onClaim();
+    // Execute the actual claim with claimType='base'
+    const success = await onClaim('base');
     
     if (success) {
       // Track feature usage - successful claim
       await trackFeatureUsage(userId, 'user_action', 'daily_gift', 'claim_success', {
-        coins_amount: nextReward,
-        streak_day: weeklyEntryCount + 1
+        coins_amount: rewardAmounts.baseAmount,
+        streak_day: weeklyEntryCount + 1,
+        claim_type: 'base'
       });
       
       // Track successful claim
@@ -144,7 +163,7 @@ const DailyGiftDialog = ({
         (window as any).gtag('event', 'reward_granted', {
           event_category: 'daily_gift',
           event_label: `day_${weeklyEntryCount + 1}`,
-          value: nextReward
+          value: rewardAmounts.baseAmount
         });
       }
       
@@ -185,13 +204,13 @@ const DailyGiftDialog = ({
 
   // CRITICAL: Video completion - reward is credited ONLY when user closes the modal (X button)
   const handleVideoComplete = async (watchedVideoIds: string[]) => {
-    // Credit the doubled reward via new store
-    const result = await rewardStore.completeRewardSession(watchedVideoIds);
+    // First claim the ad reward via backend
+    const claimSuccess = await onClaim('ad');
     
-    // Calculate the correct doubled amount for display
-    const doubledReward = nextReward * 2;
+    // Complete the reward session for tracking
+    await rewardStore.completeRewardSession(watchedVideoIds);
     
-    if (result.success) {
+    if (claimSuccess) {
       toast.success(
         <div className="flex flex-col items-center gap-2 text-center max-w-[75vw]">
           <div className="text-2xl">🎉</div>
@@ -200,21 +219,23 @@ const DailyGiftDialog = ({
           </div>
           <div className="text-sm text-foreground/90">
             {lang === 'hu' 
-              ? 'A jutalmad duplázva jóváíródott!' 
-              : 'Your doubled reward has been credited!'}
+              ? (isTop10Yesterday ? 'TOP10 + reklám bónusz jóváíródott!' : 'A reklám jutalmad jóváíródott!')
+              : (isTop10Yesterday ? 'TOP10 + ad bonus credited!' : 'Your ad reward has been credited!')}
           </div>
           <div className="flex items-center gap-2 mt-1 px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-500/20 via-amber-500/30 to-yellow-500/20 border border-yellow-500/40 shadow-lg shadow-yellow-500/20">
-            <span className="font-bold text-yellow-400 text-lg">+{doubledReward} 🪙</span>
+            <span className="font-bold text-yellow-400 text-lg">+{rewardAmounts.adAmount} 🪙</span>
           </div>
         </div>,
         { position: 'top-center', duration: 2000 }
       );
     }
     
-    // Close everything
+    // Close everything FAST - 0.5 seconds after video completion
     setShowVideoView(false);
     setActiveVideos([]);
-    onLater();
+    setTimeout(() => {
+      onLater();
+    }, 500);
   };
 
   const handleVideoClose = () => {
@@ -645,7 +666,7 @@ const DailyGiftDialog = ({
                               textShadow: '0 0 16px rgba(255,255,255,0.3), 0 2px 8px rgba(0,0,0,0.9)',
                               letterSpacing: '0.02em'
                             }}>
-                        +{nextReward}
+                        +{rewardAmounts.baseAmount}
                       </span>
                     </div>
                   </div>
@@ -741,7 +762,7 @@ const DailyGiftDialog = ({
                                 textShadow: '0 0 16px rgba(255,255,255,0.3), 0 2px 8px rgba(0,0,0,0.9)',
                                 letterSpacing: '0.02em'
                               }}>
-                          +{nextReward * 2}
+                          +{rewardAmounts.adAmount}
                         </span>
                         
                         {/* Film icon SVG */}

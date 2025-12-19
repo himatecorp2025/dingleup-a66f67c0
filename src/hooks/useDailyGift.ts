@@ -125,13 +125,17 @@ export const useDailyGift = (userId: string | undefined, isPremium: boolean = fa
     }
   };
 
-  const claimDailyGift = async (refetchWallet?: () => Promise<void>): Promise<boolean> => {
+  const claimDailyGift = async (claimType: 'base' | 'ad' = 'base', refetchWallet?: () => Promise<void>): Promise<boolean> => {
     if (!userId || claiming) return false;
     
     setClaiming(true);
     
     try {
-      const { data, error } = await supabase.rpc('claim_daily_gift');
+      // Call RPC with claimType parameter - backend calculates final reward
+      // Using any cast because the RPC signature will be updated in migration
+      const { data, error } = await (supabase.rpc as any)('claim_daily_gift', {
+        p_claim_type: claimType
+      });
       
       if (error) {
         const errorMsg = error.message || t('daily.claim_error');
@@ -144,10 +148,10 @@ export const useDailyGift = (userId: string | undefined, isPremium: boolean = fa
         return false;
       }
       
-      const result = data as { success: boolean; grantedCoins: number; walletBalance: number; streak: number; error?: string };
+      const result = data as { success: boolean; grantedCoins: number; walletBalance: number; streak: number; multiplier: number; claimType: string; error?: string };
       
       if (result.success) {
-        trackEvent('daily_gift_claimed', 'daily', result.grantedCoins.toString());
+        trackEvent('daily_gift_claimed', claimType, result.grantedCoins.toString());
         
         setCanClaim(false);
         setShowPopup(false);
