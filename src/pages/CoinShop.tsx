@@ -33,9 +33,14 @@ const CoinShop = () => {
     setPurchasingCoins(coins);
     
     try {
-      // Step 1: Create payment intent
+      // Step 1: Create payment intent (authenticated)
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!session?.access_token) throw new Error('NOT_AUTHENTICATED');
+
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-coin-payment', {
-        body: { coins }
+        body: { coins },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
       if (paymentError) {

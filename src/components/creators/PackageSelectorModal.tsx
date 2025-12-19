@@ -31,9 +31,9 @@ const texts = {
     hu: '3 új videó / 24 óra',
     en: '3 new videos / 24 hours',
   },
-  feature90Days: {
-    hu: 'Minden videó 90 napig aktív',
-    en: 'Each video active for 90 days',
+  feature30Days: {
+    hu: 'Minden videó 30 napig aktív',
+    en: 'Each video active for 30 days',
   },
   trialText: {
     hu: '30 napig kötetlenül!',
@@ -72,7 +72,13 @@ const PackageSelectorModal = ({ isOpen, onClose, onSuccess, lang }: PackageSelec
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('create-creator-subscription', {});
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!session?.access_token) throw new Error('NOT_AUTHENTICATED');
+
+      const { data, error } = await supabase.functions.invoke('create-creator-subscription', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
 
       if (error) throw error;
 
@@ -142,7 +148,7 @@ const PackageSelectorModal = ({ isOpen, onClose, onSuccess, lang }: PackageSelec
                     ✓ {texts.planFeatures[lang]}
                   </p>
                   <p className="text-white/90 text-base">
-                    ✓ {texts.feature90Days[lang]}
+                    ✓ {texts.feature30Days[lang]}
                   </p>
                 </div>
 

@@ -81,8 +81,13 @@ export const CreatorVideoCard = ({
   const handleReactivate = async () => {
     setIsReactivating(true);
     try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!session?.access_token) throw new Error('NOT_AUTHENTICATED');
+
       const { data, error } = await supabase.functions.invoke('reactivate-creator-video', {
         body: { video_id: video.id },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
       if (error) throw error;
